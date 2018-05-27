@@ -20,10 +20,6 @@ package com.adobe.platform.ecosystem.examples.catalog.model;
  * Created by vedhera on 8/25/2017.
  */
 
-import static com.adobe.platform.ecosystem.examples.constants.SDKConstants.CATALOG_FILE_DESCRIPTION_DELIMITERS_KEY;
-import static com.adobe.platform.ecosystem.examples.constants.SDKConstants.CATALOG_FILE_DESCRIPTION_PERSISTED_KEY;
-import static com.adobe.platform.ecosystem.examples.constants.SDKConstants.CATALOG_FORMAT;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,9 +31,11 @@ import java.util.logging.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import com.adobe.platform.ecosystem.examples.catalog.api.CatalogService;
+import com.adobe.platform.ecosystem.examples.catalog.impl.CatalogFactory;
 import com.adobe.platform.ecosystem.examples.constants.SDKConstants;
-import com.adobe.platform.ecosystem.examples.data.FileFormat;
-import com.adobe.platform.ecosystem.examples.util.JsonUtil;
+import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
+import com.adobe.platform.ecosystem.examples.util.ConnectorSDKUtil;
 
 /**
  * Represent Dataset entity in Catalog.
@@ -53,9 +51,13 @@ public class DataSet extends BaseModel {
 
     private String description;
 
+    private String schema;
+
     private JSONObject dule;
 
     private JSONArray fields;
+
+    private JSONObject observableSchema;
 
     private JSONObject fileDescription;
 
@@ -68,6 +70,12 @@ public class DataSet extends BaseModel {
     private static final Logger logger = Logger.getLogger(BaseModel.class
             .getName());
 
+    public static enum FieldsFrom {
+        FIELDS,
+        OBSERVABLE_SCHEMA,
+        SCHEMA
+    }
+
     static {
         _keys = new HashMap<String, DataType>() {
             {
@@ -75,7 +83,9 @@ public class DataSet extends BaseModel {
                 put(SDKConstants.CATALOG_DSV, DataType.StringType);
                 put(SDKConstants.CATALOG_DESCRIPTION, DataType.StringType);
                 put(SDKConstants.CONNECTION_ID, DataType.StringType);
+                put(SDKConstants.CATALOG_SCHEMA, DataType.StringType);
                 put(SDKConstants.CATALOG_FIELDS, DataType.JsonArrayType);
+                put(SDKConstants.CATALOG_OBSERVABLE_SCHEMA, DataType.Field_ObjectType);
                 put(SDKConstants.CATALOG_DULE, DataType.Field_ObjectType);
                 put(SDKConstants.CATALOG_FILE_DESCRIPTION,
                         DataType.Field_ObjectType);
@@ -90,7 +100,7 @@ public class DataSet extends BaseModel {
     public DataSet(JSONObject jsonObject) {
         super(jsonObject);
         Field[] fields = DataSet.class.getDeclaredFields();
-        super.populateFields(fields, this._keys, this, jsonObject);
+        super.populateFields(fields, _keys, this, jsonObject);
     }
 
     public String getBasePath() {
@@ -155,27 +165,61 @@ public class DataSet extends BaseModel {
      * @return List of {@link SchemaField}
      */
     public List<SchemaField> getFields(boolean useFlatNamesForLeafNodes) {
-        fieldsList = new ArrayList<>();
-        for (int i = 0; i < this.fields.size(); i++) {
-            Object field = this.fields.get(i);
-            if (field instanceof JSONObject) {
-                fieldsList.add(new SchemaField((JSONObject) field, useFlatNamesForLeafNodes));
+        return getFields(useFlatNamesForLeafNodes,FieldsFrom.FIELDS);
+    }
+
+    public List<SchemaField> getFields(boolean useFlatNamesForLeafNodes, FieldsFrom fieldsFrom) {
+        if(fieldsFrom == FieldsFrom.FIELDS) {
+            fieldsList = new ArrayList<>();
+            for (int i = 0; i < this.fields.size(); i++) {
+                Object field = this.fields.get(i);
+                if (field instanceof JSONObject) {
+                    fieldsList.add(new SchemaField((JSONObject) field, useFlatNamesForLeafNodes));
+                }
+            }
+        } else if(fieldsFrom == FieldsFrom.OBSERVABLE_SCHEMA) {
+            if(this.observableSchema.get(SDKConstants.TYPE) != null) {
+                Schema schema = new Schema(this.observableSchema);
+                fieldsList = schema.getSchemaFields(useFlatNamesForLeafNodes);
+            } else {
+                logger.warning("Observable Schema not defined for dataset id " + this.getId());
+            }
+        } else if(fieldsFrom == FieldsFrom.SCHEMA) {
+            if(this.schema != null && this.schema.length() > 0) {
+                try {
+                    CatalogService cs = CatalogFactory.getCatalogService();
+                    fieldsList = cs.getSchemaFields(getImsOrg(), 
+                            ConnectorSDKUtil.getInstance().getAccessToken(), 
+                            this.schema.replace("@", ""), useFlatNamesForLeafNodes);
+                } catch (ConnectorSDKException e) {
+                    logger.severe("Failed in getting catalog service while listing fields for dataset id " + this.getId());
+                }
+            } else {
+                logger.warning("Schema path not defined for " + this.getId());
             }
         }
         return fieldsList;
     }
 
     public List<SchemaField> getFlattenedSchemaFields() {
+        return getFlattenedSchemaFields(FieldsFrom.FIELDS);
+    }
+
+    public List<SchemaField> getFlattenedSchemaFields(FieldsFrom fieldsFrom) {
         if (flatFieldsList != null) {
             return flatFieldsList;
         } else {
-            flatFieldsList = recursivelyPopulateSchemaField(getFields(true));
+            flatFieldsList = recursivelyPopulateSchemaField(getFields(true, fieldsFrom));
              return flatFieldsList;
         }
     }
 
     public void matchFlattenedSchemaFields(Map<String, String> sdkFields) {
-        List<SchemaField> sfs = getFlattenedSchemaFields();
+        matchFlattenedSchemaFields(sdkFields, FieldsFrom.FIELDS);
+    }
+
+    public void matchFlattenedSchemaFields(Map<String, String> sdkFields, FieldsFrom fieldsFrom) {
+        List<SchemaField> sfs = getFlattenedSchemaFields(fieldsFrom);
         for(SchemaField sf : sfs) {
             for(Object sdkField : sdkFields.keySet().toArray()) {
                 if(sf.getName().replace(".", "_").equals(sdkField.toString())) {
@@ -193,16 +237,24 @@ public class DataSet extends BaseModel {
     }
 
     public FileDescription getFileDescription() {
-        return new FileDescription(fileDescription);
+        try {
+            return new FileDescription(fileDescription);
+        } catch (ConnectorSDKException csdke) {
+            logger.severe("Error getting file description. Dataset id " + this.getId());
+        }
+        return null;
     }
 
     private List<SchemaField> recursivelyPopulateSchemaField(
             List<SchemaField> fields) {
+        if(fields == null) {
+            return null;
+        }
         ArrayList<SchemaField> flatFields = new ArrayList<SchemaField>();
         for (SchemaField field : fields) {
-            if ((field.type != DataType.Field_ObjectType    //Checking if not object and not array
-                    && field.type != DataType.Field_ArrayType)
-                || (field.type == DataType.Field_ArrayType    //Checking if array but without subfields, hence primitive.
+            if ((field.getType() != DataType.Field_ObjectType    //Checking if not object and not array
+                    && field.getType() != DataType.Field_ArrayType)
+                || (field.getType() == DataType.Field_ArrayType    //Checking if array but without subfields, hence primitive.
                     && field.getSubFields() == null)) {
                 flatFields.add(field);
             } else {
@@ -230,216 +282,4 @@ public class DataSet extends BaseModel {
         return new DataSet(obj);
     }
 
-    public class SchemaField {
-        private String name;
-
-        private DataType type;
-
-        private DataType arraySubType; // Will be set only when SchemaField.type is a DataType.Field_ArrayType.
-
-        private List<SchemaField> subFields = null;
-
-        private Dule dule;
-
-        public SchemaField(JSONObject field, boolean useFlatNamesForLeafNodes) {
-            getSchemaField(field, "", useFlatNamesForLeafNodes);
-        }
-
-        public SchemaField(JSONObject subFieldJson, String currentHierarchy, boolean useFlatNamesForLeafNodes) {
-            getSchemaField(subFieldJson, currentHierarchy, useFlatNamesForLeafNodes);
-        }
-
-        private void getSchemaField(JSONObject field, String parentHierarchy, boolean useFlatNameForLeafNodes) {
-            String type = (String) field.get(SDKConstants.CATALOG_SCHEMA_TYPE);
-
-            switch (type) {
-                case "string":
-                    this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
-                    this.type = DataType.StringType;
-                    break;
-                case "long":
-                    this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
-                    this.type = DataType.LongType;
-                    break;
-                case "date":// TODO Once catalog start giving information for date
-                    // format, we will start parsing date in same format
-                    this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
-                    this.type = DataType.StringType;
-                    break;
-                case "integer":
-                    this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
-                    this.type = DataType.IntegerType;
-                    break;
-                case "float":
-                    this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
-                    this.type = DataType.FloatType;
-                    break;
-                case "double":
-                    this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
-                    this.type = DataType.DoubleType;
-                    break;
-                case "boolean":
-                    this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
-                    this.type = DataType.BooleanType;
-                    break;
-                case "object":
-                    this.name = (String) field.get(SDKConstants.CATALOG_NAME);
-                    this.type = DataType.Field_ObjectType;
-                    JSONArray subFields = (JSONArray) field
-                            .get(SDKConstants.SUB_FIELDS);
-                    List<SchemaField> schemaSubFields = new ArrayList<>();
-                    for (int i = 0; i < subFields.size(); i++) {
-                        JSONObject subFieldJson = (JSONObject) subFields.get(i);
-                        String currentHeirachy = getNewHeirarchy(this.name,
-                                parentHierarchy);
-                        SchemaField subSchemaField = new SchemaField(subFieldJson,
-                                currentHeirachy, useFlatNameForLeafNodes);
-                        schemaSubFields.add(subSchemaField);
-                    }
-                    this.subFields = schemaSubFields;
-                    break;
-                case "array":
-                    this.type = DataType.Field_ArrayType;
-                    this.name = (String) field.get(SDKConstants.CATALOG_NAME);
-                    JSONObject subType = (JSONObject) field
-                            .get(SDKConstants.SUB_TYPE);
-                    if (subType != null) {
-                        JSONArray subFieldsArray = (JSONArray) subType
-                                .get(SDKConstants.SUB_FIELDS);
-                        List<SchemaField> schemaSubFieldsArray = new ArrayList<>();
-                        if (subFieldsArray != null) {
-                            this.arraySubType = DataType.Field_ObjectType;
-                            for (int i = 0; i < subFieldsArray.size(); i++) {
-                                JSONObject subFieldJson = (JSONObject) subFieldsArray
-                                        .get(i);
-                                String currentHeirachy = getNewHeirarchy(this.name,
-                                        parentHierarchy);
-                                SchemaField subSchemaField = new SchemaField(
-                                        subFieldJson, currentHeirachy, useFlatNameForLeafNodes);
-                                schemaSubFieldsArray.add(subSchemaField);
-                            }
-                            this.subFields = schemaSubFieldsArray;
-                        } else {// This condition arises when there is no tag
-                            // *subFields* exists in array type objects OR
-                            // the sub type is a primitive type.
-                            String typeOfSubType = (String) subType.get(SDKConstants.TYPE);
-                            // TODO: add if-else based on type of sub-type.
-                            this.arraySubType = DataType.StringType;
-                            if(useFlatNameForLeafNodes)
-                                this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
-                        }
-                        break;
-                    }
-                default:
-                    this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
-                    this.type = DataType.StringType;
-            }
-
-            this.dule = new Dule(JsonUtil.getJsonObject(field,
-                    SDKConstants.CATALOG_DULE));
-        }
-
-        private String getNewHeirarchy(String name, String parentHeirarchy) {
-            if (parentHeirarchy.equals("")) {
-                return name;
-            } else {
-                return parentHeirarchy + SDKConstants.FIELDS_DELIM + name;
-            }
-        }
-
-        private String getNameForNonComplexField(String parentHeirarchy,
-                                                 JSONObject field, boolean flattenNamesForPrimitiveTypes) {
-            String fieldName = (String) field.get(SDKConstants.CATALOG_NAME);
-            if (fieldName != null) {
-                if (parentHeirarchy != "" && flattenNamesForPrimitiveTypes) {
-                    fieldName = parentHeirarchy + SDKConstants.FIELDS_DELIM
-                            + fieldName;
-                }
-            } else {
-                fieldName = parentHeirarchy;// In case *name* tag doesn't exist,
-                // we are calling field name with
-                // the name of parent
-            }
-            return fieldName;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public DataType getType() {
-            return type;
-        }
-
-        public List<SchemaField> getSubFields() {
-            return subFields;
-        }
-
-        public Dule getDule() {
-            return dule;
-        }
-
-        public boolean getIsPrimitive() {
-           if(type != DataType.Field_ObjectType && type != DataType.Field_ArrayType) {
-               return true;
-           } else
-               return false;
-        }
-
-        public DataType getArraySubType() {
-            return arraySubType;
-        }
-    }
-
-    public class FileDescription {
-        private boolean persisted;
-
-        private FileFormat format;
-
-        private char delimiter;
-
-        private static final char DEFAULT_DELIMITER = ',';
-
-        public FileDescription(JSONObject fileDescription) {
-            this.persisted = JsonUtil.getBoolean(fileDescription,
-                    CATALOG_FILE_DESCRIPTION_PERSISTED_KEY);
-            JSONArray delimArray = JsonUtil.getJsonArray(fileDescription,
-                    CATALOG_FILE_DESCRIPTION_DELIMITERS_KEY);
-            if (delimArray.size() > 0) {
-                this.delimiter = ((String) delimArray.get(0)).charAt(0);
-            } else {
-                this.delimiter = DEFAULT_DELIMITER;
-            }
-            String fileFormat = JsonUtil.getString(fileDescription,
-                    CATALOG_FORMAT);
-            switch (fileFormat) {
-                case "csv":
-                    this.format = FileFormat.CSV;
-                    break;
-                case "parquet":
-                    this.format = FileFormat.PARQUET;
-                    break;
-                case "json":
-                    this.format = FileFormat.JSON;
-                    break;
-                default:
-                    logger.severe("File format in Catalog metadata of type "
-                            + fileFormat + " for dataSetId: "
-                            + DataSet.this.getId());
-                    break;
-            }
-        }
-
-        public boolean isPersisted() {
-            return persisted;
-        }
-
-        public FileFormat getFormat() {
-            return format;
-        }
-
-        public char getDelimiter() {
-            return delimiter;
-        }
-    }
 }

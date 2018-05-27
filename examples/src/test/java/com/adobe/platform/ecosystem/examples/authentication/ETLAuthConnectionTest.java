@@ -17,7 +17,7 @@
 package com.adobe.platform.ecosystem.examples.authentication;
 
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
-import com.adobe.platform.connector.ut.BaseTest;
+import com.adobe.platform.ecosystem.ut.BaseTest;
 import org.apache.http.client.methods.HttpGet;
 import org.json.simple.JSONObject;
 import org.junit.Before;

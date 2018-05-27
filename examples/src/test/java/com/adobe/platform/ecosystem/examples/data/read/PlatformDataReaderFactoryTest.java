@@ -20,7 +20,7 @@ import com.adobe.platform.ecosystem.examples.catalog.impl.CatalogAPIStrategy;
 import com.adobe.platform.ecosystem.examples.constants.SDKConstants;
 import com.adobe.platform.ecosystem.examples.data.read.reader.DataAccessAPIReader;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
-import com.adobe.platform.connector.ut.BaseTest;
+import com.adobe.platform.ecosystem.ut.BaseTest;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;

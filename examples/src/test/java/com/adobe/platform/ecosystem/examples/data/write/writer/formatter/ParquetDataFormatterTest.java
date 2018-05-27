@@ -23,7 +23,7 @@ import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIORepetitionTy
 import com.adobe.platform.ecosystem.examples.parquet.wiring.impl.ParquetIOImpl;
 import com.adobe.platform.ecosystem.examples.data.write.field.converter.parquet.ParquetFieldConverter;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
-import com.adobe.platform.connector.ut.BaseTest;
+import com.adobe.platform.ecosystem.ut.BaseTest;
 import org.apache.parquet.schema.MessageType;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;

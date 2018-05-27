@@ -16,7 +16,7 @@
  */
 package com.adobe.platform.ecosystem.examples.data.access.model;
 
-import com.adobe.platform.connector.ut.BaseTest;
+import com.adobe.platform.ecosystem.ut.BaseTest;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;

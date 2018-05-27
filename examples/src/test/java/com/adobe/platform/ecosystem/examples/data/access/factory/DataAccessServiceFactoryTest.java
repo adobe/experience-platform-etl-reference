@@ -19,7 +19,7 @@ package com.adobe.platform.ecosystem.examples.data.access.factory;
 import com.adobe.platform.ecosystem.examples.data.access.api.DataAccessService;
 import com.adobe.platform.ecosystem.examples.data.access.impl.DataAccessServiceImpl;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
-import com.adobe.platform.connector.ut.BaseTest;
+import com.adobe.platform.ecosystem.ut.BaseTest;
 import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;

@@ -16,7 +16,7 @@
  */
 package com.adobe.platform.ecosystem.examples.catalog.model;
 
-import com.adobe.platform.connector.ut.BaseTest;
+import com.adobe.platform.ecosystem.ut.BaseTest;
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;

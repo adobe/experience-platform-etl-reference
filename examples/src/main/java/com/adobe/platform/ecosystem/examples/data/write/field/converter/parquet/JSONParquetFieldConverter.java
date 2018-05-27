@@ -21,6 +21,7 @@ import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIOField;
 import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIORepetitionType;
 import com.adobe.platform.ecosystem.examples.catalog.model.DataSet;
 import com.adobe.platform.ecosystem.examples.catalog.model.DataType;
+import com.adobe.platform.ecosystem.examples.catalog.model.SchemaField;
 import com.adobe.platform.ecosystem.examples.data.Pair;
 import com.adobe.platform.ecosystem.examples.data.functions.FieldConverterFunction;
 import org.json.simple.JSONArray;
@@ -36,9 +37,9 @@ import java.util.List;
  * JSON object to Parquet fields.
  */
 public class JSONParquetFieldConverter implements ParquetFieldConverter<JSONObject> {
-    private final List<DataSet.SchemaField> catalogSchemaFields;
+    private final List<SchemaField> catalogSchemaFields;
 
-    public JSONParquetFieldConverter(List<DataSet.SchemaField> catalogSchemaFields) {
+    public JSONParquetFieldConverter(List<SchemaField> catalogSchemaFields) {
         this.catalogSchemaFields = catalogSchemaFields;
     }
 
@@ -151,8 +152,8 @@ public class JSONParquetFieldConverter implements ParquetFieldConverter<JSONObje
      * @return
      */
     private Pair<ParquetIODataType, ParquetIORepetitionType> getParquetTypeAndRepetition(LinkedList<String> fieldPath) {
-        DataSet.SchemaField schemaField = null;
-        List<DataSet.SchemaField> searchableSchemaFields = this.catalogSchemaFields;
+        SchemaField schemaField = null;
+        List<SchemaField> searchableSchemaFields = this.catalogSchemaFields;
         Iterator pathIterator = fieldPath.iterator();
         while (pathIterator.hasNext()) {
             String currentKey = (String) pathIterator.next();
@@ -184,8 +185,8 @@ public class JSONParquetFieldConverter implements ParquetFieldConverter<JSONObje
         return pair;
     }
 
-    private DataSet.SchemaField getCatalogSchemaFieldFromKey(String currentKey, List<DataSet.SchemaField> catalogSchemaFields) {
-        for (DataSet.SchemaField schemaField : catalogSchemaFields) {
+    private SchemaField getCatalogSchemaFieldFromKey(String currentKey, List<SchemaField> catalogSchemaFields) {
+        for (SchemaField schemaField : catalogSchemaFields) {
             if (schemaField.getName().equalsIgnoreCase(currentKey)) {
                 return schemaField;
             }

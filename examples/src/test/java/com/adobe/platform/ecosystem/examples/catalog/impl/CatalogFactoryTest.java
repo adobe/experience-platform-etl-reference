@@ -17,7 +17,7 @@
 package com.adobe.platform.ecosystem.examples.catalog.impl;
 
 import com.adobe.platform.ecosystem.examples.catalog.api.CatalogService;
-import com.adobe.platform.connector.ut.BaseTest;
+import com.adobe.platform.ecosystem.ut.BaseTest;
 import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;

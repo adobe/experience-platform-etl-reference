@@ -37,7 +37,7 @@ import com.adobe.platform.ecosystem.examples.data.write.Formatter;
 import com.adobe.platform.ecosystem.examples.data.write.PlatformDataFormatterFactory;
 import com.adobe.platform.ecosystem.examples.data.write.WriteAttributes;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
-import com.adobe.platform.connector.ut.BaseTest;
+import com.adobe.platform.ecosystem.ut.BaseTest;
 
 public class DataIngestionAPIWriterTest extends BaseTest {
 

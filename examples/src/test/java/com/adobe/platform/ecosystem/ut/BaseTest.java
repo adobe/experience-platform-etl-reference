@@ -14,7 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.adobe.platform.connector.ut;
+package com.adobe.platform.ecosystem.ut;
 
 import com.adobe.platform.ecosystem.examples.parquet.write.ParquetIOWriter;
 import com.adobe.platform.ecosystem.examples.catalog.api.CatalogService;
@@ -63,7 +63,7 @@ public class BaseTest {
     protected DataAccessService das = Mockito.mock(DataAccessService.class);
     protected DataIngestionService dis = Mockito.mock(DataIngestionService.class);
     protected Batch batch = Mockito.mock(Batch.class);
-    protected DataSet.FileDescription fileDescription = Mockito.mock(DataSet.FileDescription.class);
+    protected FileDescription fileDescription = Mockito.mock(FileDescription.class);
     protected Formatter formatter = Mockito.mock(Formatter.class);
 
     public static final String datasetSample = "{\"testDSId\": {\"fields\":[],\"basePath\": \"adl://ADLPATH/adlpath\"}}";
@@ -77,6 +77,7 @@ public class BaseTest {
     public static final String dummyAccessToken = "eyJ4NXUiOiJpbXNfbmExLXN0ZzEta2V5LTEuY2VyIiwiYWxnIjoiUlMyNTYifQ.eyJpZCI6IjE1MDk3MDExMDM0MDlfZjRlZWQwMDYtYjY5Ni00YjQ5LTliOGYtMTAyNzY4YjhlYTczX3VlMSIsImNsaWVudF9pZCI6Ik1DRFBfSEFSVkVTVEVSIiwidXNlcl9pZCI6Ik1DRFBfSEFSVkVTVEVSQEFkb2JlSUQiLCJ0eXBlIjoiYWNjZXNzX3Rva2VuIiwiYXMiOiJpbXMtbmExLXN0ZzEiLCJwYWMiOiJNQ0RQX0hBUlZFU1RFUl9zdGciLCJydGlkIjoiMTUwOTcwMTEwMzQwOV81NmQxNWY3ZS0yYjcwLTQ3MjYtOGQ5Ni1hNDdkNDg4N2VhYWRfdWUxIiwicnRlYSI6IjE1MTA5MTA3MDM0MDkiLCJtb2kiOiI2ZDk0M2UwMCIsImMiOiI0dVFzWVFzL0Z5VHhUekErWE1pa2pnPT0iLCJleHBpcmVzX2luIjoiODY0MDAwMDAiLCJzY29wZSI6InN5c3RlbSIsImNyZWF0ZWRfYXQiOiIxNTA5NzAxMTAzNDA5In0.exiCb1l9HNLjQgwhz_XFatzvUvhHWe7u4QBau8UiegiB-iOlOJvFds5QwaUj1fX2N3Ki8FZWQ0uCqCKJRKCFvFxitnElrmsNIS3lkQz1NWlfq2KK-qQS5pORyd05ZK95ep11Tokz-S_bUvjK-tE-HkZeFzpHLLL2ab9cDwBGSVdeofCUSm8LYnaC7YAlAYbC3kwSAFm6XewD9BHrOx6luYlEr7oPdZxIM-eBJ-Xe95eC6Dnm-UUbLVOyHUeQhYPO51CPUmTY6uaok7Ic3osP4038SrVtKRYijQtmEWsCPg4otlqN5NNkeJqP8jrLHv5n193jtDHdH_8V0GP-YZS8Dg";
     public static final String jwtExchangeResponse = "{\"access_token\":" + "\"" + dummyAccessToken + "\"" + "}";
     public static final String connectionSample = "{ \"conId\": { \"name\": \"testCon\", \"imsOrg\": \"testOrg\", \"dule\": { \"contracts\": [ \"C2\",  \"C3\", \"C4\", \"C5\", \"C6\" ] } }}";
+    public static final String schemaSample = "{\"version\": \"3\",\"created\": 1525868087437,\"updated\": 1525868161644,\"createdClient\": \"acp_int_ws2018\",\"updatedUser\": \"acp_int_ws2018@AdobeID\",\"imsOrg\": \"EDCE5A655A5E73FF0A494113@AdobeOrg\",\"title\": \"LogalizerJobSchemaFinal\",\"type\": \"object\",\"description\": \"Nothing\",\"properties\": {\"raw_text\": {\"type\": \"string\"},\"cluster_id\": {\"type\": \"number\"},\"sample_count\": {\"type\": \"number\"},\"label\": {\"type\": \"string\"}},\"extNamespace\": \"logalizer\",\"id\": \"_customer/logalizer/LogalizerJobSchemaFinal\"}";
 
     public static final String dataSetViewSample = "{ \"dsvId\": {\"imsOrg\": \"testOrg\",\"fields\": [{ \"LogicalName\": \"Id\", \"DisplayName\": \"Feed Item ID\", \"IsPrimaryKey\": true,\n" +
             "        \"type\": \"string\", \"meta\": { \"originalType\": \"id\",  \"options\": null }, \"name\": \"Id\",  \"dule\": { \"loginStateField\": true }},{ \"LogicalName\": \"Type\",\n" +
