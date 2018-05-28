@@ -19,7 +19,7 @@ package com.adobe.platform.ecosystem.examples.data.access.impl;
 import com.adobe.platform.ecosystem.examples.data.access.model.DataAccessFileEntity;
 import com.adobe.platform.ecosystem.examples.data.access.model.DataSetFileProcessingEntity;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
-import com.adobe.platform.connector.ut.BaseTest;
+import com.adobe.platform.ecosystem.ut.BaseTest;
 import org.apache.http.client.methods.HttpGet;
 import org.junit.Before;
 import org.junit.Test;

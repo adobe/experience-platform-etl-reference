@@ -20,7 +20,7 @@ import com.adobe.platform.ecosystem.examples.catalog.model.*;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKUtil;
 import com.adobe.platform.ecosystem.examples.util.ResourceName;
-import com.adobe.platform.connector.ut.BaseTest;
+import com.adobe.platform.ecosystem.ut.BaseTest;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
@@ -80,6 +80,14 @@ public class CatalogServiceTest extends BaseTest{
         Connection connection = catService.getConnection("testOrg", "testToken", "conId");
         assertTrue(connection!=null);
         assertTrue("conId".equals(connection.getId()));
+    }
+
+    @Test
+    public void testGetSchema() throws IOException, ConnectorSDKException {
+        setupTestForHttpOutput(schemaSample);
+        List<SchemaField> schemaFields = catService.getSchemaFields("testOrg", "testToken", "/testschema", true);
+        assertTrue(schemaFields!=null);
+        assertTrue(schemaFields.size() == 4);
     }
 
     @Test

@@ -24,9 +24,9 @@ import java.util.logging.Logger;
 
 import org.json.simple.JSONObject;
 
-import com.adobe.platform.ecosystem.examples.catalog.model.DataSet.SchemaField;
 import com.adobe.platform.ecosystem.examples.catalog.model.DataType;
 import com.adobe.platform.ecosystem.examples.catalog.model.SDKField;
+import com.adobe.platform.ecosystem.examples.catalog.model.SchemaField;
 import com.adobe.platform.ecosystem.examples.data.wiring.DataWiringParam;
 import com.adobe.platform.ecosystem.examples.data.write.Formatter;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;

@@ -20,9 +20,7 @@ import com.adobe.platform.ecosystem.examples.catalog.api.CatalogService;
 import com.adobe.platform.ecosystem.examples.catalog.model.*;
 import com.adobe.platform.ecosystem.examples.constants.SDKConstants;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
-import com.adobe.platform.ecosystem.examples.util.ConnectorSDKUtil;
 import com.adobe.platform.ecosystem.examples.util.HttpClientUtil;
-import com.adobe.platform.ecosystem.examples.util.ResourceName;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -68,7 +66,7 @@ public class CatalogServiceImpl implements CatalogService {
         List<DataSet> dataSets;
         try {
             String catalogURI = this._endpoint + "/dataSets";
-            dataSets = getEntities(catalogURI, imsOrg, authToken, params, strategy, DataSet.class);
+            dataSets = getEntities(catalogURI, imsOrg, authToken, params, strategy, false, DataSet.class);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error while fetching datasets :" + e.getMessage());
             throw new ConnectorSDKException("Error while fetching datasets :" + e.getMessage(), e.getCause());
@@ -85,7 +83,7 @@ public class CatalogServiceImpl implements CatalogService {
         Connection connection;
         try {
             String catalogURI = this._endpoint + "/connections/" + connectionId;
-            connection = getEntity(catalogURI, imsOrg, authToken, connectionId, Connection.class);
+            connection = getEntity(catalogURI, imsOrg, authToken, connectionId, false, Connection.class);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error while fetching connection for connectionId :" + e.getMessage());
             throw new ConnectorSDKException(e.getMessage(), e.getCause());
@@ -101,7 +99,7 @@ public class CatalogServiceImpl implements CatalogService {
         DataSet dataSet;
         try {
             String catalogURI = this._endpoint + "/dataSets/" + dataSetId;
-            dataSet = getEntity(catalogURI, imsOrg, authToken, dataSetId, DataSet.class);
+            dataSet = getEntity(catalogURI, imsOrg, authToken, dataSetId, false, DataSet.class);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error while fetching dataSet for dataSetId :" + e.getMessage());
             throw new ConnectorSDKException(e.getMessage(), e.getCause());
@@ -147,7 +145,7 @@ public class CatalogServiceImpl implements CatalogService {
         Batch batch;
         try {
             String catalogURI = this._endpoint + "/batch/" + batchId;
-            batch = getEntity(catalogURI, imsOrg, authToken, batchId, Batch.class);
+            batch = getEntity(catalogURI, imsOrg, authToken, batchId, false, Batch.class);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error in getBatchByBatchId :" + e.getMessage());
             throw new ConnectorSDKException(e.getMessage(), e.getCause());
@@ -163,7 +161,7 @@ public class CatalogServiceImpl implements CatalogService {
         List<DataSetFile> dataSetFiles;
         try {
             String catalogURI = this._endpoint + "/dataSetFiles";
-            dataSetFiles = getEntities(catalogURI, imsOrg, authToken, params, strategy, DataSetFile.class);
+            dataSetFiles = getEntities(catalogURI, imsOrg, authToken, params, strategy, false, DataSetFile.class);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error in getCredentials :" + e.getMessage());
             throw new ConnectorSDKException(e.getMessage(), e.getCause());
@@ -179,7 +177,7 @@ public class CatalogServiceImpl implements CatalogService {
         DataSetView dataSetView;
         try {
             String catalogURI = this._endpoint + "/dataSetView/" + viewId;
-            dataSetView = getEntity(catalogURI, imsOrg, authToken, viewId, DataSetView.class);
+            dataSetView = getEntity(catalogURI, imsOrg, authToken, viewId, false, DataSetView.class);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error in getCredentials :" + e.getMessage());
             throw new ConnectorSDKException(e.getMessage(), e.getCause());
@@ -195,7 +193,7 @@ public class CatalogServiceImpl implements CatalogService {
         List<Batch> batches;
         try {
             String catalogURI = this._endpoint + "/batches";
-            batches = getEntities(catalogURI, imsOrg, authToken, params, strategy, Batch.class);
+            batches = getEntities(catalogURI, imsOrg, authToken, params, strategy, false, Batch.class);
         } catch (Exception e) {
             logger.log(Level.INFO, "Error in getBatches :" + e.getMessage());
             throw new ConnectorSDKException(e.getMessage(), e.getCause());
@@ -211,14 +209,16 @@ public class CatalogServiceImpl implements CatalogService {
                                               String imsOrg,
                                               String authToken,
                                               String entityId,
+                                              boolean isFlat,
                                               Class<T> clazz) throws ConnectorSDKException, ParseException, URISyntaxException {
         T entity = getEntities(entityEndpoint,
                 imsOrg,
                 authToken,
                 new HashMap<>(),
                 CatalogAPIStrategy.ONCE,
+                isFlat,
                 clazz).get(0);
-        if (!entity.getId().equals(entityId)) {
+        if (!isFlat && !entity.getId().equals(entityId)) {
             throw new ConnectorSDKException("Entity id fetched from Catalog does not equal " + entityId + " for class: " + clazz);
         }
         return entity;
@@ -237,6 +237,7 @@ public class CatalogServiceImpl implements CatalogService {
                                                       String authToken,
                                                       Map<String, String> params,
                                                       CatalogAPIStrategy strategy,
+                                                      boolean isFlat,
                                                       Class<T> clazz) throws URISyntaxException, ConnectorSDKException, ParseException {
         List<T> entities = new ArrayList<>();
         URIBuilder builder = new URIBuilder(entityEndpoint);
@@ -247,16 +248,20 @@ public class CatalogServiceImpl implements CatalogService {
         JSONParser parser = new JSONParser();
         JSONObject jsonObject = (JSONObject) parser.parse(response);
         if (!jsonObject.isEmpty()) {
-            for (Object key : jsonObject.keySet()) {
-                String entityId = (String) key;
-                JSONObject jdata = (JSONObject) jsonObject.get(entityId);
-                jdata.put(SDKConstants.CATALOG_ID, entityId);
-                entities.add(getNewInstance(clazz, jdata));
+            if(isFlat) {
+                entities.add(getNewInstance(clazz, jsonObject));
+            } else {
+                for (Object key : jsonObject.keySet()) {
+                    String entityId = (String) key;
+                    JSONObject jdata = (JSONObject) jsonObject.get(entityId);
+                    jdata.put(SDKConstants.CATALOG_ID, entityId);
+                    entities.add(getNewInstance(clazz, jdata));
+                }
             }
         }
         if (checkForRecursiveAPICall(strategy, entities)) {
             updateOffsetsForNextAPICall(params);
-            entities.addAll(getEntities(entityEndpoint, imsOrg, authToken, params, strategy, clazz));
+            entities.addAll(getEntities(entityEndpoint, imsOrg, authToken, params, strategy, false, clazz));
         }
         return entities;
     }
@@ -298,5 +303,19 @@ public class CatalogServiceImpl implements CatalogService {
         } else {
             return false;
         }
+    }
+
+    @Override
+    public List<SchemaField> getSchemaFields(String imsOrg, String authToken, String schemaPath
+            , boolean flattenFields) throws ConnectorSDKException {
+        List<SchemaField> schemaFields = new ArrayList<SchemaField>();
+        try {
+            String catalogURI = this._endpoint + schemaPath + "?expansion=xdm";
+            schemaFields = getEntity(catalogURI, imsOrg, authToken, schemaPath, true, Schema.class).getSchemaFields(flattenFields);
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Error while fetching schema for schema Id :" + e.getMessage());
+            throw new ConnectorSDKException(e.getMessage(), e.getCause());
+        }
+        return schemaFields;
     }
 }

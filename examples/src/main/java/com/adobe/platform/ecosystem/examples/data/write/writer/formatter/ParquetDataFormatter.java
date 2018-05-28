@@ -41,6 +41,7 @@ import org.apache.parquet.schema.MessageType;
 
 import com.adobe.platform.ecosystem.examples.parquet.write.ParquetIOWriter;
 import com.adobe.platform.ecosystem.examples.catalog.model.SDKField;
+import com.adobe.platform.ecosystem.examples.catalog.model.SchemaField;
 import com.adobe.platform.ecosystem.examples.constants.SDKConstants;
 import com.adobe.platform.ecosystem.examples.data.write.Formatter;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
@@ -234,8 +235,8 @@ public class ParquetDataFormatter implements Formatter {
      * this while creating the parquet schema.
      */
     private Predicate<String> booleanCatalogFieldLambda = (sdkField -> {
-        List<DataSet.SchemaField> catalogFields = param.getDataSet().getFlattenedSchemaFields();
-        for (DataSet.SchemaField catalogField : catalogFields) {
+        List<SchemaField> catalogFields = param.getDataSet().getFlattenedSchemaFields();
+        for (SchemaField catalogField : catalogFields) {
             if (catalogField.getName().equals(sdkField) && catalogField.getType() == DataType.BooleanType) {
                 return true;
             }
@@ -254,8 +255,8 @@ public class ParquetDataFormatter implements Formatter {
      * this while creating the parquet schema.
      */
     private Predicate<String> floatCatalogFieldLambda = (sdkField -> {
-        List<DataSet.SchemaField> catalogFields = param.getDataSet().getFlattenedSchemaFields();
-        for (DataSet.SchemaField catalogField : catalogFields) {
+        List<SchemaField> catalogFields = param.getDataSet().getFlattenedSchemaFields();
+        for (SchemaField catalogField : catalogFields) {
             if (catalogField.getName().equals(sdkField) && catalogField.getType() == DataType.FloatType) {
                 return true;
             }

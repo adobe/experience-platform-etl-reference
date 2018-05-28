@@ -40,6 +40,8 @@ public class SDKConstants {
     public static final String CATALOG_BASEPATH = "basePath";
     public static final String CATALOG_DSV = "viewId";
     public static final String CATALOG_FIELDS = "fields";
+    public static final String CATALOG_OBSERVABLE_SCHEMA = "observableSchema";
+    public static final String CATALOG_SCHEMA = "schema";
     public static final String CATALOG_SCHEMA_TYPE = "type";
     public static final String CATALOG_STATUS = "status";
     public static final String CATALOG_FOLDERNAME = "folderName";
@@ -82,6 +84,8 @@ public class SDKConstants {
 
     public static final String SUB_TYPE = "subType";
     public static final String SUB_FIELDS = "subFields";
+    public static final String PROPERTIES = "properties";
+    public static final String ITEMS = "items";
     public static final String TYPE = "type";
     public static final String FIELDS_DELIM = ".";
 

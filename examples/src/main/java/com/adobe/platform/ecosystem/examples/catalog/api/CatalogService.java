@@ -46,6 +46,17 @@ public interface CatalogService {
     List<DataSet> getDataSets(String imsOrg, String authToken, Map<String, String> params, CatalogAPIStrategy strategy) throws ConnectorSDKException;
 
     /**
+     * Fetch Schema from XDM Registry via catalog
+     * @param imsOrg imsOrg in context.
+     * @param authToken authToken
+     * @param schemaPath schemaPath
+     * @param flattenFields boolean
+     * @return List of SchemaFields.
+     * @throws ConnectorSDKException
+     */
+    List<SchemaField> getSchemaFields(String imsOrg, String authToken, String schemaPath, boolean flattenFields) throws ConnectorSDKException;
+
+    /**
      * Get data set corresponding to the given connection ID
      * @param imsOrg
      * @param authToken

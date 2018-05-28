@@ -18,10 +18,10 @@ package com.adobe.platform.ecosystem.examples.data.write;
 
 import com.adobe.platform.ecosystem.examples.parquet.write.ParquetIOWriter;
 import com.adobe.platform.ecosystem.examples.parquet.write.ParquetIOWriterImpl;
-import com.adobe.platform.ecosystem.examples.catalog.model.DataSet;
+import com.adobe.platform.ecosystem.examples.catalog.model.FileDescription;
 import com.adobe.platform.ecosystem.examples.data.FileFormat;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
-import com.adobe.platform.connector.ut.BaseTest;
+import com.adobe.platform.ecosystem.ut.BaseTest;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -32,7 +32,7 @@ public class PlatformDataWriterFactoryTest extends BaseTest {
 
     @Before
     public void setUp() {
-        DataSet.FileDescription mockFileDescription = Mockito.mock(DataSet.FileDescription.class);
+        FileDescription mockFileDescription = Mockito.mock(FileDescription.class);
         Mockito.when(dataset.getFileDescription()).thenReturn(mockFileDescription);
         Mockito.when(mockFileDescription.getFormat()).thenReturn(FileFormat.PARQUET);
     }

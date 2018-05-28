@@ -24,7 +24,7 @@ import org.junit.Test;
 import com.adobe.platform.ecosystem.examples.parquet.write.ParquetIOWriter;
 import com.adobe.platform.ecosystem.examples.parquet.write.ParquetIOWriterImpl;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
-import com.adobe.platform.connector.ut.BaseTest;
+import com.adobe.platform.ecosystem.ut.BaseTest;
 
 public class PlatformDataFormatterFactoryTest extends BaseTest {
 

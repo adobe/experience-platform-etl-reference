@@ -40,7 +40,7 @@ import com.adobe.platform.ecosystem.examples.parquet.wiring.impl.ParquetIOImpl;
 import com.adobe.platform.ecosystem.examples.constants.SDKConstants;
 import com.adobe.platform.ecosystem.examples.data.wiring.DataWiringParam;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
-import com.adobe.platform.connector.ut.BaseTest;
+import com.adobe.platform.ecosystem.ut.BaseTest;
 
 /**
  * Created by vedhera on 10/11/2017.
