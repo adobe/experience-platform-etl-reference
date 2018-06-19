@@ -126,3 +126,7 @@ Following snippet helps in writing data to platform
  
  int returnStatus = platformWriter.write(sdkFields, dataTable);
 ```
+
+# Contributing
+
+If you are interested in contributing to this project, check out our [contribution guidelines](CONTRIBUTING.md)!
