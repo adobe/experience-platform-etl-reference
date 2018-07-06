@@ -79,6 +79,11 @@ public class DataIngestionAPIWriter implements Writer {
                 );
     }
 
+    @Override
+    public String getBatchId() {
+        return batchId;
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     /**
@@ -169,15 +174,21 @@ public class DataIngestionAPIWriter implements Writer {
 
     private int flushRecords(List<SDKField> sdkFields,List<List<Object>> dataTable, FlushHandler flushHandler) throws ConnectorSDKException {
         try{
+            int outputResponse = -1;
             byte[] buffer = formatter.getBuffer(sdkFields, dataTable);
             logger.log(Level.INFO,"Buffer received for " + outputFileFormat + " file, total records flushed: "+dataTable.size());
-            if(dis.writeToBatch(batchId, this.param.getDataSet().getId(), this.param.getImsOrg(), this.param.getAuthToken(), outputFileFormat, buffer) == 0){
+            if (buffer.length > Integer.parseInt(System.getProperty(SDKConstants.SIMPLE_FILE_UPLOAD_LIMIT, "500000000"))) {
+                outputResponse = dis.writeLargeFileToBatch(batchId, this.param.getDataSet().getId(), this.param.getImsOrg(), this.param.getAuthToken(), outputFileFormat, buffer);
+            }
+            else {
+                outputResponse = dis.writeToBatch(batchId, this.param.getDataSet().getId(), this.param.getImsOrg(), this.param.getAuthToken(), outputFileFormat, buffer);
+            }
+
+            if(outputResponse == 0){
                 if(flushHandler!=null)
                     flushHandler.reset();
-                return 0;
             }
-            else
-                return -1;
+            return outputResponse;
         }
         catch(Exception e){
             throw new ConnectorSDKException("Error while executing flushRecords :" + e.getMessage(), e.getCause());
@@ -185,15 +196,21 @@ public class DataIngestionAPIWriter implements Writer {
     }
 
     private int flushRecords(List<JSONObject> dataRecords, FlushHandler flushHandler) throws ConnectorSDKException{
+        int outputResponse = -1;
         byte[] buffer = formatter.getBuffer(dataRecords);
         logger.log(Level.INFO,"Buffer received for " + outputFileFormat + " file, total records flushed: "+dataRecords.size());
-        if(dis.writeToBatch(batchId, this.param.getDataSet().getId(), this.param.getImsOrg(), this.param.getAuthToken(), outputFileFormat, buffer) == 0){
+        if (buffer.length > Integer.parseInt(System.getProperty(SDKConstants.SIMPLE_FILE_UPLOAD_LIMIT, "500000000"))) {
+            outputResponse = dis.writeLargeFileToBatch(batchId, this.param.getDataSet().getId(), this.param.getImsOrg(), this.param.getAuthToken(), outputFileFormat, buffer);    
+        }
+        else {
+            outputResponse = dis.writeToBatch(batchId, this.param.getDataSet().getId(), this.param.getImsOrg(), this.param.getAuthToken(), outputFileFormat, buffer);
+        }
+
+        if(outputResponse == 0){
             if(flushHandler!=null)
                 flushHandler.reset();
-            return 0;
         }
-        else
-            return -1;
+        return outputResponse;
 
     }
 

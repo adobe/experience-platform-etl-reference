@@ -20,10 +20,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Random;
 
+import org.apache.parquet.io.api.Binary;
+
 public class ParquetIOUtil {
 
-    public static String generateRandomText() {
-        String SALTCHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+	private final static long JULIAN_DAY_OF_EPOCH = 2440588;
+
+	public static String generateRandomText() {
+		String SALTCHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
         StringBuilder salt = new StringBuilder();
         Random rnd = new Random();
         while (salt.length() < 18) { // length of the random string.
@@ -32,19 +36,38 @@ public class ParquetIOUtil {
         }
         String saltStr = salt.toString();
         return saltStr;
-    }
+	}
 
-    public static File getLocalFilePath(String fileName) {
-        String suffix = fileName.endsWith(".parquet") ? "" : ".parquet";
-        File tempFile = null;
-        try {
-            tempFile = File.createTempFile(fileName, suffix);
-            if (!tempFile.delete()) {
-                throw new RuntimeException("Unable to delete the local temp file for logs");
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Caught IO exception for creating temp file. " + e);
-        }
-        return tempFile;
-    }
+	public static long dateFromInt96( Binary value ) {
+	  byte[] readBuffer = value.getBytes();
+	  if ( readBuffer.length != 12 ) {
+	    throw new RuntimeException( "Invalid byte array length for INT96" );
+	  }
+
+	  long timeOfDayNanos =
+	      ( ( (long) readBuffer[7] << 56 ) + ( (long) ( readBuffer[6] & 255 ) << 48 )
+	          + ( (long) ( readBuffer[5] & 255 ) << 40 ) + ( (long) ( readBuffer[4] & 255 ) << 32 )
+	          + ( (long) ( readBuffer[3] & 255 ) << 24 ) + ( ( readBuffer[2] & 255 ) << 16 )
+	          + ( ( readBuffer[1] & 255 ) << 8 ) + ( ( readBuffer[0] & 255 ) << 0 ) );
+
+	  int julianDay =
+	      ( (int) ( readBuffer[11] & 255 ) << 24 ) + ( ( readBuffer[10] & 255 ) << 16 )
+	          + ( ( readBuffer[9] & 255 ) << 8 ) + ( ( readBuffer[8] & 255 ) << 0 );
+
+	  return ( julianDay - JULIAN_DAY_OF_EPOCH ) * 24L * 60L * 60L * 1000L + timeOfDayNanos / 1000000;
+	}
+
+	public static File getLocalFilePath(String fileName) {
+		String suffix = fileName.endsWith(".parquet") ? "" : ".parquet";
+		File tempFile = null;
+		try {
+			tempFile = File.createTempFile(fileName, suffix);
+			if (!tempFile.delete()) {
+				throw new RuntimeException("Unable to delete the local temp file for logs");
+			}
+		} catch (IOException e) {
+			throw new RuntimeException("Caught IO exception for creating temp file. " + e);
+		}
+		return tempFile;
+	}
 }

@@ -16,6 +16,7 @@
  */
 package com.adobe.platform.ecosystem.examples.parquet.wiring;
 
+import com.adobe.platform.ecosystem.examples.parquet.exception.ParquetIOException;
 import com.adobe.platform.ecosystem.examples.parquet.read.ParquetIOReader;
 import com.adobe.platform.ecosystem.examples.parquet.wiring.impl.ParquetIOImpl;
 import com.adobe.platform.ecosystem.examples.parquet.write.ParquetIOWriter;
@@ -33,6 +34,11 @@ public class ParquetIOImplTest {
     public void getReaderTest(){
         assertTrue(pio.getParquetIOReader(false) != null);
         assertTrue(pio.getParquetIOReader(false) instanceof ParquetIOReader);
+    }
+
+    @Test(expected = ParquetIOException.class)
+    public void getReaderTestNullConfiguration() throws ParquetIOException {
+        pio.getParquetIOReader(null);
     }
 
     @Test

@@ -43,6 +43,7 @@ public class SDKConstants {
     public static final String CATALOG_OBSERVABLE_SCHEMA = "observableSchema";
     public static final String CATALOG_SCHEMA = "schema";
     public static final String CATALOG_SCHEMA_TYPE = "type";
+    public static final String CATALOG_SCHEMA_TYPE_FORMAT = "format";
     public static final String CATALOG_STATUS = "status";
     public static final String CATALOG_FOLDERNAME = "folderName";
     public static final String CATALOG_ISLOOKUP = "isLookup";
@@ -117,4 +118,6 @@ public class SDKConstants {
     public static final String HTTP_RETRY_COUNT_DEFAULT_PROPERTY = "com.adobe.platform.clientRetry.count";
     public static final String HTTP_RETRY_WAITTIME_DEFAULT_PROPERTY = "com.adobe.platform.clientRetry.waitTime";
     public static final String DEFAULT_LOGGING_PROPERTY = "com.adobe.platform.connector.loggingLevel";
+
+    public static final String SIMPLE_FILE_UPLOAD_LIMIT = "simplefileUploadLimit";
 }

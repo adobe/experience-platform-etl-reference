@@ -71,4 +71,11 @@ public class ParquetIOException extends Exception {
         s.flush();
         super.printStackTrace();
     }
+
+    public String getMessage() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(formatErrorMessage());
+        builder.append("Stack trace: " + super.getMessage());
+        return builder.toString();
+    }
 }

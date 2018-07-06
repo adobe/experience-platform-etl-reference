@@ -70,9 +70,22 @@ public class ParquetIOWriterImpl implements ParquetIOWriter {
             primTypeBuilder =  Types.primitive(field.getType().getParquetPrimitiveType(), Type.Repetition.OPTIONAL);
         }
 
-        if(PrimitiveTypeName.BINARY.equals(field.getType().getParquetPrimitiveType())) {
-            primTypeBuilder.as(OriginalType.UTF8);
-        }
+        if (PrimitiveTypeName.BINARY.equals(field.getType().getParquetPrimitiveType()) &&
+                "string".equals(field.getType().getParquetSchemaName())) {
+             primTypeBuilder.as(OriginalType.UTF8);
+        } else if (PrimitiveTypeName.INT64.equals(field.getType().getParquetPrimitiveType()) &&
+                "timestamp".equals(field.getType().getParquetSchemaName())) {
+            primTypeBuilder.as(OriginalType.TIMESTAMP_MILLIS);
+        } else if (PrimitiveTypeName.INT32.equals(field.getType().getParquetPrimitiveType()) &&
+                "date".equals(field.getType().getParquetSchemaName())) {
+            primTypeBuilder.as(OriginalType.DATE);
+        } else if (PrimitiveTypeName.INT32.equals(field.getType().getParquetPrimitiveType()) &&
+	            "short".equals(field.getType().getParquetSchemaName())) {
+	        primTypeBuilder.as(OriginalType.INT_16);
+        } else if (PrimitiveTypeName.INT32.equals(field.getType().getParquetPrimitiveType()) &&
+	            "byte".equals(field.getType().getParquetSchemaName())) {
+	        primTypeBuilder.as(OriginalType.INT_8);
+	    }
         return primTypeBuilder.named(field.getName());
     }
 

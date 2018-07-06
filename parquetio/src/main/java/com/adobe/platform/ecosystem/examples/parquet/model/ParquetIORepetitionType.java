@@ -16,6 +16,8 @@
  */
 package com.adobe.platform.ecosystem.examples.parquet.model;
 
+import org.apache.parquet.schema.Type;
+
 /**
  * Enum to represent repetition
  * of any parquet field/group.
@@ -24,11 +26,25 @@ package com.adobe.platform.ecosystem.examples.parquet.model;
  */
 public enum ParquetIORepetitionType {
     OPTIONAL("optional"),
-    REPEATED("repeated");
+    REPEATED("repeated"),
+    REQUIRED("required");
 
     private final String repString;
 
     ParquetIORepetitionType(String repString) {
         this.repString = repString;
+    }
+
+    public static ParquetIORepetitionType fromRepetition(Type.Repetition repetition) {
+        switch (repetition) {
+            case OPTIONAL:
+                return OPTIONAL;
+            case REPEATED:
+                return REPEATED;
+            case REQUIRED:
+                return REQUIRED;
+            default:
+                return OPTIONAL;
+        }
     }
 }

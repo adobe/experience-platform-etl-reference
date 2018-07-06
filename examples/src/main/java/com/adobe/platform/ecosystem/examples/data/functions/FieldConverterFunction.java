@@ -42,6 +42,10 @@ public class FieldConverterFunction {
             return ParquetIODataType.FLOAT;
         } else if(catalogDataType == DataType.DoubleType) {
             return ParquetIODataType.DOUBLE;
+        } else if(catalogDataType == DataType.DateType) {
+            return ParquetIODataType.DATE;
+        } else if(catalogDataType == DataType.DateTimeType) {
+            return ParquetIODataType.TIMESTAMP;
         } else if(catalogDataType == DataType.Field_ObjectType) {
             return ParquetIODataType.GROUP;
         }
