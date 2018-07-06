@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
@@ -62,6 +63,7 @@ public class DataIngestionAPIWriterTest extends BaseTest {
         Formatter platFormatter = new PlatformDataFormatterFactory(writer, param).getFormatter(PARQUET_FILE_FORMAT);
         DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, PARQUET_FILE_FORMAT, platFormatter, writeAttributes);
         assertTrue(disWriter != null);
+        assertTrue(!StringUtils.isEmpty(disWriter.getBatchId()));
 
         platFormatter = new PlatformDataFormatterFactory(writer, param).getFormatter(CSV_FILE_FORMAT);
         disWriter = new DataIngestionAPIWriter(dis, param, CSV_FILE_FORMAT, platFormatter, writeAttributes);

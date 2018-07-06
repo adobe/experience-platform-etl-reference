@@ -28,6 +28,7 @@ import java.util.logging.Logger;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.utils.URIBuilder;
@@ -144,6 +145,122 @@ public class DataIngestionServiceImpl implements DataIngestionService {
         }
         return outputResponse;
 
+    }
+
+    /* (non-Javadoc)
+     * @see com.adobe.platform.connector.sdk.data.ingestion.api.DataIngestionService#writeLargeFileToBatch(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, byte[])
+     */
+    @Override
+    public int writeLargeFileToBatch(String batchId, String dataSetId, String imsOrg, String accessToken, FileFormat fileFormat, byte[] buffer) throws ConnectorSDKException {
+        int outputResponse = -1;
+        logger.log(Level.INFO,"Going to write for batchId with imsOrg:"+imsOrg);
+        try {
+            int patchSize = Integer.parseInt(System.getProperty(SDKConstants.SIMPLE_FILE_UPLOAD_LIMIT, "500000000"));
+            int noOfPatches = 1;
+            if (buffer.length > patchSize) {
+                noOfPatches = (buffer.length%(patchSize) != 0) ?
+                        buffer.length/patchSize + 1 : buffer.length/patchSize;
+            }
+
+            String fileName = System.currentTimeMillis()+"."+fileFormat.getExtension().toLowerCase();
+            InputStream stream = new ByteArrayInputStream(buffer);
+            outputResponse = initializeFileUpload(batchId, dataSetId, imsOrg, accessToken, fileName);
+            if (outputResponse == 0) {
+                int rangeEnd = -1;
+                for (int iter = 0; iter < noOfPatches; iter++) {
+                    int rangeStart = rangeEnd + 1;
+                    rangeEnd = rangeStart + patchSize - 1;
+                    if (rangeEnd > buffer.length)
+                        rangeEnd = buffer.length - 1;
+                    outputResponse = uploadPatch(rangeStart, rangeEnd, buffer.length, batchId, dataSetId, imsOrg, accessToken, fileName, stream);
+                    if (outputResponse != 0) {
+                        break;
+                    }
+                }
+            }
+            if (outputResponse == 0)
+                outputResponse = completeUpload(batchId, dataSetId, imsOrg, accessToken, fileName);
+        } catch (Exception e) {
+            logger.severe("Error in writeLargeFileToBatch : "+e.getMessage());
+            throw new ConnectorSDKException("Error while writing to batch :" + e.getMessage(), e.getCause());
+        }
+        return outputResponse;
+    }
+
+    private int completeUpload(String batchId, String dataSetId, String imsOrg, String accessToken, String fileName) throws ConnectorSDKException {
+        int outputResponse = -1;
+        try {
+            ConnectorSDKUtil utilInstance;
+            utilInstance = ConnectorSDKUtil.getInstance();
+            String dataIngestionURI = utilInstance.getEndPoint(ResourceName.DATA_INGESTION);
+            URIBuilder builder = new URIBuilder(dataIngestionURI);
+            builder.setPath(builder.getPath() + "/batches/"+batchId+"/datasets/"+dataSetId+"/files/"+fileName);
+            builder.setParameter("action", "complete");
+            HttpPost request = new HttpPost(builder.build());
+            request.setHeader("Authorization", "Bearer " + accessToken);
+            request.setHeader(SDKConstants.CONNECTION_HEADER_IMS_ORG_KEY, imsOrg);
+            request.setHeader(SDKConstants.CONNECTION_HEADER_X_API_KEY,
+                    utilInstance.getConnectionProperty(SDKConstants.CREDENTIAL_CLIENT_KEY));
+            HttpResponse response = httpClientUtil.executeRequest(request,false);
+            if(response!=null && response.getStatusLine().getStatusCode()==200)
+                outputResponse = 0;
+            } catch (Exception e) {
+                logger.severe("Error in initializeFileUpload : "+e.getMessage());
+                throw new ConnectorSDKException("Error while writing to batch :" + e.getMessage(), e.getCause());
+            }
+        return outputResponse;
+    }
+
+    private int uploadPatch(int rangeStart, int rangeEnd, int contentLength, String batchId, String dataSetId, String imsOrg, String accessToken, String fileName, InputStream stream) throws ConnectorSDKException {
+        int outputResponse = -1;
+        try {
+            ConnectorSDKUtil utilInstance = ConnectorSDKUtil.getInstance();
+            String dataIngestionURI = utilInstance.getEndPoint(ResourceName.DATA_INGESTION);
+            URIBuilder builder = new URIBuilder(dataIngestionURI);
+            builder.setPath(builder.getPath() + "/batches/"+batchId+"/datasets/"+dataSetId+"/files/"+fileName);
+            HttpPatch request = new HttpPatch(builder.build());
+            byte[] buf = new byte[rangeEnd - rangeStart + 1];
+            int res = stream.read(buf, 0, rangeEnd - rangeStart + 1);
+            request.setEntity(new ByteArrayEntity(buf));
+            request.setHeader("Content-Type", ContentType.APPLICATION_OCTET_STREAM.toString());
+            String rangeHeader = String.format("bytes %d-%d/%d", rangeStart, rangeEnd, contentLength);
+            request.setHeader("Content-Range", rangeHeader);
+            request.setHeader("Authorization", "Bearer " + accessToken);
+            request.setHeader(SDKConstants.CONNECTION_HEADER_IMS_ORG_KEY, imsOrg);
+            request.setHeader(SDKConstants.CONNECTION_HEADER_X_API_KEY,
+                    utilInstance.getConnectionProperty(SDKConstants.CREDENTIAL_CLIENT_KEY));
+            HttpResponse response = httpClientUtil.executeRequest(request,false);
+            if(response!=null && response.getStatusLine().getStatusCode()==200)
+                outputResponse = 0;
+        } catch (Exception e) {
+            logger.severe("Error in uploadPatch : "+e.getMessage());
+            throw new ConnectorSDKException("Error while writing to batch :" + e.getMessage(), e.getCause());
+        }
+        return outputResponse;
+    }
+
+    private int initializeFileUpload(String batchId, String dataSetId, String imsOrg, String accessToken, String fileName) throws ConnectorSDKException {
+        int outputResponse = -1;
+        try {
+        ConnectorSDKUtil utilInstance;
+        utilInstance = ConnectorSDKUtil.getInstance();
+        String dataIngestionURI = utilInstance.getEndPoint(ResourceName.DATA_INGESTION);
+        URIBuilder builder = new URIBuilder(dataIngestionURI);
+        builder.setPath(builder.getPath() + "/batches/"+batchId+"/datasets/"+dataSetId+"/files/"+fileName);
+        builder.setParameter("action", "initialize");
+        HttpPost request = new HttpPost(builder.build());
+        request.setHeader("Authorization", "Bearer " + accessToken);
+        request.setHeader(SDKConstants.CONNECTION_HEADER_IMS_ORG_KEY, imsOrg);
+        request.setHeader(SDKConstants.CONNECTION_HEADER_X_API_KEY,
+                utilInstance.getConnectionProperty(SDKConstants.CREDENTIAL_CLIENT_KEY));
+        HttpResponse response = httpClientUtil.executeRequest(request,false);
+        if(response!=null && response.getStatusLine().getStatusCode()==201)
+            outputResponse = 0;
+        } catch (Exception e) {
+            logger.severe("Error in initializeFileUpload : "+e.getMessage());
+            throw new ConnectorSDKException("Error while writing to batch :" + e.getMessage(), e.getCause());
+        }
+        return outputResponse;
     }
 
     /* (non-Javadoc)

@@ -59,6 +59,21 @@ public interface DataIngestionService {
     int writeToBatch(String batchId, String dataSetId, String imsOrg, String accessToken, FileFormat fileFormat, byte[] buffer) throws ConnectorSDKException;
 
     /**
+     * This method is used to upload large files (> 500MB) via
+     * Data Ingestion Service APIs.
+     *
+     * @param batchId
+     * @param dataSetId
+     * @param imsOrg
+     * @param accessToken
+     * @param fileFormat
+     * @param buffer
+     * @return
+     */
+    int writeLargeFileToBatch(String batchId, String dataSetId, String imsOrg, String accessToken, 
+        FileFormat fileFormat, byte[] buffer) throws ConnectorSDKException;
+
+    /**
      * This method is used to signal completion
      * of batch uploads.
      * @param batchId

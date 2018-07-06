@@ -170,6 +170,8 @@ public class JSONParquetFieldConverter implements ParquetFieldConverter<JSONObje
                 || schemaField.getType() == DataType.LongType
                 || schemaField.getType() == DataType.FloatType
                 || schemaField.getType() == DataType.DoubleType
+                || schemaField.getType() == DataType.DateType
+                || schemaField.getType() == DataType.DateTimeType
                 || schemaField.getType() == DataType.Field_ObjectType) {
             pair.setFirst(FieldConverterFunction.catalogToParquetFieldFunction.apply(schemaField.getType()));
         } else if (schemaField.getType() == DataType.Field_ArrayType) {

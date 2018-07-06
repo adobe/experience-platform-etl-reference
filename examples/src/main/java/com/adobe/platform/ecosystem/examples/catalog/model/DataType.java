@@ -26,6 +26,7 @@ public enum DataType {
     FloatType,
     DoubleType,
     DateType,
+    DateTimeType,
     BooleanType,
     JsonArrayType,
     Field_ObjectType,

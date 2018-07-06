@@ -83,6 +83,19 @@ public class DataIngestionServiceTest extends BaseTest {
     }
 
     @Test
+    public void testWriteLargeFileToBatch() throws ConnectorSDKException {
+        String bufferString = "testDataLarge";
+        try{
+            setupTestForHttpOutputLargeFile(batchSample);
+            int outputResponse = dis.writeLargeFileToBatch("testBatchId", "testDataSetId", "testIMSOrg", "testAccessToken", FileFormat.PARQUET, bufferString.getBytes());
+            assertTrue(outputResponse == 0);
+        }
+        catch(Exception e){
+            assertTrue(true);
+        }
+    }
+
+    @Test
     public void testSignalBatchCompletion() throws ConnectorSDKException {
         try{
             setupTestForHttpOutput(batchSample);

@@ -52,4 +52,10 @@ public interface Writer {
      * @throws ConnectorSDKException
      */
     int write(List<Object> dataTable) throws ConnectorSDKException;
+
+    /**
+     *
+     * @return batchId used for pushing the data
+     */
+    String getBatchId();
 }

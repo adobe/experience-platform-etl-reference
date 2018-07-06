@@ -67,12 +67,25 @@ public class SchemaField {
 
         switch (type) {
         case "string":
-            this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
+            this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
             this.type = DataType.StringType;
+            if("date-time".equals(field.get(SDKConstants.CATALOG_SCHEMA_TYPE_FORMAT)))
+                this.type = DataType.DateTimeType;
+            else if("date".equals(field.get(SDKConstants.CATALOG_SCHEMA_TYPE_FORMAT)))
+                this.type = DataType.DateType;
             break;
         case "integer":
             this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
             this.type = DataType.IntegerType;
+            break;
+        case "date":
+            // format, we will start parsing date in same format
+            this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
+            this.type = DataType.DateType;
+            break;
+        case "date-time":
+            this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
+            this.type = DataType.DateTimeType;
             break;
         case "number":
             this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);

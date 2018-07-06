@@ -17,6 +17,8 @@
 package com.adobe.platform.ecosystem.examples.parquet.read;
 
 import com.adobe.platform.ecosystem.examples.parquet.exception.ParquetIOException;
+import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIOField;
+import org.apache.hadoop.fs.Path;
 import org.json.simple.JSONObject;
 
 import java.io.File;
@@ -58,10 +60,47 @@ public interface ParquetIOReader {
      */
     void initFileForRead(File file) throws ParquetIOException;
 
+    @Deprecated
+    /**
+     * abstract method to init
+     * parquet reader for a
+     * {@link org.apache.hadoop.fs.Path}.
+     *
+     * @param path path pointing to the file.
+     *             Can be both a remote or a
+     *             local path.
+     */
+    ParquetIOReader initFileForRead(Path path) throws ParquetIOException;
+
+    /**
+     * abstract method to init
+     * parquet reader for a
+     * {@link org.apache.hadoop.fs.Path}.
+     *
+     */
+    ParquetIOReader initFileForRead() throws ParquetIOException;
+
     /**
      * abstract method to provide iterator
      * for reading records.
      * @return Iterator
      */
     Iterator getIterator() throws ParquetIOException;
+
+    /**
+     * API to close the reader
+     * which in turn closes on
+     * the hadoop parquet reader
+     */
+    void readerClose() throws ParquetIOException;
+
+    /**
+     * API to extract schema from the
+     * parquet file.
+     *
+     * @return equivalent schema
+     * for parquet file.
+     * @throws ParquetIOException
+     */
+    List<ParquetIOField> getSchema() throws ParquetIOException;
 }

@@ -131,6 +131,16 @@ public class BaseTest {
        getStringAsHttpOutputStream(sample);
     }
 
+    public void setupTestForHttpOutputLargeFile(String sample) throws ClientProtocolException, IOException {
+        StatusLine statusLine = Mockito.mock(StatusLine.class);
+
+        Mockito.when(httpClient.execute(Mockito.any())).thenReturn(httpResponse);
+        Mockito.when(httpResponse.getStatusLine()).thenReturn(statusLine);
+        Mockito.when(statusLine.getStatusCode()).thenReturn(201,201,200);
+
+        getStringAsHttpOutputStream(sample);
+     }
+
     public void getStringAsHttpOutputStream(String sample) throws IOException {
        InputStream stream = new ByteArrayInputStream(sample.getBytes(StandardCharsets.UTF_8.name()));
 
