@@ -24,7 +24,10 @@ package com.adobe.platform.ecosystem.examples.parquet.exception;
 public enum ParquetIOErrorCode implements ErrorCode {
     PAQUETIO_READER_NOT_INITIALISED(101,"Reader not initialized for read. Initialize first."),
     PARQUETIO_IO_EXCEPTION(102,"IO Exception while reading group."),
-    PARQUETIO_FILE_DELLETION_EXCEPTION(103,"Exception while deleting file on local system.");
+    PARQUETIO_FILE_DELLETION_EXCEPTION(103,"Exception while deleting file on local system."),
+    PARQUETIO_INPUT_CONFIGURATION_NULL(104,"Input configuration is null. Kindly initialize first."),
+    PARQUETIO_READER_CLOSE_EXCEPTION(105,"Error while closing hadoop parquet reader."),
+    PARQUETIO_READER_METADATA_NULL_EXCEPTION(106,"Metadata read from parquet file is null. Kindly check input file.");
 
     private final int number;
 

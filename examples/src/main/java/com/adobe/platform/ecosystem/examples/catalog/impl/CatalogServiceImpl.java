@@ -307,11 +307,11 @@ public class CatalogServiceImpl implements CatalogService {
 
     @Override
     public List<SchemaField> getSchemaFields(String imsOrg, String authToken, String schemaPath
-            , boolean flattenFields) throws ConnectorSDKException {
+            , boolean useFlatNamesForLeafNodes) throws ConnectorSDKException {
         List<SchemaField> schemaFields = new ArrayList<SchemaField>();
         try {
             String catalogURI = this._endpoint + schemaPath + "?expansion=xdm";
-            schemaFields = getEntity(catalogURI, imsOrg, authToken, schemaPath, true, Schema.class).getSchemaFields(flattenFields);
+            schemaFields = getEntity(catalogURI, imsOrg, authToken, schemaPath, true, Schema.class).getSchemaFields(useFlatNamesForLeafNodes);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error while fetching schema for schema Id :" + e.getMessage());
             throw new ConnectorSDKException(e.getMessage(), e.getCause());

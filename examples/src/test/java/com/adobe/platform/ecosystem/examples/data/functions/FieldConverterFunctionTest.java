@@ -1,4 +1,3 @@
-
 /*
  *  Copyright 2017-2018 Adobe.
  *
@@ -39,6 +38,15 @@ public class FieldConverterFunctionTest {
     }
 
     @Test
+    public void testByteConversion() {
+        assert (function.apply(DataType.ByteType) == ParquetIODataType.BYTE);
+    }
+    @Test
+    public void testShortConversion() {
+        assert (function.apply(DataType.ShortType) == ParquetIODataType.SHORT);
+    }
+
+    @Test
     public void testIntegerConversion() {
         assert (function.apply(DataType.IntegerType) == ParquetIODataType.INTEGER);
     }
@@ -54,8 +62,23 @@ public class FieldConverterFunctionTest {
     }
 
     @Test
+    public void testDateConversion() {
+        assert (function.apply(DataType.DateType) == ParquetIODataType.DATE);
+    }
+
+    @Test
+    public void testDateTimeConversion() {
+        assert (function.apply(DataType.DateTimeType) == ParquetIODataType.TIMESTAMP);
+    }
+
+    @Test
     public void testDoubleConversion() {
         assert (function.apply(DataType.DoubleType) == ParquetIODataType.DOUBLE);
+    }
+
+    @Test
+    public void testBinaryConversion() {
+        assert (function.apply(DataType.BinaryType) == ParquetIODataType.BINARY);
     }
 
     @Test

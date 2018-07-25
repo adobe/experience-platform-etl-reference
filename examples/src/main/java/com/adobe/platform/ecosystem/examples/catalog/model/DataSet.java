@@ -127,6 +127,22 @@ public class DataSet extends BaseModel {
         return duleObj;
     }
 
+    public String getSchema() {
+        return schema;
+    }
+
+    public JSONObject getObservableSchema() {
+        return observableSchema;
+    }
+
+    public List<SchemaField> getFields() {
+        return getFields(false);
+    }
+
+    public List<SchemaField> getFields(FieldsFrom fieldsFrom) {
+        return getFields(false, fieldsFrom);
+    }
+
     /**
      * Public getter to return list of schema
      * fields as represented in catalog.

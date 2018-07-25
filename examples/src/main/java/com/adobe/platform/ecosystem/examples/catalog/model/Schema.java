@@ -47,7 +47,7 @@ public class Schema extends BaseModel {
         this.rawSchema = schemaObj;
     }
 
-    public List<SchemaField> getSchemaFields(boolean flattenFields) {
+    public List<SchemaField> getSchemaFields(boolean useFlatNamesForLeafNodes) {
         if(fieldsList == null && rawSchema != null) {
             HashMap<?, ?> props = (HashMap<?, ?>)rawSchema.get(SDKConstants.PROPERTIES);
             if(props == null) {
@@ -56,7 +56,7 @@ public class Schema extends BaseModel {
             }
             fieldsList = new ArrayList<>();
             props.forEach((key, value) -> {
-                fieldsList.add(new SchemaField((String)key, (JSONObject) value, flattenFields, FieldsFrom.OBSERVABLE_SCHEMA));
+                fieldsList.add(new SchemaField((String)key, (JSONObject) value, useFlatNamesForLeafNodes, DataSet.FieldsFrom.OBSERVABLE_SCHEMA));
             });
         }
         return fieldsList;
@@ -64,7 +64,6 @@ public class Schema extends BaseModel {
 
     @Override
     public BaseModel build(JSONObject schemaObj) {
-        this.rawSchema = schemaObj;
-        return this;
+        return new Schema(schemaObj);
     }
 }

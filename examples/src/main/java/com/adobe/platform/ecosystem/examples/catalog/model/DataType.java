@@ -21,12 +21,16 @@ package com.adobe.platform.ecosystem.examples.catalog.model;
  */
 public enum DataType {
     StringType,
+    ByteType,
+    ShortType,
     IntegerType,
     LongType,
     FloatType,
     DoubleType,
     DateType,
+    DateTimeType,
     BooleanType,
+    BinaryType,
     JsonArrayType,
     Field_ObjectType,
     Field_ArrayType

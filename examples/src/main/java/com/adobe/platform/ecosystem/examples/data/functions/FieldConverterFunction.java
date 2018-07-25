@@ -31,9 +31,13 @@ public class FieldConverterFunction {
 
     public static Function<DataType,ParquetIODataType> catalogToParquetFieldFunction = ( catalogDataType -> {
         if(catalogDataType == DataType.StringType) {
-           return ParquetIODataType.STRING;
+            return ParquetIODataType.STRING;
         } else if(catalogDataType == DataType.BooleanType) {
             return ParquetIODataType.BOOLEAN;
+        } else if(catalogDataType == DataType.ByteType) {
+            return ParquetIODataType.BYTE;
+        } else if(catalogDataType == DataType.ShortType) {
+            return ParquetIODataType.SHORT;
         } else if(catalogDataType == DataType.IntegerType) {
             return ParquetIODataType.INTEGER;
         } else if(catalogDataType == DataType.LongType) {
@@ -42,6 +46,12 @@ public class FieldConverterFunction {
             return ParquetIODataType.FLOAT;
         } else if(catalogDataType == DataType.DoubleType) {
             return ParquetIODataType.DOUBLE;
+        } else if(catalogDataType == DataType.DateType) {
+            return ParquetIODataType.DATE;
+        } else if(catalogDataType == DataType.DateTimeType) {
+            return ParquetIODataType.TIMESTAMP;
+        } else if(catalogDataType == DataType.BinaryType) {
+            return ParquetIODataType.BINARY;
         } else if(catalogDataType == DataType.Field_ObjectType) {
             return ParquetIODataType.GROUP;
         }

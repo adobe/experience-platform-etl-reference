@@ -27,6 +27,7 @@ import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.adobe.platform.ecosystem.examples.data.write.mapper.MapperUtil;
 import com.adobe.platform.ecosystem.examples.parquet.exception.ParquetIOException;
 import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIOField;
 import com.adobe.platform.ecosystem.examples.catalog.model.DataSet;
@@ -74,13 +75,29 @@ public class ParquetDataFormatter implements Formatter {
     @Override
     public byte[] getBuffer(List<SDKField> sdkFields, List<List<Object>> dataTable) throws ConnectorSDKException {
         try {
-            List<SimpleGroup> records = getRecords(sdkFields, dataTable);
-            Long timeStamp = 0l;
-            timeStamp = System.currentTimeMillis();
-            String fileId = timeStamp + "";
-            byte[] buffer = getDataBuffer(fileId, records);
-            return buffer;
 
+            // Match to the flattened fields.
+            Map<String, String> mapSDKFields = new LinkedHashMap<>();
+            for (SDKField field : sdkFields) {
+                mapSDKFields.put(field.getName(), "");
+            }
+            param.getDataSet().matchFlattenedSchemaFields(mapSDKFields);
+
+            List<SDKField> newFields = new ArrayList<>();
+
+            for (SDKField field : sdkFields) {
+                String mappedName = mapSDKFields.get(field.getName());
+                if ("".equals(mappedName)) {
+                    mappedName = field.getName();
+                }
+                newFields.add(new SDKField(mappedName, "typeNotRequired"));
+            }
+
+            return getBuffer(
+                    MapperUtil.convert(
+                            newFields,
+                            dataTable
+                    ));
         } catch (Exception ex) {
             logger.severe("Error while getting buffer from data table: " + ex);
             throw new ConnectorSDKException("Error while getting buffer from data table", ex);
