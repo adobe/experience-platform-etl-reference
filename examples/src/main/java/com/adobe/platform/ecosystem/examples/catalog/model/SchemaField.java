@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -27,6 +28,19 @@ import com.adobe.platform.ecosystem.examples.catalog.model.DataSet.FieldsFrom;
 import com.adobe.platform.ecosystem.examples.constants.SDKConstants;
 import com.adobe.platform.ecosystem.examples.util.JsonUtil;
 
+/**
+ * Single place for type-mapping
+ * from XDM/(old Catalog) types
+ * to Connector SDK types. These
+ * types get later mapped to
+ * parquet types.
+ *
+ * Please refer for type mapping
+ * between XDM -> Parquet type.
+ * <href>https://wiki.corp.adobe.com/pages/viewpage.action?spaceKey=DMSArchitecture&title=XDM+Architecture#XDMArchitecture-XDMDataTypes</href>
+ *
+ * @author vedhera on 7/20/2018.
+ */
 public class SchemaField {
     private String name;
 
@@ -39,23 +53,19 @@ public class SchemaField {
     private Dule dule;
 
     public SchemaField(JSONObject field, boolean useFlatNamesForLeafNodes) {
-        this(null, field, "", useFlatNamesForLeafNodes, FieldsFrom.FIELDS);
+        this(field, "", useFlatNamesForLeafNodes);
     }
 
     public SchemaField(JSONObject subFieldJson, String currentHierarchy, boolean useFlatNamesForLeafNodes) {
-        this(null, subFieldJson, currentHierarchy, useFlatNamesForLeafNodes, FieldsFrom.FIELDS);
+        this(null, subFieldJson, currentHierarchy, useFlatNamesForLeafNodes, DataSet.FieldsFrom.FIELDS);
     }
 
-    public SchemaField(String name, JSONObject field, boolean useFlatNamesForLeafNodes, FieldsFrom fieldsFrom) {
-        if(FieldsFrom.OBSERVABLE_SCHEMA == fieldsFrom) {
-            getSchemaFieldFromObservableSchema(name, field, "", useFlatNamesForLeafNodes);
-        } else {
-            getSchemaField(field, "", useFlatNamesForLeafNodes);
-        }
+    public SchemaField(String name, JSONObject field, boolean useFlatNamesForLeafNodes, DataSet.FieldsFrom fieldsFrom) {
+        this(name, field, "", useFlatNamesForLeafNodes, fieldsFrom);
     }
 
-    public SchemaField(String name, JSONObject subFieldJson, String currentHierarchy, boolean useFlatNamesForLeafNodes, FieldsFrom fieldsFrom) {
-        if(FieldsFrom.OBSERVABLE_SCHEMA == fieldsFrom) {
+    public SchemaField(String name, JSONObject subFieldJson, String currentHierarchy, boolean useFlatNamesForLeafNodes, DataSet.FieldsFrom fieldsFrom) {
+        if(DataSet.FieldsFrom.OBSERVABLE_SCHEMA == fieldsFrom) {
             getSchemaFieldFromObservableSchema(name, subFieldJson, currentHierarchy, useFlatNamesForLeafNodes);
         } else {
             getSchemaField(subFieldJson, currentHierarchy, useFlatNamesForLeafNodes);
@@ -63,79 +73,119 @@ public class SchemaField {
     }
 
     private void getSchemaFieldFromObservableSchema(String name, JSONObject field, String parentHierarchy, boolean useFlatNameForLeafNodes) {
-        String type = (String) field.get(SDKConstants.CATALOG_SCHEMA_TYPE);
+        String type = (String) field.get(SDKConstants.CATALOG_SCHEMA_META_XDM_TYPE);
+
+        if(StringUtils.isEmpty(type))
+            type = (String) field.get(SDKConstants.CATALOG_SCHEMA_TYPE);
+
 
         switch (type) {
-        case "string":
-            this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
-            this.type = DataType.StringType;
-            break;
-        case "integer":
-            this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
-            this.type = DataType.IntegerType;
-            break;
-        case "number":
-            this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
-            this.type = DataType.DoubleType;
-            break;
-        case "boolean":
-            this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
-            this.type = DataType.BooleanType;
-            break;
-        case "object":
-            this.name = name;
-            this.type = DataType.Field_ObjectType;
-            HashMap<?, ?> props = (HashMap<?, ?>)field.get("properties");
-            List<SchemaField> schemaSubFields = new ArrayList<>();
-            props.forEach((key, value) -> {
-                JSONObject subFieldJson = (JSONObject) value;
-                String currentHeirachy = getNewHeirarchy(this.name,
-                        parentHierarchy);
-                SchemaField subSchemaField = new SchemaField((String)key, subFieldJson,
-                        currentHeirachy, useFlatNameForLeafNodes, FieldsFrom.OBSERVABLE_SCHEMA);
-                schemaSubFields.add(subSchemaField);
-            });
-            this.subFields = schemaSubFields;
-            break;
-        case "array":
-            this.type = DataType.Field_ArrayType;
-            this.name = name;
-            JSONObject items = (JSONObject) field
-                    .get(SDKConstants.ITEMS);
-            if (items != null) {
-                props = (HashMap<?, ?>)items.get("properties");
-                List<SchemaField> schemaSubFieldsArray = new ArrayList<>();
-                if (props != null) {
-                    this.arraySubType = DataType.Field_ObjectType;
-                    props.forEach((key, value) -> {
-                        JSONObject subFieldJson = (JSONObject) value;
-                        String currentHeirachy = getNewHeirarchy(this.name,
-                                parentHierarchy);
-                        SchemaField subSchemaField = new SchemaField((String)key, subFieldJson,
-                                currentHeirachy, useFlatNameForLeafNodes, FieldsFrom.OBSERVABLE_SCHEMA);
-                        schemaSubFieldsArray.add(subSchemaField);
-                    });
-                    this.subFields = schemaSubFieldsArray;
-                } else {
-                    String typeOfSubType = (String) items.get(SDKConstants.TYPE);
-                    this.arraySubType = DataType.StringType;
-                    if(useFlatNameForLeafNodes)
-                        this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
-                }
+            case "string":
+                this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
+                this.type = DataType.StringType;
                 break;
-            }
-        default:
-            this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
-            this.type = DataType.StringType;
-    }
+            case "int":
+            case "integer":
+                this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
+                this.type = DataType.IntegerType;
+                break;
+            case "long":
+                this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
+                this.type = DataType.LongType;
+                break;
+            case "number":
+                this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
+                this.type = DataType.DoubleType;
+                break;
+            case "float":
+                this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
+                this.type = DataType.FloatType;
+                break;
+            case "double":
+                this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
+                this.type = DataType.DoubleType;
+                break;
+            case "boolean":
+                this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
+                this.type = DataType.BooleanType;
+                break;
+            case "date":
+                this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
+                this.type = DataType.DateType;
+                break;
+            case "date-time":
+                this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
+                this.type = DataType.DateTimeType;
+                break;
+            case "short":
+                this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
+                this.type = DataType.ShortType;
+                break;
+            case "byte":
+                this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
+                this.type = DataType.ByteType;
+                break;
+            case "binary":
+                this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
+                this.type = DataType.BinaryType;
+                break;
+            case "object":
+                this.name = name;
+                this.type = DataType.Field_ObjectType;
+                HashMap<?, ?> props = (HashMap<?, ?>)field.get("properties");
+                List<SchemaField> schemaSubFields = new ArrayList<>();
+                props.forEach((key, value) -> {
+                    JSONObject subFieldJson = (JSONObject) value;
+                    String currentHeirachy = getNewHeirarchy(this.name,
+                            parentHierarchy);
+                    SchemaField subSchemaField = new SchemaField((String)key, subFieldJson,
+                            currentHeirachy, useFlatNameForLeafNodes, DataSet.FieldsFrom.OBSERVABLE_SCHEMA);
+                    schemaSubFields.add(subSchemaField);
+                });
+                this.subFields = schemaSubFields;
+                break;
+            case "array":
+                this.type = DataType.Field_ArrayType;
+                this.name = name;
+                JSONObject items = (JSONObject) field
+                        .get(SDKConstants.ITEMS);
+                if (items != null) {
+                    props = (HashMap<?, ?>)items.get("properties");
+                    List<SchemaField> schemaSubFieldsArray = new ArrayList<>();
+                    if (props != null) {
+                        this.arraySubType = DataType.Field_ObjectType;
+                        props.forEach((key, value) -> {
+                            JSONObject subFieldJson = (JSONObject) value;
+                            String currentHeirachy = getNewHeirarchy(this.name,
+                                    parentHierarchy);
+                            SchemaField subSchemaField = new SchemaField((String)key, subFieldJson,
+                                    currentHeirachy, useFlatNameForLeafNodes, DataSet.FieldsFrom.OBSERVABLE_SCHEMA);
+                            schemaSubFieldsArray.add(subSchemaField);
+                        });
+                        this.subFields = schemaSubFieldsArray;
+                    } else {
+                        String typeOfSubType = (String) items.get(SDKConstants.TYPE);
+                        this.arraySubType = DataType.StringType;
+                        if(useFlatNameForLeafNodes)
+                            this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
+                    }
+                    break;
+                }
+            default:
+                this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
+                this.type = DataType.StringType;
+        }
 
-    this.dule = new Dule(JsonUtil.getJsonObject(field,
-            SDKConstants.CATALOG_DULE));
+        this.dule = new Dule(JsonUtil.getJsonObject(field,
+                SDKConstants.CATALOG_DULE));
     }
 
 
     private void getSchemaField(JSONObject field, String parentHierarchy, boolean useFlatNameForLeafNodes) {
-        String type = (String) field.get(SDKConstants.CATALOG_SCHEMA_TYPE);
+        String type = (String) field.get(SDKConstants.CATALOG_SCHEMA_META_XDM_TYPE);
+
+        if(StringUtils.isEmpty(type))
+            type = (String) field.get(SDKConstants.CATALOG_SCHEMA_TYPE);
 
         switch (type) {
             case "string":
@@ -146,14 +196,31 @@ public class SchemaField {
                 this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
                 this.type = DataType.LongType;
                 break;
-            case "date":// TODO Once catalog start giving information for date
+            case "date":
                 // format, we will start parsing date in same format
                 this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
                 this.type = DataType.StringType;
                 break;
+            case "date-time":
+                this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
+                this.type = DataType.DateTimeType;
+                break;
             case "integer":
+            case "int":
                 this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
                 this.type = DataType.IntegerType;
+                break;
+            case "byte":
+                this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
+                this.type = DataType.ByteType;
+                break;
+            case "short" :
+                this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
+                this.type = DataType.ShortType;
+                break;
+            case "number":
+                this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
+                this.type = DataType.DoubleType;
                 break;
             case "float":
                 this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
@@ -166,6 +233,10 @@ public class SchemaField {
             case "boolean":
                 this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
                 this.type = DataType.BooleanType;
+                break;
+            case "binary":
+                this.name = getNameForNonComplexField(parentHierarchy, field, useFlatNameForLeafNodes);
+                this.type = DataType.BinaryType;
                 break;
             case "object":
                 this.name = (String) field.get(SDKConstants.CATALOG_NAME);
@@ -244,6 +315,7 @@ public class SchemaField {
                         + fieldName;
             }
         } else {
+            // Below should NEVER happen!
             fieldName = parentHeirarchy;// In case *name* tag doesn't exist,
             // we are calling field name with
             // the name of parent
@@ -252,7 +324,7 @@ public class SchemaField {
     }
 
     private String getNameForNonComplexField(String parentHeirarchy,
-            JSONObject field, boolean flattenNamesForPrimitiveTypes) {
+                                             JSONObject field, boolean flattenNamesForPrimitiveTypes) {
         return getNameForNonComplexField(null, parentHeirarchy, field, flattenNamesForPrimitiveTypes);
     }
 
@@ -273,10 +345,10 @@ public class SchemaField {
     }
 
     public boolean getIsPrimitive() {
-       if(type != DataType.Field_ObjectType && type != DataType.Field_ArrayType) {
-           return true;
-       } else
-           return false;
+        if(type != DataType.Field_ObjectType && type != DataType.Field_ArrayType) {
+            return true;
+        } else
+            return false;
     }
 
     public DataType getArraySubType() {

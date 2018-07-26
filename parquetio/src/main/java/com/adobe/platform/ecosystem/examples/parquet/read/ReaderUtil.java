@@ -16,7 +16,12 @@
  */
 package com.adobe.platform.ecosystem.examples.parquet.read;
 
+import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIODataType;
+import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIOField;
+import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIORepetitionType;
+import com.adobe.platform.ecosystem.examples.parquet.utility.ParquetIOUtil;
 import org.apache.parquet.example.data.Group;
+import org.apache.parquet.schema.PrimitiveType;
 import org.apache.parquet.schema.Type;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -24,6 +29,7 @@ import org.json.simple.JSONObject;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Created by vedhera on 12/1/2017.
@@ -53,7 +59,7 @@ public class ReaderUtil {
             if (current.getFieldRepetitionCount(currentType.getName()) >= 1) { //Not taking values which are empty.
                 if (currentType.isPrimitive()) { // primitive data.
                     if (currentType.isRepetition(Type.Repetition.OPTIONAL) || currentType.isRepetition(Type.Repetition.REQUIRED)) {
-                        jRecord.put(currentType.getName(), current.getValueToString(i, 0));
+                        jRecord.put(currentType.getName (), getValueForType(current, currentType, i, 0));
                     } else if (currentType.isRepetition(Type.Repetition.REPEATED)) {
                         JSONArray primitiveArray = getPrimitiveArray(current,i);
                         // PLAT-14737 We require first objects only for primitive.
@@ -87,18 +93,26 @@ public class ReaderUtil {
         JSONArray newArr = new JSONArray();
         int count = current.getFieldRepetitionCount(currentTypeIndex);
         for (int j = 0; j < count; j++) {
-            newArr.add(current.getValueToString(currentTypeIndex, j));
+            newArr.add(getValueForType(current, current.getType().getFields().get(currentTypeIndex), currentTypeIndex, j));
         }
         return newArr;
     }
 
-    public static JSONObject getFlattenedJSONRecord(JSONObject record, String heirarchy) {
+    private static Object getValueForType(Group current, Type currentType, int fieldIndex, int index) {
+        if(currentType.asPrimitiveType().getPrimitiveTypeName() == PrimitiveType.PrimitiveTypeName.INT96) {
+            return ParquetIOUtil.dateFromInt96(current.getInt96(fieldIndex, index));
+        } else {
+            return current.getValueToString(fieldIndex, index);
+        }
+    }
+
+    public static JSONObject getFlattenedJSONRecord(JSONObject record, String hierarchy) {
         JSONObject flatRecord = new JSONObject();
         for (Object oKey : record.keySet()) {
             String sKey = (String) oKey;
             Object value = record.get(sKey);
             if (value instanceof JSONObject) {
-                String newHierarchy = heirarchy.equals(ROOT_HIERARCHY) ? (sKey) : (heirarchy + "_" + sKey);
+                String newHierarchy = hierarchy.equals(ROOT_HIERARCHY) ? (sKey) : (hierarchy + "_" + sKey);
                 JSONObject flattenedJSON = getFlattenedJSONRecord((JSONObject) value, newHierarchy);
                 Iterator iter = flattenedJSON.entrySet().iterator();
                 while (iter.hasNext()) {
@@ -109,10 +123,37 @@ public class ReaderUtil {
                 // TODO: Do we have support in Catalog for repeatitive type in XDM ?
             } else {
                 // Adding primitive key value as it is.
-                String hierarchialKey = heirarchy.equals(ROOT_HIERARCHY) ? (sKey) : (heirarchy + "_" + sKey);
+                String hierarchialKey = hierarchy.equals(ROOT_HIERARCHY) ? (sKey) : (hierarchy + "_" + sKey);
                 flatRecord.put(hierarchialKey, value);
             }
         }
         return flatRecord;
+    }
+
+    public static List<ParquetIOField> getSchemaFromGroup(List<Type> types) {
+
+        return types
+                .stream()
+                .map(type -> {
+                    if (type.isPrimitive()) {
+                        return new ParquetIOField(
+                                type.getName(),
+                                ParquetIODataType.fromType(type),
+                                ParquetIORepetitionType.fromRepetition(type.getRepetition()),
+                                null
+                        );
+                    } else {
+
+                        List<ParquetIOField> subFields = getSchemaFromGroup(type.asGroupType().getFields());
+                        return new ParquetIOField(
+                                type.getName(),
+                                ParquetIODataType.GROUP,
+                                ParquetIORepetitionType.fromRepetition(type.getRepetition()),
+                                subFields
+                        );
+                    }
+
+                })
+                .collect(Collectors.toList());
     }
 }

@@ -166,10 +166,15 @@ public class JSONParquetFieldConverter implements ParquetFieldConverter<JSONObje
         pair.setSecond(ParquetIORepetitionType.OPTIONAL); // Default value to start with
         if (schemaField.getType() == DataType.StringType
                 || schemaField.getType() == DataType.BooleanType
+                || schemaField.getType() == DataType.ByteType
+                || schemaField.getType() == DataType.ShortType
                 || schemaField.getType() == DataType.IntegerType
                 || schemaField.getType() == DataType.LongType
                 || schemaField.getType() == DataType.FloatType
                 || schemaField.getType() == DataType.DoubleType
+                || schemaField.getType() == DataType.DateType
+                || schemaField.getType() == DataType.DateTimeType
+                || schemaField.getType() == DataType.BinaryType
                 || schemaField.getType() == DataType.Field_ObjectType) {
             pair.setFirst(FieldConverterFunction.catalogToParquetFieldFunction.apply(schemaField.getType()));
         } else if (schemaField.getType() == DataType.Field_ArrayType) {

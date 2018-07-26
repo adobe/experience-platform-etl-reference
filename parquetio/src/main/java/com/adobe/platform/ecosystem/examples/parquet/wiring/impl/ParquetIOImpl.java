@@ -16,8 +16,11 @@
  */
 package com.adobe.platform.ecosystem.examples.parquet.wiring.impl;
 
+import com.adobe.platform.ecosystem.examples.parquet.exception.ParquetIOErrorCode;
+import com.adobe.platform.ecosystem.examples.parquet.exception.ParquetIOException;
 import com.adobe.platform.ecosystem.examples.parquet.read.ParquetIOReader;
 import com.adobe.platform.ecosystem.examples.parquet.read.ParquetIOReaderImpl;
+import com.adobe.platform.ecosystem.examples.parquet.read.configuration.ParquetReaderConfiguration;
 import com.adobe.platform.ecosystem.examples.parquet.wiring.api.ParquetIO;
 import com.adobe.platform.ecosystem.examples.parquet.write.ParquetIOWriter;
 import com.adobe.platform.ecosystem.examples.parquet.write.ParquetIOWriterImpl;
@@ -29,6 +32,9 @@ import org.apache.hadoop.conf.Configuration;
  */
 public class ParquetIOImpl implements ParquetIO {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ParquetIOReader getParquetIOReader(boolean doFlatten) {
         Configuration configuration = new Configuration();
@@ -40,6 +46,29 @@ public class ParquetIOImpl implements ParquetIO {
                 .build();
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ParquetIOReader getParquetIOReader(ParquetReaderConfiguration readerConfiguration) throws ParquetIOException {
+        if(readerConfiguration == null) {
+            throw new ParquetIOException(ParquetIOErrorCode.PARQUETIO_INPUT_CONFIGURATION_NULL);
+        }
+
+        ParquetIOReader reader = new ParquetIOReaderImpl.ParquetIOReaderBuilder()
+                .with(readerBuilder -> {
+                    readerBuilder.conf = readerConfiguration.getConfiguration();
+                    readerBuilder.doFlatten = readerConfiguration.getShouldFlattenData();
+                    readerBuilder.path = readerConfiguration.getPath();
+                })
+                .build();
+        reader.initFileForRead();
+        return reader;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ParquetIOWriter getParquetIOWriter() {
         return new ParquetIOWriterImpl();

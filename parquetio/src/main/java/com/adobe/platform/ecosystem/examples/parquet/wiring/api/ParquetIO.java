@@ -16,7 +16,9 @@
  */
 package com.adobe.platform.ecosystem.examples.parquet.wiring.api;
 
+import com.adobe.platform.ecosystem.examples.parquet.exception.ParquetIOException;
 import com.adobe.platform.ecosystem.examples.parquet.read.ParquetIOReader;
+import com.adobe.platform.ecosystem.examples.parquet.read.configuration.ParquetReaderConfiguration;
 import com.adobe.platform.ecosystem.examples.parquet.write.ParquetIOWriter;
 
 /**
@@ -31,14 +33,25 @@ public interface ParquetIO {
     /**
      * Interface to provide reader for
      * performing parquet read operations.
+     *
      * @param doFlatten to flatten the data after reading.
      * @return {@code ParquetIOReader} instance
      */
     ParquetIOReader getParquetIOReader(boolean doFlatten);
 
     /**
+     * Interface to provide reader for
+     * performing parquet read operations.
+     *
+     * @param readerConfiguration
+     * @return {@code ParquetIOReader} instance
+     */
+    ParquetIOReader getParquetIOReader(ParquetReaderConfiguration readerConfiguration) throws ParquetIOException;
+
+    /**
      * Interface to provide writer for
      * performing parquet writer operations.
+     *
      * @return
      */
     ParquetIOWriter getParquetIOWriter();

@@ -22,11 +22,15 @@ package com.adobe.platform.ecosystem.examples.parquet.read;
 
 import com.adobe.platform.ecosystem.examples.parquet.exception.ParquetIOErrorCode;
 import com.adobe.platform.ecosystem.examples.parquet.exception.ParquetIOException;
+import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIOField;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.parquet.example.data.Group;
+import org.apache.parquet.format.converter.ParquetMetadataConverter;
+import org.apache.parquet.hadoop.ParquetFileReader;
 import org.apache.parquet.hadoop.ParquetReader;
 import org.apache.parquet.hadoop.example.GroupReadSupport;
+import org.apache.parquet.hadoop.metadata.ParquetMetadata;
 import org.json.simple.JSONObject;
 
 import java.io.File;
@@ -45,12 +49,15 @@ public class ParquetIOReaderImpl implements ParquetIOReader {
     private ParquetReader<Group> reader;
     private final Configuration configuration;
     private final boolean doFlatten;
+    private final Path path;
 
-    ParquetIOReaderImpl(Configuration configuration, boolean doFlatten) {
+    ParquetIOReaderImpl(Configuration configuration, boolean doFlatten, Path path) {
         this.configuration = configuration;
         this.doFlatten = doFlatten;
+        this.path = path;
     }
 
+    @Override
     public List<JSONObject> processData(int rows) throws ParquetIOException {
         return getDataFromExistingBuffer(rows);
 
@@ -79,12 +86,77 @@ public class ParquetIOReaderImpl implements ParquetIOReader {
         }
     }
 
+    @Deprecated
+    @Override
+    public ParquetIOReader initFileForRead(Path path) throws ParquetIOException {
+        try {
+            if (reader != null) {
+                reader.close(); // Close previous file reader.
+            }
+            reader = ParquetReader.builder(new GroupReadSupport(), path)
+                    .withConf(configuration)
+                    .build();
+        } catch (IOException ioex) {
+            throw new ParquetIOException(ParquetIOErrorCode.PARQUETIO_IO_EXCEPTION, ioex);
+        }
+        return this;
+    }
+
+    @Override
+    public ParquetIOReader initFileForRead() throws ParquetIOException {
+        try {
+            if (reader != null) {
+                reader.close(); // Close previous file reader.
+            }
+            reader = ParquetReader.builder(new GroupReadSupport(), path)
+                    .withConf(configuration)
+                    .build();
+        } catch (IOException ioex) {
+            throw new ParquetIOException(ParquetIOErrorCode.PARQUETIO_IO_EXCEPTION, ioex);
+        }
+        return this;
+    }
+
     @Override
     public Iterator getIterator() throws ParquetIOException {
         if(reader == null) {
             throw new ParquetIOException(ParquetIOErrorCode.PAQUETIO_READER_NOT_INITIALISED);
         }
         return new ParquetIOReaderIterator<Group>(reader,doFlatten).iterator();
+    }
+
+    @Override
+    public void readerClose() throws ParquetIOException {
+        if(reader != null) {
+            try {
+                reader.close();
+            } catch (IOException e) {
+                throw new ParquetIOException(ParquetIOErrorCode.PARQUETIO_READER_CLOSE_EXCEPTION, e);
+            }
+        }
+    }
+
+    @Override
+    public List<ParquetIOField> getSchema() throws ParquetIOException {
+        try {
+            ParquetMetadata metadata = ParquetFileReader.readFooter(
+                    this.configuration,
+                    this.path,
+                    ParquetMetadataConverter.NO_FILTER
+            );
+            if (metadata == null) {
+                throw new ParquetIOException(ParquetIOErrorCode.PARQUETIO_READER_METADATA_NULL_EXCEPTION);
+            }
+            return ReaderUtil.getSchemaFromGroup(
+                    metadata
+                            .getFileMetaData()
+                            .getSchema()
+                            .asGroupType()
+                            .getFields()
+            );
+        } catch (IOException ioex) {
+            throw new ParquetIOException(ParquetIOErrorCode.PARQUETIO_IO_EXCEPTION, ioex);
+        }
     }
 
     private List<JSONObject> getDataFromExistingBuffer(int rows) throws ParquetIOException {
@@ -107,6 +179,7 @@ public class ParquetIOReaderImpl implements ParquetIOReader {
     public static class ParquetIOReaderBuilder {
         public Configuration conf;
         public boolean doFlatten;
+        public Path path;
         // TODO: More fields to be added based on compressions style etc..
 
         public ParquetIOReaderBuilder with(Consumer<ParquetIOReaderBuilder> builderFunction) {
@@ -115,7 +188,7 @@ public class ParquetIOReaderImpl implements ParquetIOReader {
         }
 
         public ParquetIOReaderImpl build() {
-            return new ParquetIOReaderImpl(conf,doFlatten);
+            return new ParquetIOReaderImpl(conf, doFlatten, path);
         }
     }
 

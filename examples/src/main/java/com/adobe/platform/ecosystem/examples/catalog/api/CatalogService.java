@@ -50,11 +50,11 @@ public interface CatalogService {
      * @param imsOrg imsOrg in context.
      * @param authToken authToken
      * @param schemaPath schemaPath
-     * @param flattenFields boolean
+     * @param useFlatNamesForLeafNodes boolean
      * @return List of SchemaFields.
      * @throws ConnectorSDKException
      */
-    List<SchemaField> getSchemaFields(String imsOrg, String authToken, String schemaPath, boolean flattenFields) throws ConnectorSDKException;
+    List<SchemaField> getSchemaFields(String imsOrg, String authToken, String schemaPath, boolean useFlatNamesForLeafNodes) throws ConnectorSDKException;
 
     /**
      * Get data set corresponding to the given connection ID

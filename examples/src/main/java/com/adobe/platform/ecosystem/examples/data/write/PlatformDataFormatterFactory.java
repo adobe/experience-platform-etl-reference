@@ -16,6 +16,8 @@
  */
 package com.adobe.platform.ecosystem.examples.data.write;
 
+import com.adobe.platform.ecosystem.examples.catalog.model.DataSet;
+import com.adobe.platform.ecosystem.examples.catalog.model.SchemaField;
 import com.adobe.platform.ecosystem.examples.parquet.write.ParquetIOWriter;
 import com.adobe.platform.ecosystem.examples.data.FileFormat;
 import com.adobe.platform.ecosystem.examples.data.wiring.DataWiringParam;
@@ -24,6 +26,9 @@ import com.adobe.platform.ecosystem.examples.data.write.field.converter.parquet.
 import com.adobe.platform.ecosystem.examples.data.write.writer.formatter.CSVDataFormatter;
 import com.adobe.platform.ecosystem.examples.data.write.writer.formatter.JSONDataFormatter;
 import com.adobe.platform.ecosystem.examples.data.write.writer.formatter.ParquetDataFormatter;
+import org.apache.commons.lang.StringUtils;
+
+import java.util.List;
 
 /**
  * Created by vedhera on 8/25/2017.
@@ -56,7 +61,7 @@ public class PlatformDataFormatterFactory implements DataFormatterFactory {
                 formatter = new CSVDataFormatter(param);
                 break;
             case PARQUET:
-                ParquetFieldConverter converter = new JSONParquetFieldConverter(param.getDataSet().getFields(false));
+                ParquetFieldConverter converter = new JSONParquetFieldConverter(getFieldsFromDataSet());
                 formatter = new ParquetDataFormatter(writer, param, converter);
                 break;
             case JSON:
@@ -65,5 +70,13 @@ public class PlatformDataFormatterFactory implements DataFormatterFactory {
             // Do we need to add a default type here?
         }
         return formatter;
+    }
+
+    private List<SchemaField> getFieldsFromDataSet() {
+        if (!StringUtils.isEmpty(param.getDataSet().getSchema())) {
+            return param.getDataSet().getFields(false, DataSet.FieldsFrom.SCHEMA);
+        } else {
+            return param.getDataSet().getFields(false, DataSet.FieldsFrom.FIELDS);
+        }
     }
 }
