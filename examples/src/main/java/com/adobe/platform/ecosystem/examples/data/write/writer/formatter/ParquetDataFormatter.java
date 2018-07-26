@@ -28,6 +28,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.adobe.platform.ecosystem.examples.data.write.mapper.MapperUtil;
+import com.adobe.platform.ecosystem.examples.data.write.writer.extractor.Extractor;
 import com.adobe.platform.ecosystem.examples.parquet.exception.ParquetIOException;
 import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIOField;
 import com.adobe.platform.ecosystem.examples.catalog.model.DataSet;
@@ -62,16 +63,28 @@ public class ParquetDataFormatter implements Formatter {
 
     private DataWiringParam param;
 
-    private final ParquetFieldConverter fieldConverter;
+    private final ParquetFieldConverter<JSONObject> fieldConverter;
+
+    private final Extractor<JSONObject> extractor;
 
     private static Logger logger = Logger.getLogger(ParquetDataFormatter.class.getName());
 
-    public ParquetDataFormatter(ParquetIOWriter writer, DataWiringParam param, ParquetFieldConverter fieldConverter) {
+    public ParquetDataFormatter(ParquetIOWriter writer,
+                                DataWiringParam param,
+                                ParquetFieldConverter<JSONObject> fieldConverter,
+                                Extractor<JSONObject> extractor) {
         this.writer = writer;
         this.param = param;
         this.fieldConverter = fieldConverter;
+        this.extractor = extractor;
     }
 
+    /**
+     *  Constructing new fields with their mapped Catalog Flattened fields
+     *  as tools internally coverts fields from "a.b.c" to "a_b_c".
+     *  Type is set as "typeNotRequired" as reconciliation will be done in
+     *  {@link ParquetFieldConverter} instance with Catalog fields.
+     */
     @Override
     public byte[] getBuffer(List<SDKField> sdkFields, List<List<Object>> dataTable) throws ConnectorSDKException {
         try {
@@ -141,7 +154,7 @@ public class ParquetDataFormatter implements Formatter {
             String currentFieldName = schema.getFieldName(i);
             if (schema.getType(i).isPrimitive()) {
                 if (schema.getType(i).isRepetition(Type.Repetition.REPEATED)) {
-                    if (data.get(currentFieldName) instanceof JSONArray) {
+                    if (data.get(currentFieldName) instanceof JSONArray) { // Regular case
                         // Below is an assumption that json array will be present as value.
                         JSONArray jsonValueArray = (JSONArray) data.get(currentFieldName);
                         for (int j = 0; j < jsonValueArray.size(); j++) {
@@ -150,7 +163,17 @@ public class ParquetDataFormatter implements Formatter {
                         }
                     } else {
                         Object value = data.get(currentFieldName);
-                        updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, i);
+                        if(value instanceof String) {
+                            final String strValue = (String) value;
+                            if(strValue.split(",").length > 1) {
+                                final int index = i;
+                                Arrays.stream(strValue.split(",")).forEach( token -> {
+                                    updateParquetRecordWithPrimitiveValue(schema, token, currentGroup, index);
+                                });
+                            }
+                        } else {
+                            updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, i);
+                        }
                     }
                 } else if (schema.getType(i).isRepetition(Type.Repetition.OPTIONAL)) {
                     Object value = data.get(currentFieldName);
@@ -159,18 +182,32 @@ public class ParquetDataFormatter implements Formatter {
             } else {
                 if (schema.getType(i).isRepetition(Type.Repetition.REPEATED)) {
                     if (data.get(currentFieldName) instanceof JSONArray) {
-                        // TODO: we can add logic here to support complex array.
-                        // TODO: Read each json object and invoke updateParquetGroupWithData(...)
+                        JSONArray jsonValueArray = (JSONArray) data.get(currentFieldName);
+                        for (int j = 0; j < jsonValueArray.size(); j++) {
+                            addComplexGroupToParquet(currentGroup, schema.getFieldName(i), (JSONObject) data.get(currentFieldName));
+                        }
                     } else {
-                        Group complexGroup = currentGroup.addGroup(schema.getFieldName(i));
-                        updateParquetGroupWithData((JSONObject) data.get(currentFieldName), (SimpleGroup) complexGroup);
+                        final JSONObject value = (JSONObject) data.get(currentFieldName);
+                        if(extractor.isExtractRequired(value)) {
+                            final List<JSONObject> objects = extractor.extract(value);
+                            final int index = i;
+                            objects.stream().forEach( extractedObject -> {
+                                addComplexGroupToParquet(currentGroup, schema.getFieldName(index), extractedObject);
+                            });
+                        } else {
+                            addComplexGroupToParquet(currentGroup, schema.getFieldName(i), (JSONObject) data.get(currentFieldName));
+                        }
                     }
                 } else {
-                    Group complexGroup = currentGroup.addGroup(schema.getFieldName(i));
-                    updateParquetGroupWithData((JSONObject) data.get(currentFieldName), (SimpleGroup) complexGroup);
+                    addComplexGroupToParquet(currentGroup, schema.getFieldName(i), (JSONObject) data.get(currentFieldName));
                 }
             }
         }
+    }
+
+    private void addComplexGroupToParquet(Group currentGroup, String fieldName, JSONObject jsonData){
+        Group complexGroup = currentGroup.addGroup(fieldName);
+        updateParquetGroupWithData(jsonData, (SimpleGroup) complexGroup);
     }
 
     private List<SimpleGroup> getRecords(List<SDKField> sdkFields, List<List<Object>> dataTable) {
@@ -321,6 +358,9 @@ public class ParquetDataFormatter implements Formatter {
      * @param currentColumnIndex
      */
     private void updateParquetRecordWithPrimitiveValue(GroupType schema, Object currentColumnValue, SimpleGroup currentRecord, int currentColumnIndex) {
+        if (currentColumnValue == null) {
+            return;
+        }
         PrimitiveType primitiveTypeField = schema.getType(currentColumnIndex).asPrimitiveType();
         String type = primitiveTypeField.getPrimitiveTypeName().name();
         if (type.equalsIgnoreCase("binary")) {

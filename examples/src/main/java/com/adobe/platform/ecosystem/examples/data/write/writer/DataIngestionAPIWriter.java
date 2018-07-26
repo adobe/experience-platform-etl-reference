@@ -169,6 +169,9 @@ public class DataIngestionAPIWriter implements Writer {
 
     private int flushRecords(List<SDKField> sdkFields,List<List<Object>> dataTable, FlushHandler flushHandler) throws ConnectorSDKException {
         try{
+            if(dataTable.size() == 0) {
+                return 0;
+            }
             byte[] buffer = formatter.getBuffer(sdkFields, dataTable);
             logger.log(Level.INFO,"Buffer received for " + outputFileFormat + " file, total records flushed: "+dataTable.size());
             if(dis.writeToBatch(batchId, this.param.getDataSet().getId(), this.param.getImsOrg(), this.param.getAuthToken(), outputFileFormat, buffer) == 0){

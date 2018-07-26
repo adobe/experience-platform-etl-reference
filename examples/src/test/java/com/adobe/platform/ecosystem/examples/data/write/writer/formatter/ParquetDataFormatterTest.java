@@ -22,6 +22,7 @@ import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIOField;
 import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIORepetitionType;
 import com.adobe.platform.ecosystem.examples.parquet.wiring.impl.ParquetIOImpl;
 import com.adobe.platform.ecosystem.examples.data.write.field.converter.parquet.ParquetFieldConverter;
+import com.adobe.platform.ecosystem.examples.data.write.writer.extractor.JsonObjectsExtractor;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
 import com.adobe.platform.ecosystem.ut.BaseTest;
 import org.apache.parquet.schema.MessageType;
@@ -54,7 +55,7 @@ public class ParquetDataFormatterTest extends BaseTest {
         File file = readMockParquet();
         Mockito.when(writer.writeParquetFile(Mockito.any(),Mockito.any(),Mockito.any())).thenReturn(file);
 
-        parquetDataFormatter = new ParquetDataFormatter(writer,param,fieldConverter);
+        parquetDataFormatter = new ParquetDataFormatter(writer,param,fieldConverter, new JsonObjectsExtractor());
     }
 
     @Test

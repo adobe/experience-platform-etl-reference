@@ -23,10 +23,13 @@ import com.adobe.platform.ecosystem.examples.data.FileFormat;
 import com.adobe.platform.ecosystem.examples.data.wiring.DataWiringParam;
 import com.adobe.platform.ecosystem.examples.data.write.field.converter.parquet.JSONParquetFieldConverter;
 import com.adobe.platform.ecosystem.examples.data.write.field.converter.parquet.ParquetFieldConverter;
+import com.adobe.platform.ecosystem.examples.data.write.writer.extractor.Extractor;
+import com.adobe.platform.ecosystem.examples.data.write.writer.extractor.JsonObjectsExtractor;
 import com.adobe.platform.ecosystem.examples.data.write.writer.formatter.CSVDataFormatter;
 import com.adobe.platform.ecosystem.examples.data.write.writer.formatter.JSONDataFormatter;
 import com.adobe.platform.ecosystem.examples.data.write.writer.formatter.ParquetDataFormatter;
 import org.apache.commons.lang.StringUtils;
+import org.json.simple.JSONObject;
 
 import java.util.List;
 
@@ -61,8 +64,10 @@ public class PlatformDataFormatterFactory implements DataFormatterFactory {
                 formatter = new CSVDataFormatter(param);
                 break;
             case PARQUET:
-                ParquetFieldConverter converter = new JSONParquetFieldConverter(getFieldsFromDataSet());
-                formatter = new ParquetDataFormatter(writer, param, converter);
+                ParquetFieldConverter<JSONObject> converter =
+                new JSONParquetFieldConverter(getFieldsFromDataSet());
+                Extractor<JSONObject> extractor = new JsonObjectsExtractor();
+                formatter = new ParquetDataFormatter(writer, param, converter, extractor);
                 break;
             case JSON:
                 formatter = new JSONDataFormatter();
