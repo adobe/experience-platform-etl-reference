@@ -38,8 +38,9 @@ public class FlushHandler {
     private List<?> dataTable;
 
     public FlushHandler(long sizeOfRecord){
-        this.sizeOfRecord = sizeOfRecord;
-        this.batchSize = fileMaxSize/sizeOfRecord;
+        //Keep size as 3 times the first record
+        this.sizeOfRecord = sizeOfRecord*3;
+        this.batchSize = fileMaxSize/this.sizeOfRecord;
     }
 
     public long getBatchSize() {
