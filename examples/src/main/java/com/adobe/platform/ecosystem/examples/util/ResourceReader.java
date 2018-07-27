@@ -63,4 +63,8 @@ public class ResourceReader {
         }
         return prop;
     }
+
+    public Properties getSystemProperties() {
+        return System.getProperties();
+    }
 }

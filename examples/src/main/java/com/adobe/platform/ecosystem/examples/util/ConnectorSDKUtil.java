@@ -239,6 +239,16 @@ public class ConnectorSDKUtil {
         }
     }
 
+    public static String getSystemProperty(String key) {
+        final String value = new ResourceReader().getSystemProperties().getProperty(key);
+
+        if(value == null) {
+            logger.log(Level.WARNING, "Key: " + key + "is not found in system properties. Please check!");
+        }
+
+        return value;
+    }
+
     public String getConnectionProperty(String propertyName){
         return credentials.get(propertyName);
     }
