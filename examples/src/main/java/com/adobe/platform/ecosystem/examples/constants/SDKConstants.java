@@ -119,6 +119,8 @@ public class SDKConstants {
     public static final String HTTP_RETRY_COUNT_DEFAULT_PROPERTY = "com.adobe.platform.clientRetry.count";
     public static final String HTTP_RETRY_WAITTIME_DEFAULT_PROPERTY = "com.adobe.platform.clientRetry.waitTime";
     public static final String DEFAULT_LOGGING_PROPERTY = "com.adobe.platform.connector.loggingLevel";
+    public static final String CATALOG_FIELD_FILTER_PROPERTY = "com.adobe.platform.xdm.blacklist.filter";
+    public static final String CATALOG_FIELD_FILTER_DELIMITER = ",";
 
     public static final String SIMPLE_FILE_UPLOAD_LIMIT = "simplefileUploadLimit";
 }

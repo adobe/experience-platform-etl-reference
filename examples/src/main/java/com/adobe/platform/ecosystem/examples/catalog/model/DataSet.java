@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.adobe.platform.ecosystem.examples.filter.FilterFactory;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -202,17 +203,38 @@ public class DataSet extends BaseModel {
             }
         } else if(fieldsFrom == FieldsFrom.SCHEMA) {
             if(this.schema != null && this.schema.length() > 0) {
-                try {
-                    CatalogService cs = CatalogFactory.getCatalogService();
-                    fieldsList = cs.getSchemaFields(getImsOrg(), 
-                            ConnectorSDKUtil.getInstance().getAccessToken(), 
-                            this.schema.replace("@", ""), useFlatNamesForLeafNodes);
-                } catch (ConnectorSDKException e) {
-                    logger.severe("Failed in getting catalog service while listing fields for dataset id " + this.getId());
-                }
+                fieldsList = getFieldsFromCatalogSchema(useFlatNamesForLeafNodes);
             } else {
                 logger.warning("Schema path not defined for " + this.getId());
             }
+        }
+        return fieldsList;
+    }
+
+    private List<SchemaField> getFieldsFromCatalogSchema(boolean useFlatNamesForLeafNodes) {
+        List<SchemaField> fieldsList = new ArrayList<>();
+        try {
+            CatalogService cs = CatalogFactory.getCatalogService();
+            fieldsList = cs.getSchemaFields(
+                    getImsOrg(),
+                    ConnectorSDKUtil.getInstance().getAccessToken(),
+                    this.schema.replace("@", ""),
+                    useFlatNamesForLeafNodes
+            );
+
+            final String schemaId = this.schema.replace("@/xdms/", "");
+            // Perform Catalog field filtering.
+            return FilterFactory
+                    .provideSchemaFieldFilter()
+                    .stream()
+                    .filter(schemaFilter -> schemaFilter.canApply(schemaId))
+                    .reduce(fieldsList,
+                            (schemaFields, schemaFilter) -> schemaFilter.filter(schemaFields),
+                            (x, y) -> x // combiner is not used as it's not parallel processing.
+                    );
+
+        } catch (ConnectorSDKException e) {
+            logger.severe("Failed in getting catalog service while listing fields for dataset id " + this.getId());
         }
         return fieldsList;
     }
