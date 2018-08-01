@@ -20,6 +20,8 @@ package com.adobe.platform.ecosystem.examples.data.write.writer;
  * Created by vardgupt on 10/23/2017.
  */
 
+import com.adobe.platform.ecosystem.examples.catalog.api.CatalogService;
+import com.adobe.platform.ecosystem.examples.catalog.model.Batch;
 import com.adobe.platform.ecosystem.examples.catalog.model.SDKField;
 import com.adobe.platform.ecosystem.examples.constants.SDKConstants;
 import com.adobe.platform.ecosystem.examples.data.FileFormat;
@@ -46,6 +48,7 @@ import java.util.logging.Logger;
 public class DataIngestionAPIWriter implements Writer {
     private final DataWiringParam param;
     private final DataIngestionService dis;
+    private final CatalogService catalogService;
     private FileFormat outputFileFormat;
     private String batchId;
     private Formatter formatter;
@@ -55,9 +58,15 @@ public class DataIngestionAPIWriter implements Writer {
 
     private List<String> headerFields;
 
-    public DataIngestionAPIWriter(DataIngestionService dis, DataWiringParam param, FileFormat outputFileFormat, Formatter formatter,  WriteAttributes writeAttributes) throws ConnectorSDKException {
+    public DataIngestionAPIWriter(DataIngestionService dis,
+                                  DataWiringParam param,
+                                  FileFormat outputFileFormat,
+                                  Formatter formatter,
+                                  WriteAttributes writeAttributes,
+                                  CatalogService catalogService) throws ConnectorSDKException {
         this.param = param;
         this.dis = dis;
+        this.catalogService = catalogService;
         this.outputFileFormat = outputFileFormat;
         this.formatter = formatter;
         this.writeAttributes = writeAttributes;
@@ -200,19 +209,42 @@ public class DataIngestionAPIWriter implements Writer {
 
     }
 
-    @Override
-    public int markBatchCompletion(Boolean isSuccess) throws ConnectorSDKException {
-        logger.log(Level.FINER,"Inside markBatchCompletion with status " + isSuccess);
-        int outputResponse = -1;
-        if (isSuccess) {
-            dis.signalBatchCompletion(batchId, this.param.getImsOrg(), this.param.getAuthToken());
-            logger.log(Level.FINER,"signalBatchCompletion triggered");
-            outputResponse = 0;
-        } else {
-            // code to be added to mark batch failure
-        }
-        return outputResponse;
-    }
+	@Override
+	public int markBatchCompletion(Boolean isSuccess) throws ConnectorSDKException {
+		return markBatchCompletion(isSuccess, false);
+	}
+
+	@Override
+	public int markBatchCompletion(Boolean isSuccess, Boolean shouldPollForBatchStatus) throws ConnectorSDKException {
+		logger.log(Level.FINER, "Inside markBatchCompletion with status " + isSuccess);
+		int outputResponse = -1;
+		if (isSuccess) {
+			outputResponse = dis.signalBatchCompletion(batchId, this.param.getImsOrg(), this.param.getAuthToken());
+			logger.log(Level.FINER, "signalBatchCompletion triggered");
+		}
+
+		if (shouldPollForBatchStatus) {
+			try {
+				final Batch batch = catalogService.pollForBatchProcessingCompletion(
+						param.getImsOrg(),
+						param.getAuthToken(),
+						batchId
+				);
+
+				if (batch != null
+							&& (SDKConstants.CATALOG_BATCH_STATUS_SUCCESS.equals(batch.getStatus()) || SDKConstants.CATALOG_BATCH_STATUS_ACTIVE.equals(batch.getStatus()))) {
+					outputResponse = 0;
+				} else {
+					outputResponse = -1;
+				}
+
+			} catch (ConnectorSDKException exception) { // Exception can arise from Catalog API or Timeout expired. Check 'pollForBatchProcessingCompletion'.
+				logger.log(Level.SEVERE, "Error while invoking operation[pollForBatchProcessingCompletion]: ", exception);
+				outputResponse = -1;
+			}
+		}
+		return outputResponse;
+	}
 
     private JSONObject getPayLoadForBatchCreation() {
         JSONObject payload = new JSONObject();

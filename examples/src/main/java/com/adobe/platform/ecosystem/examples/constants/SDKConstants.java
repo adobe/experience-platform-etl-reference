@@ -33,6 +33,10 @@ public class SDKConstants {
     public static final String CATALOG_BATCH_TYPE_KEY = "type";
     public static final String CATALOG_BATCH_ID_KEY = "id";
     public static final String CATALOG_BATCH_RELATEDOBJECTS = "relatedObjects";
+    public static final String CATALOG_BATCH_STATUS_SUCCESS = "success";
+    public static final String CATALOG_BATCH_STATUS_ACTIVE = "active";
+    public static final String CATALOG_BATCH_STATUS_FAILURE = "failure";
+    public static final String CATALOG_BATCH_STATUS_FAILED = "failed";
 
     public static final String CATALOG_ID = "id";
     public static final String CATALOG_NAME = "name";

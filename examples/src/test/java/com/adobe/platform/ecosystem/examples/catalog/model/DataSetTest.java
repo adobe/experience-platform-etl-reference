@@ -17,10 +17,20 @@
 package com.adobe.platform.ecosystem.examples.catalog.model;
 
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import com.adobe.platform.ecosystem.examples.catalog.api.CatalogService;
+import com.adobe.platform.ecosystem.examples.catalog.impl.CatalogFactory;
+import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
@@ -219,39 +229,41 @@ public class DataSetTest extends BaseTest{
             + "}";
 
     @Before
-    public void setupDataSet() throws ParseException {
+    public void setupDataSet() throws Exception {
+        setUp();
+        setUpHttpForJwtResponse();
         ds = getDataSetFromString(datasetInnerSample);
         ds_Sample1 = getDataSetFromString(datasetInnerSample1);
         ds_Sample2 = getDataSetFromString(datasetInnerSample2);
     }
 
     @Test
-    public void testGetConnectionId() throws ParseException {
+    public void testGetConnectionId() {
         assertTrue(ds.getConnectionId().equalsIgnoreCase("conId"));
     }
 
     @Test
-    public void testGetFields() throws ParseException {
+    public void testGetFields() {
         assertTrue(ds.getFields(false).size() == 4);
     }
 
     @Test
-    public void testGetFieldsFromObservableSchema() throws ParseException {
+    public void testGetFieldsFromObservableSchema() {
         assertTrue(ds_Sample2.getFields(false, FieldsFrom.OBSERVABLE_SCHEMA).size() == 6);
     }
 
     @Test
-    public void testGetFlattenedFieldsFromObservableSchema() throws ParseException {
+    public void testGetFlattenedFieldsFromObservableSchema() {
         assertTrue(ds_Sample2.getFlattenedSchemaFields(FieldsFrom.OBSERVABLE_SCHEMA).size() == 14);
     }
 
     @Test
-    public void testGetFlattenedSchemaFields() throws ParseException {
+    public void testGetFlattenedSchemaFields() {
         assertTrue(ds.getFlattenedSchemaFields().size() == 4);
     }
 
     @Test
-    public void testMatchFlattenedSchemaFields() throws ParseException {
+    public void testMatchFlattenedSchemaFields() {
         Map<String,String> sdkFields = new HashMap<>();
         sdkFields.put("Name_firstName", "");
         sdkFields.put("_date", "");
@@ -265,22 +277,22 @@ public class DataSetTest extends BaseTest{
     }
 
     @Test
-    public void testGetDataSetViewId() throws ParseException {
+    public void testGetDataSetViewId() {
         assertTrue("dsvId".equals(ds.getViewId()));
     }
 
     @Test
-    public void testGetDataSetViewFieldName() throws ParseException {
+    public void testGetDataSetViewFieldName() {
         assertTrue("id1".equals(ds.getFlattenedSchemaFields().get(0).getName()));
     }
 
     @Test
-    public void testGetDataSetViewFieldType() throws ParseException {
+    public void testGetDataSetViewFieldType() {
         assertTrue(ds.getFlattenedSchemaFields().get(0).getType() == DataType.StringType);
     }
 
     @Test
-    public void testGetIsDuleEnabled() throws ParseException {
+    public void testGetIsDuleEnabled() {
         assertTrue(ds.getIsDuleEnabled() == true);
     }
 
@@ -291,5 +303,37 @@ public class DataSetTest extends BaseTest{
         assertNotNull (ds.getFileDescription().getFormat());
         assertNotNull (ds.getFileDescription().isPersisted());
         assert (ds.getFileDescription().getDelimiter() == ',');
+    }
+
+    @Test
+    public void testGetSchemaFieldsFromCatalog() throws ParseException, ConnectorSDKException {
+        System.setProperty("com.adobe.platform.xdm.blacklist.filter", "model/Profile.person");
+
+        JSONParser jsonParser = new JSONParser();
+        JSONObject jsonObject = (JSONObject)(jsonParser.parse(datasetInnerSample2));
+
+        when(catService.getSchemaFields(
+                anyString(),
+                anyString(),
+                eq("/xdms/model/Profile"),
+                eq(false)
+        )).thenReturn(ds_Sample2.getFields(DataSet.FieldsFrom.OBSERVABLE_SCHEMA));
+
+        DataSet dataSet = new DataSetExtension(jsonObject);
+
+        final List<SchemaField> fieldList = dataSet.getFields(false, DataSet.FieldsFrom.SCHEMA);
+        assertEquals(fieldList.size(), 5);
+
+    }
+
+    class DataSetExtension extends DataSet {
+        public DataSetExtension(JSONObject jsonObject) {
+            super(jsonObject);
+        }
+
+        @Override
+        protected CatalogService getCatalogService() throws ConnectorSDKException {
+            return catService;
+        }
     }
 }
