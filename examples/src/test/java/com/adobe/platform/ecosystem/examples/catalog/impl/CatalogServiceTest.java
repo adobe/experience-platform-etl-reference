@@ -21,19 +21,26 @@ import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKUtil;
 import com.adobe.platform.ecosystem.examples.util.ResourceName;
 import com.adobe.platform.ecosystem.ut.BaseTest;
+import org.apache.http.client.methods.HttpGet;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
 
 public class CatalogServiceTest extends BaseTest{
 
@@ -59,7 +66,8 @@ public class CatalogServiceTest extends BaseTest{
     }
 
     @Test
-    public void testGetDataset() throws ConnectorSDKException {
+    public void testGetDataset() throws ConnectorSDKException, IOException {
+        setupTestForHttpOutput(datasetSample);
         DataSet ds = catService.getDataSet("testOrg", "testToken", "testDSId");
         assertTrue(ds.getBasePath().startsWith("adl://"));
     }
@@ -101,7 +109,8 @@ public class CatalogServiceTest extends BaseTest{
     }
 
     @Test
-    public void testGetDatasets() throws ConnectorSDKException{
+    public void testGetDatasets() throws ConnectorSDKException, IOException {
+        setupTestForHttpOutput(datasetSample);
         Map<String,String> params = new HashMap<>();
         List<DataSet> listDS = catService.getDataSets("testOrg", "testToken",params,CatalogAPIStrategy.ONCE);
         assertTrue(listDS.size() > 0);
@@ -134,6 +143,7 @@ public class CatalogServiceTest extends BaseTest{
 
     @Test
     public void testGetBatchByBatchId() throws ParseException, UnsupportedOperationException, IOException, ConnectorSDKException {
+        setupTestForHttpOutput(batchSample);
         getStringAsHttpOutputStream(batchSample);
 
         catService.getBatchByBatchId("testOrg", "testToken","testBatch");
@@ -151,6 +161,7 @@ public class CatalogServiceTest extends BaseTest{
 
     @Test
     public void testGetDataSetFiles() throws UnsupportedOperationException, IOException, ConnectorSDKException{
+        setupTestForHttpOutput(credSample);
         getStringAsHttpOutputStream(credSample);
         Map<String,String> params = new HashMap<>();
         List<DataSetFile> listDSF = catService.getDataSetFiles("testOrg", "testToken", params, CatalogAPIStrategy.ONCE);
@@ -159,9 +170,37 @@ public class CatalogServiceTest extends BaseTest{
 
     @Test
     public void testGetDataSetView() throws UnsupportedOperationException, IOException, ConnectorSDKException{
+        setupTestForHttpOutput(datasetSample);
         getStringAsHttpOutputStream(datasetSample);
         DataSetView dsv = catService.getDataSetView("testOrg", "testToken", "testDSId");
         assertTrue(dsv!=null);
         assertTrue("testDSId".equals(dsv.getId()));
+    }
+
+
+    @Test
+    public void testPollForBatchCompletionStatus() throws IOException, ConnectorSDKException {
+        // Basic mocks.
+        when(httpResponse.getStatusLine()).thenReturn(statusLine);
+        when(statusLine.getStatusCode()).thenReturn(200);
+        when(httpResponse.getEntity()).thenReturn(httpEntity);
+
+        when(httpClient.execute(any())).thenAnswer(invocation -> {
+            Object[] args = invocation.getArguments();
+            String path;
+            if (args[0] instanceof HttpGet) {
+                HttpGet request = (HttpGet) args[0];
+                path = request.getURI().getPath();
+
+                if (path.contains("/batch/testBatch")) {
+                    InputStream stream = new ByteArrayInputStream(batchSample.getBytes(StandardCharsets.UTF_8.name()));
+                    when(httpEntity.getContent()).thenReturn(stream);
+                    return httpResponse;
+                }
+            }
+            return null;
+        });
+        Batch batch = catService.pollForBatchProcessingCompletion("testOrg", "testToken", "testBatch");
+        assertEquals("success", batch.getStatus());
     }
 }

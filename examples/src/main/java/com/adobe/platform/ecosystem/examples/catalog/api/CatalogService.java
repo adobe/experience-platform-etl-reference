@@ -85,6 +85,19 @@ public interface CatalogService {
     Batch createBatch(String imsOrg, String authToken, JSONObject payload) throws ConnectorSDKException;
 
     /**
+     * API to continuously fetch the batch
+     * from Catalog until is either moved
+     * to success/active or failed/failure
+     * states.
+     *
+     * @param batchId
+     * @param imsOrg
+     * @param accessToken
+     * @return
+     */
+    Batch pollForBatchProcessingCompletion(String imsOrg, String accessToken, String batchId) throws ConnectorSDKException;
+
+    /**
      * Get batch from the catalog for the given batchId
      * @param imsOrg
      * @param authToken

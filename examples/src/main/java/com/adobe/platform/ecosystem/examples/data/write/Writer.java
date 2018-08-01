@@ -45,6 +45,14 @@ public interface Writer {
     int markBatchCompletion(Boolean isSuccess) throws ConnectorSDKException;
 
     /**
+     *
+     * @param isSuccess
+     * @return
+     * @throws ConnectorSDKException
+     */
+    int markBatchCompletion(Boolean isSuccess, Boolean shouldPollForBatchStatus) throws ConnectorSDKException;
+
+    /**
      * Interface for exposing write capabilities for
      * procedural connector.
      * @param dataTable

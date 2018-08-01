@@ -68,7 +68,7 @@ public class BaseTest {
 
     public static final String datasetSample = "{\"testDSId\": {\"fields\":[],\"basePath\": \"adl://ADLPATH/adlpath\"}}";
     public static final String datasetInnerSample1 = "{\"fields\":[{\"name\":\"col1\",\"type\":\"string\"},{\"name\":\"col2\",\"type\":\"boolean\"},{\"name\":\"col3\",\"type\":\"string\"},{\"name\":\"col4\",\"type\":\"boolean\"},{\"name\":\"col5\",\"type\":\"long\"},{\"name\":\"col6\",\"type\":\"double\"},{\"name\":\"col7\",\"type\":\"float\"}]}";
-    public static final String batchSample = "{\"testBatch\": {\"fields\":[]}}";
+    public static final String batchSample = "{\"testBatch\": {\"fields\":[], \"status\": \"success\"}}";
     public static final String batchResp = "@/abc/xyz/testBatch";
     public static final String batchIdResp = "{\"testBatch\":\"batchId\"}";
     public static final String credSample = "{\"credentials\": {\"id\":\"CredId\"}}";
@@ -222,7 +222,7 @@ public class BaseTest {
 
     public List<Batch> getBatches() throws ParseException {
         List<Batch> batches = new ArrayList<>();
-        String strEntity = "{\"imsOrg\":\"4F3BB22C5631222A7F000101@AdobeOrg\",\"created\":1511154303061,\"availableDates\":{},\"relatedObjects\":[{\"type\":\"dataSetFile\",\"id\":\"59a6ef99e94ed701bc827056\",\"tag\":\"output\"}]}";
+        String strEntity = "{\"imsOrg\":\"4F3BB22C5631222A7F000101@AdobeOrg\",\"status\":\"success\",\"created\":1511154303061,\"availableDates\":{},\"relatedObjects\":[{\"type\":\"dataSetFile\",\"id\":\"59a6ef99e94ed701bc827056\",\"tag\":\"output\"}]}";
         JSONParser parser = new JSONParser();
         JSONObject obj = (JSONObject) parser.parse(strEntity);
         batches.add(new Batch(obj));

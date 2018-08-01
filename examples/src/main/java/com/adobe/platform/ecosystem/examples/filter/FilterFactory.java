@@ -19,6 +19,7 @@ package com.adobe.platform.ecosystem.examples.filter;
 import com.adobe.platform.ecosystem.examples.catalog.model.SchemaField;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKUtil;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,6 +44,10 @@ public class FilterFactory {
      */
     public static List<Filter<SchemaField>> provideSchemaFieldFilter() {
         final String schemaFilter = ConnectorSDKUtil.getSystemProperty(CATALOG_FIELD_FILTER_PROPERTY);
+
+        if (schemaFilter == null || schemaFilter.isEmpty()) {
+            return new ArrayList<>();
+        }
         return Arrays.stream(schemaFilter.split(CATALOG_FIELD_FILTER_DELIMITER))
                 .map(filterId -> {
                     // Each filterId will be of type 'context/profile.identities.primary'

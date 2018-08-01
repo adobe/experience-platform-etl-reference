@@ -214,7 +214,7 @@ public class DataSet extends BaseModel {
     private List<SchemaField> getFieldsFromCatalogSchema(boolean useFlatNamesForLeafNodes) {
         List<SchemaField> fieldsList = new ArrayList<>();
         try {
-            CatalogService cs = CatalogFactory.getCatalogService();
+            CatalogService cs = getCatalogService();
             fieldsList = cs.getSchemaFields(
                     getImsOrg(),
                     ConnectorSDKUtil.getInstance().getAccessToken(),
@@ -237,6 +237,10 @@ public class DataSet extends BaseModel {
             logger.severe("Failed in getting catalog service while listing fields for dataset id " + this.getId());
         }
         return fieldsList;
+    }
+
+    protected CatalogService getCatalogService() throws ConnectorSDKException {
+        return CatalogFactory.getCatalogService();
     }
 
     public List<SchemaField> getFlattenedSchemaFields() {

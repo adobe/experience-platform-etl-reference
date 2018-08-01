@@ -17,6 +17,9 @@
 package com.adobe.platform.ecosystem.examples.data.write.writer;
 
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -52,23 +55,25 @@ public class DataIngestionAPIWriterTest extends BaseTest {
         setUp();
         setUpHttpForJwtResponse();
 
-        Mockito.when(dis.getBatchId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn("dummyBatchId");
-        Mockito.when(formatter.getBuffer(Mockito.any())).thenReturn(new byte[10]);
+        when(dis.getBatchId(any(), any(), any())).thenReturn("dummyBatchId");
+        when(formatter.getBuffer(any())).thenReturn(new byte[10]);
+
+        when(catService.pollForBatchProcessingCompletion(anyString(), anyString(), anyString())).thenReturn(getBatches().get(0));
     }
 
     @Test
     public void testConstructor() throws Exception {
 
         Formatter platFormatter = new PlatformDataFormatterFactory(writer, param).getFormatter(PARQUET_FILE_FORMAT);
-        DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, PARQUET_FILE_FORMAT, platFormatter, writeAttributes);
+         DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, PARQUET_FILE_FORMAT, platFormatter, writeAttributes, catService);
         assertTrue(disWriter != null);
 
         platFormatter = new PlatformDataFormatterFactory(writer, param).getFormatter(CSV_FILE_FORMAT);
-        disWriter = new DataIngestionAPIWriter(dis, param, CSV_FILE_FORMAT, platFormatter, writeAttributes);
+        disWriter = new DataIngestionAPIWriter(dis, param, CSV_FILE_FORMAT, platFormatter, writeAttributes, catService);
         assertTrue(disWriter != null);
 
         platFormatter = new PlatformDataFormatterFactory(writer, param).getFormatter(JSON_FILE_FORMAT);
-        disWriter = new DataIngestionAPIWriter(dis, param, JSON_FILE_FORMAT, platFormatter, writeAttributes);
+        disWriter = new DataIngestionAPIWriter(dis, param, JSON_FILE_FORMAT, platFormatter, writeAttributes, catService);
         assertTrue(disWriter != null);
 
     }
@@ -78,7 +83,7 @@ public class DataIngestionAPIWriterTest extends BaseTest {
         DataSet datset = getDataSetFromString(datasetInnerSample1);
         DataWiringParam param = new DataWiringParam("imsOrg", datset);
         Formatter platFormatter = new PlatformDataFormatterFactory(writer, param).getFormatter(CSV_FILE_FORMAT);
-        DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, CSV_FILE_FORMAT, platFormatter, writeAttributes);
+        DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, CSV_FILE_FORMAT, platFormatter, writeAttributes, catService);
 
         List<SDKField> sdkFields = new ArrayList<SDKField>();
         SDKField field01 = new SDKField("col1", "string");
@@ -134,7 +139,7 @@ public class DataIngestionAPIWriterTest extends BaseTest {
     @Test
     public void testWriteJSON() throws IOException, ConnectorSDKException {
         Formatter platFormatter = new PlatformDataFormatterFactory(writer, param).getFormatter(JSON_FILE_FORMAT);
-        DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, JSON_FILE_FORMAT, platFormatter, writeAttributes);
+        DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, JSON_FILE_FORMAT, platFormatter, writeAttributes, catService);
 
         List<SDKField> sdkFields = new ArrayList<SDKField>();
         SDKField field01 = new SDKField("col1", "string");
@@ -171,8 +176,8 @@ public class DataIngestionAPIWriterTest extends BaseTest {
 
     @Test
     public void testWriteAPIForProcedural() throws ConnectorSDKException {
-        Mockito.when(dis.writeToBatch(Mockito.any(),Mockito.any(),Mockito.any(),Mockito.any(),Mockito.any(),Mockito.any())).thenReturn(0);
-        DataIngestionAPIWriter writer = new DataIngestionAPIWriter(dis, param, CSV_FILE_FORMAT, formatter, writeAttributes);
+        when(dis.writeToBatch(any(),any(),any(),any(),any(),any())).thenReturn(0);
+        DataIngestionAPIWriter writer = new DataIngestionAPIWriter(dis, param, CSV_FILE_FORMAT, formatter, writeAttributes, catService);
         List<Object> data = new ArrayList<>();
         assert (writer.write(data) == 0);
     }
@@ -181,7 +186,7 @@ public class DataIngestionAPIWriterTest extends BaseTest {
     @Test
     public void testWriteJSONForProcedural() throws IOException, ConnectorSDKException {
         Formatter platFormatter = new PlatformDataFormatterFactory(writer, param).getFormatter(JSON_FILE_FORMAT);
-        DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, JSON_FILE_FORMAT, platFormatter, writeAttributes);
+        DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, JSON_FILE_FORMAT, platFormatter, writeAttributes, catService);
 
         JSONObject jobj = new JSONObject();
         jobj.put("col1", "val1");
@@ -204,7 +209,7 @@ public class DataIngestionAPIWriterTest extends BaseTest {
         Formatter platFormatter = new PlatformDataFormatterFactory(writer, param).getFormatter(CSV_FILE_FORMAT);
         writeAttributes = new WriteAttributes.WriteAttributesBuilder().withFlushStrategy(true).withSizeOfRecord(20).build();
 
-        DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, CSV_FILE_FORMAT, platFormatter, writeAttributes);
+        DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, CSV_FILE_FORMAT, platFormatter, writeAttributes, catService);
 
         List<SDKField> sdkFields = new ArrayList<SDKField>();
         SDKField field01 = new SDKField("col1", "string");
@@ -245,7 +250,7 @@ public class DataIngestionAPIWriterTest extends BaseTest {
         Formatter platFormatter = new PlatformDataFormatterFactory(writer, param).getFormatter(JSON_FILE_FORMAT);
         writeAttributes = new WriteAttributes.WriteAttributesBuilder().withFlushStrategy(true).withSizeOfRecord(20).build();
 
-        DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, CSV_FILE_FORMAT, platFormatter, writeAttributes);
+        DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, CSV_FILE_FORMAT, platFormatter, writeAttributes, catService);
         ArrayList<Object> records = new ArrayList<Object>();
         JSONObject record1 = new JSONObject();
 
@@ -278,7 +283,7 @@ public class DataIngestionAPIWriterTest extends BaseTest {
         DataWiringParam param = new DataWiringParam("imsOrg", datset);
         Formatter platFormatter = new PlatformDataFormatterFactory(writer, param).getFormatter(CSV_FILE_FORMAT);
         writeAttributes = new WriteAttributes.WriteAttributesBuilder().withFlushStrategy(true).withSizeOfRecord(134217728).build();
-        DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, CSV_FILE_FORMAT, platFormatter, writeAttributes);
+        DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, CSV_FILE_FORMAT, platFormatter, writeAttributes, catService);
 
         List<SDKField> sdkFields = new ArrayList<SDKField>();
         SDKField field01 = new SDKField("col1", "string");

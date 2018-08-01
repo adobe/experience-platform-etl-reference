@@ -27,6 +27,9 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.awaitility.core.ConditionFactory;
+import org.awaitility.core.ConditionTimeoutException;
+import org.hamcrest.Matchers;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -34,13 +37,21 @@ import org.json.simple.parser.ParseException;
 
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.awaitility.Awaitility.to;
+import static org.awaitility.Awaitility.with;
 
 /**
  * Created by vedhera on 8/25/2017.
  */
 public class CatalogServiceImpl implements CatalogService {
+
+    private static final Integer SLEEP_TIMEOUT = 30000; //milliseconds
+    private static final Integer API_CALL_TIMEOUT = 60; //minutes
 
     private String _endpoint;
 
@@ -304,7 +315,9 @@ public class CatalogServiceImpl implements CatalogService {
             return false;
         }
     }
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<SchemaField> getSchemaFields(String imsOrg, String authToken, String schemaPath
             , boolean useFlatNamesForLeafNodes) throws ConnectorSDKException {
@@ -317,5 +330,42 @@ public class CatalogServiceImpl implements CatalogService {
             throw new ConnectorSDKException(e.getMessage(), e.getCause());
         }
         return schemaFields;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Batch pollForBatchProcessingCompletion(String imsOrg, String accessToken, String batchId) throws ConnectorSDKException {
+        ConditionFactory conditionFactory = with()
+                .pollInterval(SLEEP_TIMEOUT, MILLISECONDS)
+                .conditionEvaluationListener(condition -> logger.log(Level.SEVERE, "[{0}] (elapsed time [{1}]ms, remaining time [{2}]ms)\n",
+                        new Object[]{"Check Batch status",
+                                condition.getElapsedTimeInMS(),
+                                condition.getRemainingTimeInMS()})
+                )
+                .given()
+                .await()
+                .atMost(API_CALL_TIMEOUT, TimeUnit.MINUTES);
+
+        Batch batch;
+        try {
+            batch = conditionFactory.untilCall(
+                    to(this).getBatchByBatchId(imsOrg, accessToken, batchId),
+                    Matchers.hasProperty("status",
+                            Matchers.anyOf(
+                                    Matchers.equalTo(SDKConstants.CATALOG_BATCH_STATUS_ACTIVE),
+                                    Matchers.equalTo(SDKConstants.CATALOG_BATCH_STATUS_FAILED),
+                                    Matchers.equalTo(SDKConstants.CATALOG_BATCH_STATUS_SUCCESS),
+                                    Matchers.equalTo(SDKConstants.CATALOG_BATCH_STATUS_FAILURE)
+                            )
+                    ));
+        } catch (ConditionTimeoutException e) {
+            logger.log(Level.SEVERE, "Batch {} does not have status success/failure after {} minutes", new Object[]{batchId, API_CALL_TIMEOUT});
+            throw new ConnectorSDKException(
+                    String.format("Batch %s does not have status success/failure after %d minutes", batchId, API_CALL_TIMEOUT),
+                    e);
+        }
+        return batch;
     }
 }
