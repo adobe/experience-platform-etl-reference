@@ -150,7 +150,8 @@ public class JsonObjectsExtractor implements Extractor<JSONObject> {
                 .stream()
                 .filter(key -> {
                     return !(input.get(key) instanceof JSONObject)
-                            && !(input.get(key) instanceof JSONArray);
+                            && !(input.get(key) instanceof JSONArray)
+                            && valueClassAllowed(input.get(key));
                 }).findFirst();
     }
 }
