@@ -53,7 +53,14 @@ public class SDKConstants {
     public static final String CATALOG_FOLDERNAME = "folderName";
     public static final String CATALOG_ISLOOKUP = "isLookup";
 
+    /**
+     * Below property has been reduced from 500 to 
+     * 100 due to performance issues seen with
+     * AXP Catalog Service for datasets with huge
+     * schema's (profile/experienceevent).
+     */
     public static final int CATALOG_MAX_LIMIT_PER_API_CALL = 100;
+    
     public static final String CATALOG_QUERY_PARAM_LIMIT = "limit";
     public static final String CATALOG_QUERY_PARAM_OFFSET = "offset";
     public static final String CATALOG_QUERY_PARAM_SORT = "sort";
