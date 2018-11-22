@@ -179,6 +179,7 @@ public class SchemaField {
                         });
                         this.subFields = schemaSubFieldsArray;
                     } else {
+                        // TODO: Add correct sub-type here.
                         String typeOfSubType = (String) items.get(SDKConstants.TYPE);
                         this.arraySubType = DataType.StringType;
                         if(useFlatNameForLeafNodes)

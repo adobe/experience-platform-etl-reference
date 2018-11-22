@@ -26,6 +26,7 @@ import com.adobe.platform.ecosystem.examples.data.validation.api.Rule;
 import com.adobe.platform.ecosystem.examples.data.validation.api.ValidationRegistry;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -46,8 +47,8 @@ public class CatalogValidationRegistry implements ValidationRegistry<Object> {
     }
 
     public ValidationRegistry<Object> build() {
+        initMap();
         switch (rootField.getType()) {
-            // Wrap in a root field for complex types.
             case Field_ObjectType:
             case Field_ArrayType:
                 buildForComplexTypes(
@@ -64,6 +65,10 @@ public class CatalogValidationRegistry implements ValidationRegistry<Object> {
         }
 
         return this;
+    }
+
+    private void initMap() {
+        validationRulesMap = new HashMap<>();
     }
 
     /**
@@ -140,7 +145,7 @@ public class CatalogValidationRegistry implements ValidationRegistry<Object> {
         hierarchy.add(primitiveField.getName());
         validationRulesMap.put(
             hierarchy,
-            primitiveField.getRules()
+            primitiveField.getRules() == null ? new ArrayList<>() : primitiveField.getRules()
         );
     }
 
@@ -161,10 +166,11 @@ public class CatalogValidationRegistry implements ValidationRegistry<Object> {
      * path.
      */
     private List<String> sanitizePath(List<String> path) {
-        if(path.get(0).equalsIgnoreCase("root")) {
+        if (path.get(0).equalsIgnoreCase("root")) {
             return path;
         }
-        path.add(0, ROOT_HIERARCHY);
-        return path;
+        List<String> clone = new ArrayList<>(path);
+        clone.add(0, ROOT_HIERARCHY);
+        return clone;
     }
 }

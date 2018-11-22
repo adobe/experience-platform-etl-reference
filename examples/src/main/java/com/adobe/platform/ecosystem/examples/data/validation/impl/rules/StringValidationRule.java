@@ -44,7 +44,29 @@ public class StringValidationRule extends SchemaValidationRule<String> {
 
     @Override
     public boolean apply(String value) {
-        return false;
+        if(this.minLength.isPresent()) {
+            if(value.length() < this.minLength.get()) {
+                return false;
+            }
+        }
+
+        if(this.maxLength.isPresent()) {
+            if(value.length() > this.maxLength.get()) {
+                return false;
+            }
+        }
+
+        if(this.enumList.isPresent()) {
+            final boolean match = this.enumList
+                .get()
+                .stream()
+                .anyMatch( e -> e.equals(value));
+            if(!match)
+                return match;
+        }
+
+        // TODO: Add validations using format and pattern.
+        return true;
     }
 
     public static StringValidationRule.Builder stringValidationRuleBuilder() {
@@ -58,7 +80,7 @@ public class StringValidationRule extends SchemaValidationRule<String> {
             this.validationRule.minLength = Optional.empty();
             this.validationRule.maxLength = Optional.empty();
             this.validationRule.format = Optional.empty();
-            this.validationRule.format = Optional.empty();
+            this.validationRule.pattern = Optional.empty();
             this.validationRule.enumList = Optional.empty();
         }
 
@@ -82,6 +104,11 @@ public class StringValidationRule extends SchemaValidationRule<String> {
             return this;
         }
 
+        public Builder withPattern(String pattern) {
+            this.validationRule.pattern = Optional.of(pattern);
+            return this;
+        }
+
         public SchemaValidationRule<String> build() {
             return this.validationRule;
         }
@@ -101,5 +128,9 @@ public class StringValidationRule extends SchemaValidationRule<String> {
 
     public Optional<String> getFormat() {
         return format;
+    }
+
+    public Optional<String> getPattern() {
+        return pattern;
     }
 }

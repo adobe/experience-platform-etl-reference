@@ -19,17 +19,78 @@
  */
 package com.adobe.platform.ecosystem.examples.data.validation.impl.rules;
 
+import java.util.Optional;
+
 /**
  * @author vedhera
  */
 public class LongValidationRule extends SchemaValidationRule<Long> {
 
+    private Optional<Long> minimum;
+
+    private Optional<Long> maximum;
+
+    private LongValidationRule(){
+
+    }
+
     /**
      * Implementation for
-     * {@link Long} input types.
+     * {@link java.lang.Long} input types.
      */
     @Override
     public boolean apply(Long value) {
-        return false;
+        if(minimum.isPresent()) {
+            if(value < minimum.get()) {
+                return false;
+            }
+        }
+
+        if(maximum.isPresent()) {
+            if(value > maximum.get()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static LongValidationRule.Builder longValidationRuleBuilder() {
+        return new LongValidationRule.Builder();
+    }
+
+    /**
+     *
+     */
+    public static class Builder {
+
+        private LongValidationRule validationRule = new LongValidationRule();
+
+        protected Builder() {
+            this.validationRule.minimum = Optional.empty();
+            this.validationRule.maximum = Optional.empty();
+        }
+
+        public LongValidationRule.Builder withMinimum(long minimum) {
+            this.validationRule.minimum = Optional.of(minimum);
+            return this;
+        }
+
+        public LongValidationRule.Builder withMaximum(long maximum) {
+            this.validationRule.maximum = Optional.of(maximum);
+            return this;
+        }
+
+        public SchemaValidationRule<Long> build() {
+            return this.validationRule;
+        }
+
+    }
+
+    public Optional<Long> getMinimum() {
+        return minimum;
+    }
+
+    public Optional<Long> getMaximum() {
+        return maximum;
     }
 }

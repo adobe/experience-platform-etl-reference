@@ -71,7 +71,7 @@ public class PlatformDataFormatterFactory implements DataFormatterFactory {
                 break;
             case PARQUET:
                 final List<SchemaField> fields = getFieldsFromDataSet();
-                ParquetFieldConverter converter = new JSONParquetFieldConverter(fields);
+                ParquetFieldConverter<JSONObject> converter = new JSONParquetFieldConverter(fields);
                 Extractor<JSONObject> extractor = new JsonObjectsExtractor();
                 formatter = new ParquetDataFormatter(
                     this.writer,

@@ -100,29 +100,50 @@ public abstract class SchemaValidationRule<T> implements Rule<T> {
         }
 
         private SchemaValidationRule<Integer> buildIntegerRule() {
-            // TODO: Build Integer validation rule.
-            // TODO: Integer, Short, Byte
-            return null;
+            IntegerValidationRule.Builder runningBuilder = IntegerValidationRule.integerValidationRuleBuilder();
+
+            if (data.containsKey("maximum")) {
+                runningBuilder.withMaximum(Integer.valueOf(data.get("maximum").toString()));
+            }
+
+            if (data.containsKey("minimum")) {
+                runningBuilder.withMinimum(Integer.valueOf(data.get("minimum").toString()));
+            }
+
+            return runningBuilder.build();
         }
 
         private SchemaValidationRule<Long> buildLongValidationRule() {
-            // TODO: Build Long validation rule.
-            return null;
+            LongValidationRule.Builder runningBuilder = LongValidationRule.longValidationRuleBuilder();
+
+            if (data.containsKey("maximum")) {
+                runningBuilder.withMaximum((Long) data.get("maximum"));
+            }
+
+            if (data.containsKey("minimum")) {
+                runningBuilder.withMinimum((Long) data.get("minimum"));
+            }
+
+            return runningBuilder.build();
         }
 
         private SchemaValidationRule<String> buildStringRule() {
             StringValidationRule.Builder runningBuilder = StringValidationRule.stringValidationRuleBuilder();
 
             if (data.containsKey("maxLength")) {
-                runningBuilder.withMaxLength((Integer) data.get("maxLength"));
+                runningBuilder.withMaxLength(Integer.valueOf(data.get("maxLength").toString()));
             }
 
             if (data.containsKey("minLength")) {
-                runningBuilder.withMinLength((Integer) data.get("minLength"));
+                runningBuilder.withMinLength(Integer.valueOf(data.get("maxLength").toString()));
             }
 
             if (data.containsKey("format")) {
                 runningBuilder.withFormat((String) data.get("format"));
+            }
+
+            if (data.containsKey("pattern")) {
+                runningBuilder.withPattern((String) data.get("pattern"));
             }
 
             if (data.containsKey("enum")) {

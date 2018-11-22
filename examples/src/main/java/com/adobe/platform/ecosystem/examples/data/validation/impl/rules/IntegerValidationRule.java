@@ -19,6 +19,8 @@
  */
 package com.adobe.platform.ecosystem.examples.data.validation.impl.rules;
 
+import java.util.Optional;
+
 /**
  * Concrete {@link SchemaValidationRule} for
  * following types
@@ -32,8 +34,75 @@ package com.adobe.platform.ecosystem.examples.data.validation.impl.rules;
  */
 public class IntegerValidationRule extends SchemaValidationRule<Integer> {
 
+    private Optional<Integer> minimum;
+
+    private Optional<Integer> maximum;
+
+    private IntegerValidationRule(){
+
+    }
+
+    /**
+     * Implementation for
+     * {@link java.lang.Integer} input types.
+     */
     @Override
     public boolean apply(Integer value) {
-        return false;
+        if(minimum.isPresent()) {
+            if(value < minimum.get()) {
+                return false;
+            }
+        }
+
+        if(maximum.isPresent()) {
+            if(value > maximum.get()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public static IntegerValidationRule.Builder integerValidationRuleBuilder() {
+        return new IntegerValidationRule.Builder();
+    }
+
+    /**
+     *
+     */
+    public static class Builder {
+
+        private IntegerValidationRule validationRule = new IntegerValidationRule();
+
+        protected Builder() {
+            this.validationRule.minimum = Optional.empty();
+            this.validationRule.maximum = Optional.empty();
+        }
+
+        public IntegerValidationRule.Builder withMinimum(int minimum) {
+            this.validationRule.minimum = Optional.of(minimum);
+            return this;
+        }
+
+        public IntegerValidationRule.Builder withMaximum(int maximum) {
+            this.validationRule.maximum = Optional.of(maximum);
+            return this;
+        }
+
+        public SchemaValidationRule<Integer> build() {
+            return this.validationRule;
+        }
+
+    }
+
+    public Optional<Integer> getMinimum() {
+        return minimum;
+    }
+
+    public Optional<Integer> getMaximum() {
+        return maximum;
     }
 }

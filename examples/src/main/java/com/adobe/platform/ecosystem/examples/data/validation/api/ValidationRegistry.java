@@ -19,7 +19,7 @@
  */
 package com.adobe.platform.ecosystem.examples.data.validation.api;
 
-    import java.util.List;
+import java.util.List;
 
 /**
  * Registry to obtain validation rules
