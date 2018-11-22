@@ -22,16 +22,16 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.adobe.platform.ecosystem.examples.data.validation.api.Rule;
+import com.adobe.platform.ecosystem.examples.data.validation.api.ValidationRegistry;
 import com.adobe.platform.ecosystem.examples.data.write.mapper.MapperUtil;
 import com.adobe.platform.ecosystem.examples.data.write.writer.extractor.Extractor;
 import com.adobe.platform.ecosystem.examples.parquet.exception.ParquetIOException;
 import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIOField;
-import com.adobe.platform.ecosystem.examples.catalog.model.DataSet;
 import com.adobe.platform.ecosystem.examples.catalog.model.DataType;
 import com.adobe.platform.ecosystem.examples.data.write.field.converter.parquet.ParquetFieldConverter;
 import com.adobe.platform.ecosystem.examples.data.wiring.DataWiringParam;
@@ -52,6 +52,7 @@ import org.apache.parquet.schema.PrimitiveType;
 import org.apache.parquet.schema.Type;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.mortbay.util.ajax.JSON;
 
 /**
  * Created by vardgupt on 10/17/2017.
@@ -67,16 +68,20 @@ public class ParquetDataFormatter implements Formatter {
 
     private final Extractor<JSONObject> extractor;
 
+    private final ValidationRegistry<Object> validationRegistry;
+
     private static Logger logger = Logger.getLogger(ParquetDataFormatter.class.getName());
 
     public ParquetDataFormatter(ParquetIOWriter writer,
                                 DataWiringParam param,
                                 ParquetFieldConverter<JSONObject> fieldConverter,
-                                Extractor<JSONObject> extractor) {
+                                Extractor<JSONObject> extractor,
+                                ValidationRegistry<Object> validationRegistry) {
         this.writer = writer;
         this.param = param;
         this.fieldConverter = fieldConverter;
         this.extractor = extractor;
+        this.validationRegistry = validationRegistry;
     }
 
     /**
@@ -131,7 +136,7 @@ public class ParquetDataFormatter implements Formatter {
             List<SimpleGroup> records = new ArrayList<>();
             for (JSONObject row : dataTable) {
                 SimpleGroup parquetRow = new SimpleGroup(schema);
-                updateParquetGroupWithData(row, parquetRow);
+                updateParquetGroupWithData(row, parquetRow, new ArrayList<>());
                 records.add(parquetRow);
             }
 
@@ -147,11 +152,15 @@ public class ParquetDataFormatter implements Formatter {
         }
     }
 
-    private void updateParquetGroupWithData(JSONObject data, SimpleGroup currentGroup) {
+    private void updateParquetGroupWithData(JSONObject data, SimpleGroup currentGroup, ArrayList<String> path) throws ConnectorSDKException {
         GroupType schema = currentGroup.getType();
         int noOfFields = schema.getFieldCount();
         for (int i = 0; i < noOfFields; i++) {
             String currentFieldName = schema.getFieldName(i);
+
+            final ArrayList<String> clone = (ArrayList<String>) path.clone();
+            clone.add(currentFieldName);
+
             if (schema.getType(i).isPrimitive()) {
                 if (schema.getType(i).isRepetition(Type.Repetition.REPEATED)) {
                     if (data.get(currentFieldName) instanceof JSONArray) { // Regular case
@@ -159,7 +168,7 @@ public class ParquetDataFormatter implements Formatter {
                         JSONArray jsonValueArray = (JSONArray) data.get(currentFieldName);
                         for (int j = 0; j < jsonValueArray.size(); j++) {
                             Object value = jsonValueArray.get(j); // Value will be primitive.
-                            updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, i);
+                            updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, i, clone);
                         }
                     } else {
                         Object value = data.get(currentFieldName);
@@ -167,50 +176,50 @@ public class ParquetDataFormatter implements Formatter {
                             final String strValue = (String) value;
                             if(strValue.split(",").length > 1) {
                                 final int index = i;
-                                Arrays.stream(strValue.split(",")).forEach( token -> {
-                                    updateParquetRecordWithPrimitiveValue(schema, token, currentGroup, index);
-                                });
+                                for(String token : strValue.split(",")) {
+                                    updateParquetRecordWithPrimitiveValue(schema, token, currentGroup, index, clone);
+                                }
                             }
                         } else {
-                            updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, i);
+                            updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, i, clone);
                         }
                     }
                 } else if (schema.getType(i).isRepetition(Type.Repetition.OPTIONAL)) {
                     Object value = data.get(currentFieldName);
-                    updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, i);
+                    updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, i, clone);
                 }
             } else {
                 if (schema.getType(i).isRepetition(Type.Repetition.REPEATED)) {
                     if (data.get(currentFieldName) instanceof JSONArray) {
                         JSONArray jsonValueArray = (JSONArray) data.get(currentFieldName);
                         for (int j = 0; j < jsonValueArray.size(); j++) {
-                            addComplexGroupToParquet(currentGroup, schema.getFieldName(i), (JSONObject) data.get(currentFieldName));
+                            addComplexGroupToParquet(currentGroup, schema.getFieldName(i), (JSONObject) data.get(currentFieldName), clone);
                         }
                     } else {
                         final JSONObject value = (JSONObject) data.get(currentFieldName);
                         if(extractor.isExtractRequired(value)) {
                             final List<JSONObject> objects = extractor.extract(value);
                             final int index = i;
-                            objects.stream().forEach( extractedObject -> {
-                                addComplexGroupToParquet(currentGroup, schema.getFieldName(index), extractedObject);
-                            });
+                            for(JSONObject extractedObject : objects) {
+                                addComplexGroupToParquet(currentGroup, schema.getFieldName(index), extractedObject, clone);
+                            }
                         } else {
-                            addComplexGroupToParquet(currentGroup, schema.getFieldName(i), (JSONObject) data.get(currentFieldName));
+                            addComplexGroupToParquet(currentGroup, schema.getFieldName(i), (JSONObject) data.get(currentFieldName), clone);
                         }
                     }
                 } else {
-                    addComplexGroupToParquet(currentGroup, schema.getFieldName(i), (JSONObject) data.get(currentFieldName));
+                    addComplexGroupToParquet(currentGroup, schema.getFieldName(i), (JSONObject) data.get(currentFieldName), clone);
                 }
             }
         }
     }
 
-    private void addComplexGroupToParquet(Group currentGroup, String fieldName, JSONObject jsonData){
+    private void addComplexGroupToParquet(Group currentGroup, String fieldName, JSONObject jsonData, ArrayList<String> path) throws ConnectorSDKException {
         Group complexGroup = currentGroup.addGroup(fieldName);
-        updateParquetGroupWithData(jsonData, (SimpleGroup) complexGroup);
+        updateParquetGroupWithData(jsonData, (SimpleGroup) complexGroup, path);
     }
 
-    private List<SimpleGroup> getRecords(List<SDKField> sdkFields, List<List<Object>> dataTable) {
+    private List<SimpleGroup> getRecords(List<SDKField> sdkFields, List<List<Object>> dataTable) throws ConnectorSDKException {
         Map<String, String> map = new LinkedHashMap<>();
         Map<String, String> mapSDKFields = new LinkedHashMap<>();
         for (SDKField field : sdkFields) {
@@ -237,7 +246,7 @@ public class ParquetDataFormatter implements Formatter {
         return records;
     }
 
-    private int getRecord(List<List<Object>> dataTable, List<SDKField> sdkFields, GroupType schema, SimpleGroup record, int fieldIndex, int rowId) {
+    private int getRecord(List<List<Object>> dataTable, List<SDKField> sdkFields, GroupType schema, SimpleGroup record, int fieldIndex, int rowId) throws ConnectorSDKException {
         int noOfFields = schema.getFieldCount();
         logger.log(Level.FINE, schema.toString());
         int nextFieldIndex = fieldIndex;
@@ -247,7 +256,7 @@ public class ParquetDataFormatter implements Formatter {
                 Object fieldValue = dataTable.get(rowId).get(nextFieldIndex);
                 nextFieldIndex = nextFieldIndex + 1;
                 leavesProcessed++;
-                updateParquetRecordWithPrimitiveValue(schema, fieldValue, record, p);
+                updateParquetRecordWithPrimitiveValue(schema, fieldValue, record, p, null);
             } else {
                 GroupType groupType = schema.getType(p).asGroupType();
                 logger.log(Level.FINE, schema.getType(p).getName() + " " +  schema.getType(p).getRepetition());
@@ -349,24 +358,35 @@ public class ParquetDataFormatter implements Formatter {
      * Method that invokes correct setter on
      * parquet record using the types defined
      * in parquet schema.
-     *
-     * @param schema             parquet schema of the GroupType record
+     *  @param schema             parquet schema of the GroupType record
      *                           of which current column is a part of.
      * @param currentColumnValue current column value.
      * @param currentRecord      Represents the current record in which
-     *                           value will be updated for column <code>currentColumnIndex</code>
+ *                           value will be updated for column <code>currentColumnIndex</code>
      * @param currentColumnIndex
+     * @param path
      */
-    private void updateParquetRecordWithPrimitiveValue(GroupType schema, Object currentColumnValue, SimpleGroup currentRecord, int currentColumnIndex) {
+    private void updateParquetRecordWithPrimitiveValue(GroupType schema,
+                                                       Object currentColumnValue,
+                                                       SimpleGroup currentRecord,
+                                                       int currentColumnIndex,
+                                                       List<String> path) throws ConnectorSDKException {
         if (currentColumnValue == null) {
             return;
         }
         PrimitiveType primitiveTypeField = schema.getType(currentColumnIndex).asPrimitiveType();
         String type = primitiveTypeField.getPrimitiveTypeName().name();
+        final List<Rule<Object>> validationRules = validationRegistry.getValidationRule(path);
         if (type.equalsIgnoreCase("binary")) {
-            if (currentColumnValue != null) {
-                currentRecord.append(schema.getFieldName(currentColumnIndex), currentColumnValue.toString());
+            for(Rule rule : validationRules) {
+                final boolean result = rule.apply(currentColumnValue);
+                if (!result) {
+                    throw new ConnectorSDKException("Error in validating field "
+                        + schema.getFieldName(currentColumnIndex)
+                        + "with value: " + currentColumnValue);
+                }
             }
+            currentRecord.append(schema.getFieldName(currentColumnIndex), currentColumnValue.toString());
         } else if (type.equalsIgnoreCase("boolean")) {
             currentRecord.add(schema.getFieldName(currentColumnIndex), getBooleanValueFromInt(currentColumnValue));
         } else if (type.equalsIgnoreCase("int32")) {

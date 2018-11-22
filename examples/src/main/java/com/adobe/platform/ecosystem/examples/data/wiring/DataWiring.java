@@ -16,6 +16,8 @@
  */
 package com.adobe.platform.ecosystem.examples.data.wiring;
 
+import com.adobe.platform.ecosystem.examples.data.validation.api.ValidationRegistryFactory;
+import com.adobe.platform.ecosystem.examples.data.validation.impl.CatalogValidationRegistryFactory;
 import com.adobe.platform.ecosystem.examples.parquet.write.ParquetIOWriter;
 import com.adobe.platform.ecosystem.examples.parquet.write.ParquetIOWriterImpl;
 import com.adobe.platform.ecosystem.examples.catalog.api.CatalogService;
@@ -74,7 +76,8 @@ public class DataWiring implements Wiring {
     @Override
     public DataWriterFactory dataWriterFactory() {
         ParquetIOWriter writer = new ParquetIOWriterImpl();
-        PlatformDataFormatterFactory formatterFactory = new PlatformDataFormatterFactory(writer,param);
+        ValidationRegistryFactory<Object> registryFactory = new CatalogValidationRegistryFactory();
+        PlatformDataFormatterFactory formatterFactory = new PlatformDataFormatterFactory(writer, param, registryFactory);
         return new PlatformDataWriterFactory(param, cs, dis, httpClient, formatterFactory);
     }
 }

@@ -20,15 +20,18 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.adobe.platform.ecosystem.examples.data.validation.api.ValidationRegistryFactory;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import com.adobe.platform.ecosystem.examples.catalog.model.DataSet;
@@ -50,8 +53,13 @@ public class DataIngestionAPIWriterTest extends BaseTest {
 
     private WriteAttributes writeAttributes = new WriteAttributes.WriteAttributesBuilder().build();
 
+    @Mock
+    ValidationRegistryFactory registryFactory;
+
     @Before
     public void setUpBase() throws Exception {
+        initMocks(this);
+
         setUp();
         setUpHttpForJwtResponse();
 
@@ -64,15 +72,15 @@ public class DataIngestionAPIWriterTest extends BaseTest {
     @Test
     public void testConstructor() throws Exception {
 
-        Formatter platFormatter = new PlatformDataFormatterFactory(writer, param).getFormatter(PARQUET_FILE_FORMAT);
+        Formatter platFormatter = new PlatformDataFormatterFactory(writer, param, registryFactory).getFormatter(PARQUET_FILE_FORMAT);
          DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, PARQUET_FILE_FORMAT, platFormatter, writeAttributes, catService);
         assertTrue(disWriter != null);
 
-        platFormatter = new PlatformDataFormatterFactory(writer, param).getFormatter(CSV_FILE_FORMAT);
+        platFormatter = new PlatformDataFormatterFactory(writer, param, registryFactory).getFormatter(CSV_FILE_FORMAT);
         disWriter = new DataIngestionAPIWriter(dis, param, CSV_FILE_FORMAT, platFormatter, writeAttributes, catService);
         assertTrue(disWriter != null);
 
-        platFormatter = new PlatformDataFormatterFactory(writer, param).getFormatter(JSON_FILE_FORMAT);
+        platFormatter = new PlatformDataFormatterFactory(writer, param, registryFactory).getFormatter(JSON_FILE_FORMAT);
         disWriter = new DataIngestionAPIWriter(dis, param, JSON_FILE_FORMAT, platFormatter, writeAttributes, catService);
         assertTrue(disWriter != null);
 
@@ -82,7 +90,7 @@ public class DataIngestionAPIWriterTest extends BaseTest {
     public void testWriteCSV() throws IOException, ConnectorSDKException, ParseException {
         DataSet datset = getDataSetFromString(datasetInnerSample1);
         DataWiringParam param = new DataWiringParam("imsOrg", datset);
-        Formatter platFormatter = new PlatformDataFormatterFactory(writer, param).getFormatter(CSV_FILE_FORMAT);
+        Formatter platFormatter = new PlatformDataFormatterFactory(writer, param, registryFactory).getFormatter(CSV_FILE_FORMAT);
         DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, CSV_FILE_FORMAT, platFormatter, writeAttributes, catService);
 
         List<SDKField> sdkFields = new ArrayList<SDKField>();
@@ -138,7 +146,7 @@ public class DataIngestionAPIWriterTest extends BaseTest {
 
     @Test
     public void testWriteJSON() throws IOException, ConnectorSDKException {
-        Formatter platFormatter = new PlatformDataFormatterFactory(writer, param).getFormatter(JSON_FILE_FORMAT);
+        Formatter platFormatter = new PlatformDataFormatterFactory(writer, param, registryFactory).getFormatter(JSON_FILE_FORMAT);
         DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, JSON_FILE_FORMAT, platFormatter, writeAttributes, catService);
 
         List<SDKField> sdkFields = new ArrayList<SDKField>();
@@ -185,7 +193,7 @@ public class DataIngestionAPIWriterTest extends BaseTest {
     @SuppressWarnings("unchecked")
     @Test
     public void testWriteJSONForProcedural() throws IOException, ConnectorSDKException {
-        Formatter platFormatter = new PlatformDataFormatterFactory(writer, param).getFormatter(JSON_FILE_FORMAT);
+        Formatter platFormatter = new PlatformDataFormatterFactory(writer, param, registryFactory).getFormatter(JSON_FILE_FORMAT);
         DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, JSON_FILE_FORMAT, platFormatter, writeAttributes, catService);
 
         JSONObject jobj = new JSONObject();
@@ -206,7 +214,7 @@ public class DataIngestionAPIWriterTest extends BaseTest {
     public void testWriteAPIWithFlushStrategy() throws ConnectorSDKException, ParseException {
         DataSet datset = getDataSetFromString(datasetInnerSample1);
         DataWiringParam param = new DataWiringParam("imsOrg", datset);
-        Formatter platFormatter = new PlatformDataFormatterFactory(writer, param).getFormatter(CSV_FILE_FORMAT);
+        Formatter platFormatter = new PlatformDataFormatterFactory(writer, param, registryFactory).getFormatter(CSV_FILE_FORMAT);
         writeAttributes = new WriteAttributes.WriteAttributesBuilder().withFlushStrategy(true).withSizeOfRecord(20).build();
 
         DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, CSV_FILE_FORMAT, platFormatter, writeAttributes, catService);
@@ -247,7 +255,7 @@ public class DataIngestionAPIWriterTest extends BaseTest {
     public void testWriteAPIForProceduralWithFlushStrategy() throws ConnectorSDKException, ParseException {
         DataSet datset = getDataSetFromString(datasetInnerSample1);
         DataWiringParam param = new DataWiringParam("imsOrg", datset);
-        Formatter platFormatter = new PlatformDataFormatterFactory(writer, param).getFormatter(JSON_FILE_FORMAT);
+        Formatter platFormatter = new PlatformDataFormatterFactory(writer, param, registryFactory).getFormatter(JSON_FILE_FORMAT);
         writeAttributes = new WriteAttributes.WriteAttributesBuilder().withFlushStrategy(true).withSizeOfRecord(20).build();
 
         DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, CSV_FILE_FORMAT, platFormatter, writeAttributes, catService);
@@ -281,7 +289,7 @@ public class DataIngestionAPIWriterTest extends BaseTest {
     public void testWriteAPIForWithCustomFlushStrategy() throws ConnectorSDKException, ParseException {
         DataSet datset = getDataSetFromString(datasetInnerSample1);
         DataWiringParam param = new DataWiringParam("imsOrg", datset);
-        Formatter platFormatter = new PlatformDataFormatterFactory(writer, param).getFormatter(CSV_FILE_FORMAT);
+        Formatter platFormatter = new PlatformDataFormatterFactory(writer, param, registryFactory).getFormatter(CSV_FILE_FORMAT);
         writeAttributes = new WriteAttributes.WriteAttributesBuilder().withFlushStrategy(true).withSizeOfRecord(134217728).build();
         DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, CSV_FILE_FORMAT, platFormatter, writeAttributes, catService);
 

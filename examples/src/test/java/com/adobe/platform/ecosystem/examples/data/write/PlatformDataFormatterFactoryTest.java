@@ -17,21 +17,33 @@
 package com.adobe.platform.ecosystem.examples.data.write;
 
 import static org.junit.Assert.assertTrue;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 import com.adobe.platform.ecosystem.examples.data.FileFormat;
+import com.adobe.platform.ecosystem.examples.data.validation.api.ValidationRegistryFactory;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.adobe.platform.ecosystem.examples.parquet.write.ParquetIOWriter;
 import com.adobe.platform.ecosystem.examples.parquet.write.ParquetIOWriterImpl;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
 import com.adobe.platform.ecosystem.ut.BaseTest;
+import org.mockito.Mock;
 
 public class PlatformDataFormatterFactoryTest extends BaseTest {
+
+    @Mock
+    ValidationRegistryFactory registryFactory;
+
+    @Before
+    public void setup() {
+        initMocks(this);
+    }
 
     @Test
     public void testGetFormatter() {
         ParquetIOWriter writer = new ParquetIOWriterImpl();
-        PlatformDataFormatterFactory platFormatter = new PlatformDataFormatterFactory(writer, param);
+        PlatformDataFormatterFactory platFormatter = new PlatformDataFormatterFactory(writer, param, registryFactory);
         assertTrue(platFormatter.getFormatter(FileFormat.CSV) != null);
         assertTrue(platFormatter.getFormatter(FileFormat.PARQUET) != null);
         assertTrue(platFormatter.getFormatter(FileFormat.JSON) != null);
