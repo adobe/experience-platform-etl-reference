@@ -54,7 +54,7 @@ public class SchemaField {
 
     private Dule dule;
 
-    private List<Rule<Object>> rules;
+    private List<Rule<?>> rules;
 
     public SchemaField(JSONObject field, boolean useFlatNamesForLeafNodes) {
         this(field, "", useFlatNamesForLeafNodes);
@@ -206,7 +206,7 @@ public class SchemaField {
             return;
         }
         // Adding Validation rule for field.
-        final Rule<Object> rule = SchemaValidationRule
+        final Rule<?> rule = SchemaValidationRule
             .fromJsonBuilder()
             .with(field)
             .build();
@@ -393,7 +393,7 @@ public class SchemaField {
         return arraySubType;
     }
 
-    public List<Rule<Object>> getRules() {
+    public List<Rule<?>> getRules() {
         return rules;
     }
 }

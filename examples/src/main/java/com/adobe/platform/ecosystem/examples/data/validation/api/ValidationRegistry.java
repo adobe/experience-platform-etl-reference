@@ -19,23 +19,59 @@
  */
 package com.adobe.platform.ecosystem.examples.data.validation.api;
 
+import com.adobe.platform.ecosystem.examples.data.validation.impl.TraversablePath;
+
 import java.util.List;
 
 /**
  * Registry to obtain validation rules
  * for input schema field path.
+ * For getting rule for schema {@code firstName}
+ * below, a {@code List} of (person, firstname)
+ * should be passed as the input.
+ *
+ * <pre>
+ *     "person" : {
+ *         "type" : "object",
+ *         "properties : {
+ *             "firstName" : {
+ *                 "type" : "string"
+ *             }
+ *         }
+ *     }
+ * </pre>
  *
  * @author vedhera on 11/12/2018.
  */
-public interface ValidationRegistry<T> {
+public interface ValidationRegistry {
 
     /**
      * Given a list of traversable schema
-     * path for a field, returns a {@code List}
-     * of Rules
+     * path for a field, returns a {@code List<Rule<String>>}
+     * rules.
      *
-     * @param path
-     * @return
+     * @param path root to leaf path.
+     * @return rules for type {@link java.lang.String}
      */
-    List<Rule<T>> getValidationRule(List<String> path);
+    List<Rule<String>> getStringValidationRule(TraversablePath path);
+
+    /**
+     * Given a list of traversable schema
+     * path for a field, returns a {@code List<Rule<Integer>>}
+     * rules.
+     *
+     * @param path root to leaf path.
+     * @return rules for type {@link java.lang.Integer}
+     */
+    List<Rule<Integer>> getIntegerValidationRule(TraversablePath path);
+
+    /**
+     * Given a list of traversable schema
+     * path for a field, returns a {@code List<Rule<Long>>}
+     * rules.
+     *
+     * @param path root to leaf path.
+     * @return rules for type {@link java.lang.Long}
+     */
+    List<Rule<Long>> getLongValidationRule(TraversablePath path);
 }

@@ -20,6 +20,7 @@
 package com.adobe.platform.ecosystem.examples.data.validation.impl.rules;
 
 import com.adobe.platform.ecosystem.examples.data.validation.api.Rule;
+import com.adobe.platform.ecosystem.examples.data.validation.exception.ValidationException;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -45,7 +46,7 @@ public abstract class SchemaValidationRule<T> implements Rule<T> {
      * @param value
      * @return true/false
      */
-    public abstract boolean apply(T value);
+    public abstract void apply(T value) throws ValidationException;
 
 
     /**
@@ -81,7 +82,7 @@ public abstract class SchemaValidationRule<T> implements Rule<T> {
         }
 
         @Override
-        public SchemaValidationRule<? extends Object> build() {
+        public SchemaValidationRule<?> build() {
             final String type = (String) data.get("type");
             switch (type.toLowerCase()) {
                 case "string":
@@ -135,7 +136,7 @@ public abstract class SchemaValidationRule<T> implements Rule<T> {
             }
 
             if (data.containsKey("minLength")) {
-                runningBuilder.withMinLength(Integer.valueOf(data.get("maxLength").toString()));
+                runningBuilder.withMinLength(Integer.valueOf(data.get("minLength").toString()));
             }
 
             if (data.containsKey("format")) {
@@ -180,5 +181,4 @@ public abstract class SchemaValidationRule<T> implements Rule<T> {
     public interface Builder {
         SchemaValidationRule build();
     }
-
 }

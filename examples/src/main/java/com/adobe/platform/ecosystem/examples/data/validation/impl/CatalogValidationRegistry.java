@@ -29,39 +29,43 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.adobe.platform.ecosystem.examples.catalog.model.DataType.Field_ObjectType;
+import java.util.stream.Collectors;
 
 /**
+ * Registry to build rules over
+ * Catalog schema represented by a
+ * root {@link SchemaField}.
+ *
  * @author vedhera on 11/12/2018.
  */
-public class CatalogValidationRegistry implements ValidationRegistry<Object> {
+public class CatalogValidationRegistry implements ValidationRegistry {
     private final SchemaField rootField;
 
     private final String ROOT_HIERARCHY = "root";
 
-    private Map<List<String>, List<Rule<Object>>> validationRulesMap;
+    private Map<TraversablePath, List<Rule<?>>> validationRulesMap;
 
     public CatalogValidationRegistry(SchemaField field) {
         this.rootField = field;
     }
 
-    public ValidationRegistry<Object> build() {
+    public ValidationRegistry build() {
         initMap();
         switch (rootField.getType()) {
             case Field_ObjectType:
             case Field_ArrayType:
                 buildForComplexTypes(
                     sanitizeRootField(this.rootField),
-                    new ArrayList<>() // Empty hierarchy for root field.
+                    TraversablePath.path() // Empty hierarchy for root field.
                 );
                 break;
             case JsonArrayType:
                 break;
             default:
-                final ArrayList<String> hierarchyList = new ArrayList<>();
-                hierarchyList.add(ROOT_HIERARCHY);
-                buildForPrimitiveType(this.rootField, hierarchyList);
+                buildForPrimitiveType(
+                    this.rootField,
+                    TraversablePath.path().withNode(ROOT_HIERARCHY)
+                );
         }
 
         return this;
@@ -81,10 +85,14 @@ public class CatalogValidationRegistry implements ValidationRegistry<Object> {
             return rootField;
         }
 
+        final List<SchemaField> children = new ArrayList<>();
+        children.add(rootField);
+
+        // Encapsulate in a root field.
         return new SchemaField(
             "root",
             DataType.Field_ObjectType,
-            rootField.getSubFields()
+            children
         );
     }
 
@@ -92,23 +100,22 @@ public class CatalogValidationRegistry implements ValidationRegistry<Object> {
      * Recursively updates/adds rules
      * for Complex types.
      */
-    private void buildForComplexTypes(SchemaField field, ArrayList<String> hierarchy) {
+    private void buildForComplexTypes(SchemaField field, TraversablePath path) {
         switch (field.getType()) {
             case Field_ObjectType:
                 field.getSubFields()
                     .forEach(f -> {
-                        @SuppressWarnings("unchecked")
                         //Since list values are "String" types, Shallow copy works!
-                        final ArrayList<String> clone = (ArrayList<String>) hierarchy.clone();
-                        clone.add(field.getName());
+                        final TraversablePath clone = TraversablePath.clone(path);
+                        clone.withNode(field.getName());
                         buildForComplexTypes(f, clone);
                     });
                 break;
             case Field_ArrayType:
-                buildForArrayType(field, hierarchy);
+                buildForArrayType(field, path);
                 break;
             default:
-                buildForPrimitiveType(field, hierarchy);
+                buildForPrimitiveType(field, path);
                 break;
         }
     }
@@ -118,19 +125,19 @@ public class CatalogValidationRegistry implements ValidationRegistry<Object> {
      * Array types by peeking into
      * the 'sub' type.
      */
-    private void buildForArrayType(SchemaField field, ArrayList<String> hierarchy) {
+    private void buildForArrayType(SchemaField field, TraversablePath path) {
         switch (field.getArraySubType()) {
             case Field_ObjectType: // Complex Array
                 field.getSubFields()
                     .forEach(f -> {
-                        @SuppressWarnings("unchecked") final ArrayList<String> clone = (ArrayList<String>) hierarchy.clone();
-                        clone.add(field.getName());
+                        final TraversablePath clone = TraversablePath.clone(path);
+                        clone.withNode(field.getName());
                         buildForComplexTypes(f, clone);
                     });
 
                 break;
             default: // Primitive Array
-                buildForPrimitiveType(field, hierarchy);
+                buildForPrimitiveType(field, path);
                 break;
         }
     }
@@ -141,10 +148,10 @@ public class CatalogValidationRegistry implements ValidationRegistry<Object> {
      * there should not be two 'identical'
      * hierarchy paths.
      */
-    private void buildForPrimitiveType(SchemaField primitiveField, List<String> hierarchy) {
-        hierarchy.add(primitiveField.getName());
+    private void buildForPrimitiveType(SchemaField primitiveField, TraversablePath path) {
+        path.withNode(primitiveField.getName());
         validationRulesMap.put(
-            hierarchy,
+            path,
             primitiveField.getRules() == null ? new ArrayList<>() : primitiveField.getRules()
         );
     }
@@ -153,11 +160,48 @@ public class CatalogValidationRegistry implements ValidationRegistry<Object> {
      * {@inheritDoc}
      */
     @Override
-    public List<Rule<Object>> getValidationRule(List<String> path) {
-        if (path == null || path.size() == 0) {
+    @SuppressWarnings("unchecked")
+    public List<Rule<String>> getStringValidationRule(TraversablePath path) {
+        if (path.isNullOrEmpty()) {
             return new ArrayList<>();
         }
-        return validationRulesMap.get(sanitizePath(path));
+
+        return validationRulesMap
+            .get(sanitizePath(path))
+            .stream()
+            .map(rule -> (Rule<String>) rule).collect(Collectors.toList());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<Rule<Integer>> getIntegerValidationRule(TraversablePath path) {
+        if (path.isNullOrEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return validationRulesMap
+            .get(sanitizePath(path))
+            .stream()
+            .map(rule -> (Rule<Integer>) rule).collect(Collectors.toList());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<Rule<Long>> getLongValidationRule(TraversablePath path) {
+        if (path.isNullOrEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return validationRulesMap
+            .get(sanitizePath(path))
+            .stream()
+            .map(rule -> (Rule<Long>) rule).collect(Collectors.toList());
     }
 
     /**
@@ -165,12 +209,14 @@ public class CatalogValidationRegistry implements ValidationRegistry<Object> {
      * "root" as the first node in
      * path.
      */
-    private List<String> sanitizePath(List<String> path) {
-        if (path.get(0).equalsIgnoreCase("root")) {
+    private TraversablePath sanitizePath(TraversablePath path) {
+        if (path.getRootNode().equalsIgnoreCase("root")) {
             return path;
         }
-        List<String> clone = new ArrayList<>(path);
-        clone.add(0, ROOT_HIERARCHY);
-        return clone;
+        return path.setRootNode(ROOT_HIERARCHY);
+    }
+
+    Map<TraversablePath, List<Rule<?>>> getValidationRulesMap() {
+        return validationRulesMap;
     }
 }

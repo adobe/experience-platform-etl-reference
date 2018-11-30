@@ -19,26 +19,27 @@
  */
 package com.adobe.platform.ecosystem.examples.data.validation.impl.rules;
 
+import com.adobe.platform.ecosystem.examples.data.validation.exception.ValidationException;
+import com.adobe.platform.ecosystem.examples.data.validation.exception.ValidationExceptionBuilder;
+
 import java.util.Optional;
 
 /**
  * Concrete {@link SchemaValidationRule} for
- * following types
- * <pre>
- *     1. {@link Integer}
- *     2. {@link Short}
- *     3. {@link Byte}
+ * following types * <pre>
+ *     1. {@link java.lang.Integer}
+ *     2. {@link java.lang.Short}
+ *     3. {@link java.lang.Byte}
  * </pre>
  *
  * @author vedhera on 11/12/2018.
  */
 public class IntegerValidationRule extends SchemaValidationRule<Integer> {
-
     private Optional<Integer> minimum;
 
     private Optional<Integer> maximum;
 
-    private IntegerValidationRule(){
+    private IntegerValidationRule() {
 
     }
 
@@ -47,31 +48,37 @@ public class IntegerValidationRule extends SchemaValidationRule<Integer> {
      * {@link java.lang.Integer} input types.
      */
     @Override
-    public boolean apply(Integer value) {
-        if(minimum.isPresent()) {
-            if(value < minimum.get()) {
-                return false;
+    public void apply(Integer value) throws ValidationException {
+        if (minimum.isPresent()) {
+            if (value < minimum.get()) {
+                throw ValidationExceptionBuilder
+                    .<Integer>numericRuleExceptionBuilder()
+                    .failingLowerBound()
+                    .withValue(value)
+                    .withBound(minimum.get())
+                    .build();
             }
         }
 
-        if(maximum.isPresent()) {
-            if(value > maximum.get()) {
-                return false;
+        if (maximum.isPresent()) {
+            if (value > maximum.get()) {
+                throw ValidationExceptionBuilder
+                    .<Integer>numericRuleExceptionBuilder()
+                    .failingUpperBound()
+                    .withValue(value)
+                    .withBound(maximum.get())
+                    .build();
             }
         }
-        return true;
     }
 
-    /**
-     *
-     * @return
-     */
     public static IntegerValidationRule.Builder integerValidationRuleBuilder() {
         return new IntegerValidationRule.Builder();
     }
 
     /**
-     *
+     * Builder for type
+     * {@link IntegerValidationRule}
      */
     public static class Builder {
 

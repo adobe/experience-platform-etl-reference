@@ -19,18 +19,26 @@
  */
 package com.adobe.platform.ecosystem.examples.data.validation.api;
 
+import com.adobe.platform.ecosystem.examples.data.validation.exception.ValidationException;
+
 /**
  * Base interface to define any
  * rule.
  *
- * @param <T>
+ * @param <T> Type parameter
  * @author vedhera 11/18/2018.
  */
 public interface Rule<T> {
 
     /**
-     * @param input
-     * @return
+     * Interface to apply the rule
+     * for a give input {@code input}.
+     * Throws an exception of type
+     * {@link ValidationException} to signal
+     * errors during validation.
+     *
+     * @param input input data
+     * @throws ValidationException
      */
-    boolean apply(T input);
+    void apply(T input) throws ValidationException;
 }

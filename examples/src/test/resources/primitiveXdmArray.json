@@ -1,0 +1,16 @@
+{
+  "properties" : {
+    "contentTypes": {
+      "type": "array",
+      "description": "The content types that this channel can deliver.",
+      "meta:xdmType": "array",
+      "items": {
+        "type": "string",
+        "format": "uri",
+        "description": "The `@type` of an XDM-defined content type that is supported by this channel.",
+        "meta:xdmType": "string"
+      },
+      "meta:xdmField": "xdm:contentTypes"
+    }
+  }
+}

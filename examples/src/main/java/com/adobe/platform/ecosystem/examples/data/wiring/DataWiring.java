@@ -76,7 +76,7 @@ public class DataWiring implements Wiring {
     @Override
     public DataWriterFactory dataWriterFactory() {
         ParquetIOWriter writer = new ParquetIOWriterImpl();
-        ValidationRegistryFactory<Object> registryFactory = new CatalogValidationRegistryFactory();
+        ValidationRegistryFactory registryFactory = new CatalogValidationRegistryFactory();
         PlatformDataFormatterFactory formatterFactory = new PlatformDataFormatterFactory(writer, param, registryFactory);
         return new PlatformDataWriterFactory(param, cs, dis, httpClient, formatterFactory);
     }

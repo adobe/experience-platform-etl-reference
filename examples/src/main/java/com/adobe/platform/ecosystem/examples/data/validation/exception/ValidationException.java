@@ -17,25 +17,25 @@
  *
  *
  */
-package com.adobe.platform.ecosystem.examples.data.validation.api;
-
-
-import com.adobe.platform.ecosystem.examples.catalog.model.SchemaField;
+package com.adobe.platform.ecosystem.examples.data.validation.exception;
 
 /**
- * Interface for constructing
- * a {@link ValidationRegistry}.
+ * Exception class to signal validation errors occuring
+ * from {@link com.adobe.platform.ecosystem.examples.data.validation.api.Rule#apply(Object)}
+ * method.
  *
- * @author vedhera on 11/12/2018.
+ * See {@link ValidationExceptionBuilder}
+ * for building validation exceptions.
+ *
+ * @author vedhera
  */
-public interface ValidationRegistryFactory {
+public class ValidationException extends Exception {
 
-    /**
-     * API to construct the {@link com.adobe.platform.ecosystem.examples.data.validation.impl.rules.SchemaValidationRule}
-     * from a root of schema field.
-     *
-     * @param field The root schema field
-     * @return The constructed validation registry.
-     */
-    ValidationRegistry get(SchemaField field);
+    public ValidationException(String message) {
+        super(message);
+    }
+
+    public ValidationException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

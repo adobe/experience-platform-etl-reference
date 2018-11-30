@@ -19,7 +19,7 @@ package com.adobe.platform.ecosystem.examples.util;
 /**
  * Created by nidhi on 15/9/17.
  */
-public class ConnectorSDKException extends Exception{
+public class ConnectorSDKException extends Exception {
 
     public ConnectorSDKException(String message, Throwable cause){
         super(message, cause);

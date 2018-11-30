@@ -19,10 +19,16 @@
  */
 package com.adobe.platform.ecosystem.examples.data.validation.impl.rules;
 
+import com.adobe.platform.ecosystem.examples.data.validation.exception.ValidationException;
+import com.adobe.platform.ecosystem.examples.data.validation.exception.ValidationExceptionBuilder;
+
 import java.util.Optional;
 
 /**
- * @author vedhera
+ * Concrete {@link SchemaValidationRule} for
+ * type {@link java.lang.Long}.
+ *
+ * @author vedhera on 11/12/2018.
  */
 public class LongValidationRule extends SchemaValidationRule<Long> {
 
@@ -30,7 +36,7 @@ public class LongValidationRule extends SchemaValidationRule<Long> {
 
     private Optional<Long> maximum;
 
-    private LongValidationRule(){
+    private LongValidationRule() {
 
     }
 
@@ -39,19 +45,29 @@ public class LongValidationRule extends SchemaValidationRule<Long> {
      * {@link java.lang.Long} input types.
      */
     @Override
-    public boolean apply(Long value) {
-        if(minimum.isPresent()) {
-            if(value < minimum.get()) {
-                return false;
+    public void apply(Long value) throws ValidationException {
+        if (minimum.isPresent()) {
+            if (value < minimum.get()) {
+                throw ValidationExceptionBuilder
+                    .<Long>numericRuleExceptionBuilder()
+                    .failingLowerBound()
+                    .withValue(value)
+                    .withBound(minimum.get())
+                    .build();
             }
         }
 
-        if(maximum.isPresent()) {
-            if(value > maximum.get()) {
-                return false;
+        if (maximum.isPresent()) {
+            if (value > maximum.get()) {
+                throw ValidationExceptionBuilder
+                    .<Long>numericRuleExceptionBuilder()
+                    .failingUpperBound()
+                    .withValue(value)
+                    .withBound(maximum.get())
+                    .build();
             }
         }
-        return true;
+        return;
     }
 
     public static LongValidationRule.Builder longValidationRuleBuilder() {
@@ -59,7 +75,8 @@ public class LongValidationRule extends SchemaValidationRule<Long> {
     }
 
     /**
-     *
+     * Builder for type
+     * {@link LongValidationRule}
      */
     public static class Builder {
 

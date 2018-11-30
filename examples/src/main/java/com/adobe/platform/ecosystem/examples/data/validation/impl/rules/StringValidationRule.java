@@ -19,6 +19,10 @@
  */
 package com.adobe.platform.ecosystem.examples.data.validation.impl.rules;
 
+import com.adobe.platform.ecosystem.examples.data.validation.exception.ValidationException;
+import com.adobe.platform.ecosystem.examples.data.validation.exception.ValidationExceptionBuilder;
+import org.apache.commons.lang.StringUtils;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -42,37 +46,64 @@ public class StringValidationRule extends SchemaValidationRule<String> {
     private StringValidationRule() {
     }
 
+    /**
+     * Implementation for
+     * {@link String} input types.
+     */
     @Override
-    public boolean apply(String value) {
-        if(this.minLength.isPresent()) {
-            if(value.length() < this.minLength.get()) {
-                return false;
+    public void apply(String value) throws ValidationException {
+        if (this.minLength.isPresent()) {
+            if (value.length() < this.minLength.get()) {
+                throw ValidationExceptionBuilder
+                    .stringRuleExceptionBuilder()
+                    .failingLowerBound()
+                    .withValue(value)
+                    .withBound(minLength.get().toString())
+                    .build();
             }
         }
 
-        if(this.maxLength.isPresent()) {
-            if(value.length() > this.maxLength.get()) {
-                return false;
+        if (this.maxLength.isPresent()) {
+            if (value.length() > this.maxLength.get()) {
+                throw ValidationExceptionBuilder
+                    .stringRuleExceptionBuilder()
+                    .failingUpperBound()
+                    .withValue(value)
+                    .withBound(maxLength.get().toString())
+                    .build();
             }
         }
 
-        if(this.enumList.isPresent()) {
+        if (this.enumList.isPresent()) {
             final boolean match = this.enumList
                 .get()
                 .stream()
-                .anyMatch( e -> e.equals(value));
-            if(!match)
-                return match;
+                .anyMatch(e -> e.equals(value));
+            if (!match)
+                throw ValidationExceptionBuilder
+                    .stringRuleExceptionBuilder()
+                    .failingRangeBound()
+                    .withValue(value)
+                    .withBound(buildList(enumList.get()))
+                    .build();
         }
 
         // TODO: Add validations using format and pattern.
-        return true;
+        return;
+    }
+
+    private String buildList(List<String> allowedValues) {
+        return StringUtils.join(allowedValues, '.');
     }
 
     public static StringValidationRule.Builder stringValidationRuleBuilder() {
         return new StringValidationRule.Builder();
     }
 
+    /**
+     * Builder for type
+     * {@link StringValidationRule}
+     */
     public static class Builder {
         private StringValidationRule validationRule = new StringValidationRule();
 

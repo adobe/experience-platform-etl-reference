@@ -47,13 +47,13 @@ import java.util.List;
  */
 public class PlatformDataFormatterFactory implements DataFormatterFactory {
 
-    private ParquetIOWriter writer;
+    final private ParquetIOWriter writer;
 
-    private DataWiringParam param;
+    final private DataWiringParam param;
 
-    private final ValidationRegistryFactory<Object> registryFactory;
+    private final ValidationRegistryFactory registryFactory;
 
-    public PlatformDataFormatterFactory(ParquetIOWriter writer, DataWiringParam param, ValidationRegistryFactory<Object> registryFactory) {
+    public PlatformDataFormatterFactory(ParquetIOWriter writer, DataWiringParam param, ValidationRegistryFactory registryFactory) {
         this.writer = writer;
         this.param = param;
         this.registryFactory = registryFactory;
@@ -97,7 +97,7 @@ public class PlatformDataFormatterFactory implements DataFormatterFactory {
         }
     }
 
-    private ValidationRegistry<Object> getValidationRegistry(List<SchemaField> fields) {
+    private ValidationRegistry getValidationRegistry(List<SchemaField> fields) {
         final SchemaField rootField = new SchemaField(
             "root",
             DataType.Field_ObjectType,

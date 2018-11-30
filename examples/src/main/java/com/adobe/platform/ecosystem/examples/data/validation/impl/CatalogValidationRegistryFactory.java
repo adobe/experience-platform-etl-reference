@@ -24,15 +24,18 @@ import com.adobe.platform.ecosystem.examples.data.validation.api.ValidationRegis
 import com.adobe.platform.ecosystem.examples.data.validation.api.ValidationRegistryFactory;
 
 /**
+ * Factory to provide a schema
+ * based {@link ValidationRegistry}.
+ *
  * @author vedhera on 11/12/2018.
  */
-public class CatalogValidationRegistryFactory implements ValidationRegistryFactory<Object> {
+public class CatalogValidationRegistryFactory implements ValidationRegistryFactory {
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public ValidationRegistry<Object> get(SchemaField field) {
+    public ValidationRegistry get(SchemaField field) {
         return new CatalogValidationRegistry(field).build();
     }
 }
