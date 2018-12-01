@@ -204,7 +204,7 @@ public class ParquetDataFormatter implements Formatter {
                     if (data.get(currentFieldName) instanceof JSONArray) {
                         JSONArray jsonValueArray = (JSONArray) data.get(currentFieldName);
                         for (int j = 0; j < jsonValueArray.size(); j++) {
-                            addComplexGroupToParquet(currentGroup, currentFieldName, (JSONObject) data.get(currentFieldName), clone);
+                            addComplexGroupToParquet(currentGroup, currentFieldName, (JSONObject) data.get(j), clone);
                         }
                     } else {
                         final JSONObject value = (JSONObject) data.get(currentFieldName);
@@ -412,14 +412,14 @@ public class ParquetDataFormatter implements Formatter {
             currentRecord.add(currentFieldName, getBooleanValueFromInt(currentColumnValue));
         } else if (type.equalsIgnoreCase("int32")) {
             int integerValue = getIntValue(currentColumnValue);
-            if(primitiveTypeField.getOriginalType() == OriginalType.TIMESTAMP_MILLIS) {
+            if(primitiveTypeField.getOriginalType() == OriginalType.DATE) {
                 applyStringValidationRule(schemaPath, currentColumnValue.toString());
             } else {
                 applyIntegerValidationRule(schemaPath, integerValue);
             }
             currentRecord.add(currentFieldName, integerValue);
         } else if (type.equalsIgnoreCase("int64")) {
-            long longValue = getIntValue(currentColumnValue);
+            long longValue = getLongValue(currentColumnValue);
             if(primitiveTypeField.getOriginalType() == OriginalType.TIMESTAMP_MILLIS) {
                 applyStringValidationRule(schemaPath, currentColumnValue.toString());
             } else {
