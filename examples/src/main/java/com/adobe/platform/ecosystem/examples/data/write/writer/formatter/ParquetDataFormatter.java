@@ -202,9 +202,9 @@ public class ParquetDataFormatter implements Formatter {
             } else {
                 if (columnType.isRepetition(Type.Repetition.REPEATED)) {
                     if (data.get(currentFieldName) instanceof JSONArray) {
-                        JSONArray jsonValueArray = (JSONArray) data.get(currentFieldName);
+                        final JSONArray jsonValueArray = (JSONArray) data.get(currentFieldName);
                         for (int j = 0; j < jsonValueArray.size(); j++) {
-                            addComplexGroupToParquet(currentGroup, currentFieldName, (JSONObject) data.get(j), clone);
+                            addComplexGroupToParquet(currentGroup, currentFieldName, (JSONObject) jsonValueArray.get(j), clone);
                         }
                     } else {
                         final JSONObject value = (JSONObject) data.get(currentFieldName);
