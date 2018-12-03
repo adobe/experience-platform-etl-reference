@@ -132,6 +132,7 @@ public class SDKConstants {
     public static final String DEFAULT_LOGGING_PROPERTY = "com.adobe.platform.connector.loggingLevel";
     public static final String CATALOG_FIELD_FILTER_PROPERTY = "com.adobe.platform.xdm.blacklist.filter";
     public static final String CATALOG_FIELD_FILTER_DELIMITER = ",";
+    public static final String ENABLE_SCHEMA_VALIDATION_SYSTEM_PROPERTY = "enableSchemaValidation";
 
     public static final String SIMPLE_FILE_UPLOAD_LIMIT = "simplefileUploadLimit";
 }

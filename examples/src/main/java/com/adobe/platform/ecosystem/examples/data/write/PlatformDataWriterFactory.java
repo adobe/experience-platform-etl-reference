@@ -36,7 +36,11 @@ public class PlatformDataWriterFactory implements DataWriterFactory {
     private final HttpClient httpClient;
     private final PlatformDataFormatterFactory formatterFactory;
 
-    public PlatformDataWriterFactory(DataWiringParam param, CatalogService cs, DataIngestionService dis, HttpClient httpClient, PlatformDataFormatterFactory formatterFactory) {
+    public PlatformDataWriterFactory(DataWiringParam param,
+                                     CatalogService cs,
+                                     DataIngestionService dis,
+                                     HttpClient httpClient,
+                                     PlatformDataFormatterFactory formatterFactory) {
         this.param = param;
         this.cs = cs;
         this.dis = dis;

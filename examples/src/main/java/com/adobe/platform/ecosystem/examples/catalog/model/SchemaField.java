@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import com.adobe.platform.ecosystem.examples.data.validation.api.Rule;
+import com.adobe.platform.ecosystem.examples.data.validation.impl.rules.SchemaValidationRule;
 import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -52,6 +54,8 @@ public class SchemaField {
 
     private Dule dule;
 
+    private List<Rule<?>> rules;
+
     public SchemaField(JSONObject field, boolean useFlatNamesForLeafNodes) {
         this(field, "", useFlatNamesForLeafNodes);
     }
@@ -70,6 +74,17 @@ public class SchemaField {
         } else {
             getSchemaField(subFieldJson, currentHierarchy, useFlatNamesForLeafNodes);
         }
+    }
+
+    public SchemaField(String name, DataType type, List<SchemaField> schemaFields) {
+        this(name, type, schemaFields, null);
+    }
+
+    public SchemaField(String name, DataType type, List<SchemaField> subFields, DataType arraySubType) {
+        this.name = name;
+        this.type = type;
+        this.arraySubType = arraySubType;
+        this.subFields = subFields;
     }
 
     private void getSchemaFieldFromObservableSchema(String name, JSONObject field, String parentHierarchy, boolean useFlatNameForLeafNodes) {
@@ -164,6 +179,7 @@ public class SchemaField {
                         });
                         this.subFields = schemaSubFieldsArray;
                     } else {
+                        // TODO: Add correct sub-type here.
                         String typeOfSubType = (String) items.get(SDKConstants.TYPE);
                         this.arraySubType = DataType.StringType;
                         if(useFlatNameForLeafNodes)
@@ -178,8 +194,27 @@ public class SchemaField {
 
         this.dule = new Dule(JsonUtil.getJsonObject(field,
                 SDKConstants.CATALOG_DULE));
+
+        // Setup schema rules.
+        setupSchemaRules(type, field);
     }
 
+    @SuppressWarnings("unchecked")
+    private void setupSchemaRules(String type, JSONObject field) {
+        if(type.equalsIgnoreCase("array") ||
+            type.equalsIgnoreCase("object")) {
+            return;
+        }
+        // Adding Validation rule for field.
+        final Rule<?> rule = SchemaValidationRule
+            .fromJsonBuilder()
+            .with(field)
+            .build();
+        if(rule != null) {
+            this.rules = new ArrayList<>();
+            this.rules.add(rule);
+        }
+    }
 
     private void getSchemaField(JSONObject field, String parentHierarchy, boolean useFlatNameForLeafNodes) {
         String type = (String) field.get(SDKConstants.CATALOG_SCHEMA_META_XDM_TYPE);
@@ -293,6 +328,9 @@ public class SchemaField {
 
         this.dule = new Dule(JsonUtil.getJsonObject(field,
                 SDKConstants.CATALOG_DULE));
+
+        // Setup schema rules.
+        setupSchemaRules(type, field);
     }
 
     private String getNewHeirarchy(String name, String parentHeirarchy) {
@@ -353,6 +391,10 @@ public class SchemaField {
 
     public DataType getArraySubType() {
         return arraySubType;
+    }
+
+    public List<Rule<?>> getRules() {
+        return rules;
     }
 }
 

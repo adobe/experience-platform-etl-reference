@@ -22,24 +22,27 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.adobe.platform.ecosystem.examples.data.validation.api.Rule;
+import com.adobe.platform.ecosystem.examples.data.validation.api.ValidationRegistry;
+import com.adobe.platform.ecosystem.examples.data.validation.exception.ValidationException;
+import com.adobe.platform.ecosystem.examples.data.validation.impl.TraversablePath;
 import com.adobe.platform.ecosystem.examples.data.write.mapper.MapperUtil;
 import com.adobe.platform.ecosystem.examples.data.write.writer.extractor.Extractor;
 import com.adobe.platform.ecosystem.examples.parquet.exception.ParquetIOException;
 import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIOField;
-import com.adobe.platform.ecosystem.examples.catalog.model.DataSet;
 import com.adobe.platform.ecosystem.examples.catalog.model.DataType;
 import com.adobe.platform.ecosystem.examples.data.write.field.converter.parquet.ParquetFieldConverter;
 import com.adobe.platform.ecosystem.examples.data.wiring.DataWiringParam;
 
+import com.adobe.platform.ecosystem.examples.util.ConnectorSDKUtil;
+import org.apache.commons.lang.StringUtils;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.example.data.simple.SimpleGroup;
-import org.apache.parquet.schema.GroupType;
-import org.apache.parquet.schema.MessageType;
+import org.apache.parquet.schema.*;
 
 import com.adobe.platform.ecosystem.examples.parquet.write.ParquetIOWriter;
 import com.adobe.platform.ecosystem.examples.catalog.model.SDKField;
@@ -48,10 +51,9 @@ import com.adobe.platform.ecosystem.examples.constants.SDKConstants;
 import com.adobe.platform.ecosystem.examples.data.write.Formatter;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
 
-import org.apache.parquet.schema.PrimitiveType;
-import org.apache.parquet.schema.Type;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.mortbay.util.ajax.JSON;
 
 /**
  * Created by vardgupt on 10/17/2017.
@@ -67,16 +69,29 @@ public class ParquetDataFormatter implements Formatter {
 
     private final Extractor<JSONObject> extractor;
 
+    private final ValidationRegistry validationRegistry;
+
+    private final boolean isRegistryEnabled;
+
     private static Logger logger = Logger.getLogger(ParquetDataFormatter.class.getName());
 
     public ParquetDataFormatter(ParquetIOWriter writer,
                                 DataWiringParam param,
                                 ParquetFieldConverter<JSONObject> fieldConverter,
-                                Extractor<JSONObject> extractor) {
+                                Extractor<JSONObject> extractor,
+                                ValidationRegistry validationRegistry) {
         this.writer = writer;
         this.param = param;
         this.fieldConverter = fieldConverter;
         this.extractor = extractor;
+        this.validationRegistry = validationRegistry;
+        this.isRegistryEnabled = getRegistryEnabled();
+    }
+
+    private boolean getRegistryEnabled() {
+        return Boolean.parseBoolean(
+            ConnectorSDKUtil.getSystemProperty(SDKConstants.ENABLE_SCHEMA_VALIDATION_SYSTEM_PROPERTY)
+        );
     }
 
     /**
@@ -131,7 +146,7 @@ public class ParquetDataFormatter implements Formatter {
             List<SimpleGroup> records = new ArrayList<>();
             for (JSONObject row : dataTable) {
                 SimpleGroup parquetRow = new SimpleGroup(schema);
-                updateParquetGroupWithData(row, parquetRow);
+                updateParquetGroupWithData(row, parquetRow, TraversablePath.path());
                 records.add(parquetRow);
             }
 
@@ -147,70 +162,82 @@ public class ParquetDataFormatter implements Formatter {
         }
     }
 
-    private void updateParquetGroupWithData(JSONObject data, SimpleGroup currentGroup) {
+    private void updateParquetGroupWithData(JSONObject data, SimpleGroup currentGroup, TraversablePath path) throws ConnectorSDKException {
         GroupType schema = currentGroup.getType();
         int noOfFields = schema.getFieldCount();
-        for (int i = 0; i < noOfFields; i++) {
-            String currentFieldName = schema.getFieldName(i);
-            if (schema.getType(i).isPrimitive()) {
-                if (schema.getType(i).isRepetition(Type.Repetition.REPEATED)) {
+        for (int colIndex = 0; colIndex < noOfFields; colIndex++) {
+            final String currentFieldName = schema.getFieldName(colIndex);
+            final Type columnType = schema.getType(colIndex);
+
+            final TraversablePath clone =  TraversablePath.clone(path);
+            clone.withNode(currentFieldName);
+
+            if (columnType.isPrimitive()) {
+                if (columnType.isRepetition(Type.Repetition.REPEATED)) {
                     if (data.get(currentFieldName) instanceof JSONArray) { // Regular case
                         // Below is an assumption that json array will be present as value.
                         JSONArray jsonValueArray = (JSONArray) data.get(currentFieldName);
                         for (int j = 0; j < jsonValueArray.size(); j++) {
                             Object value = jsonValueArray.get(j); // Value will be primitive.
-                            updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, i);
+                            updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, colIndex, clone);
                         }
                     } else {
                         Object value = data.get(currentFieldName);
                         if(value instanceof String) {
                             final String strValue = (String) value;
                             if(strValue.split(",").length > 1) {
-                                final int index = i;
-                                Arrays.stream(strValue.split(",")).forEach( token -> {
-                                    updateParquetRecordWithPrimitiveValue(schema, token, currentGroup, index);
-                                });
+                                final int index = colIndex;
+                                for(String token : strValue.split(",")) {
+                                    updateParquetRecordWithPrimitiveValue(schema, token, currentGroup, index, clone);
+                                }
                             }
                         } else {
-                            updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, i);
+                            updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, colIndex, clone);
                         }
                     }
-                } else if (schema.getType(i).isRepetition(Type.Repetition.OPTIONAL)) {
+                } else if (columnType.isRepetition(Type.Repetition.OPTIONAL)) {
                     Object value = data.get(currentFieldName);
-                    updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, i);
+                    updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, colIndex, clone);
                 }
             } else {
-                if (schema.getType(i).isRepetition(Type.Repetition.REPEATED)) {
+                if (columnType.isRepetition(Type.Repetition.REPEATED)) {
                     if (data.get(currentFieldName) instanceof JSONArray) {
-                        JSONArray jsonValueArray = (JSONArray) data.get(currentFieldName);
+                        final JSONArray jsonValueArray = (JSONArray) data.get(currentFieldName);
                         for (int j = 0; j < jsonValueArray.size(); j++) {
-                            addComplexGroupToParquet(currentGroup, schema.getFieldName(i), (JSONObject) data.get(currentFieldName));
+                            addComplexGroupToParquet(currentGroup, currentFieldName, (JSONObject) jsonValueArray.get(j), clone);
                         }
                     } else {
                         final JSONObject value = (JSONObject) data.get(currentFieldName);
                         if(extractor.isExtractRequired(value)) {
                             final List<JSONObject> objects = extractor.extract(value);
-                            final int index = i;
-                            objects.stream().forEach( extractedObject -> {
-                                addComplexGroupToParquet(currentGroup, schema.getFieldName(index), extractedObject);
-                            });
+                            for(JSONObject extractedObject : objects) {
+                                addComplexGroupToParquet(currentGroup, currentFieldName, extractedObject, clone);
+                            }
                         } else {
-                            addComplexGroupToParquet(currentGroup, schema.getFieldName(i), (JSONObject) data.get(currentFieldName));
+                            addComplexGroupToParquet(currentGroup, currentFieldName, (JSONObject) data.get(currentFieldName), clone);
                         }
                     }
                 } else {
-                    addComplexGroupToParquet(currentGroup, schema.getFieldName(i), (JSONObject) data.get(currentFieldName));
+                    addComplexGroupToParquet(currentGroup, currentFieldName, (JSONObject) data.get(currentFieldName), clone);
                 }
             }
         }
     }
 
-    private void addComplexGroupToParquet(Group currentGroup, String fieldName, JSONObject jsonData){
+    private void addComplexGroupToParquet(Group currentGroup, String fieldName, JSONObject jsonData, TraversablePath path) throws ConnectorSDKException {
         Group complexGroup = currentGroup.addGroup(fieldName);
-        updateParquetGroupWithData(jsonData, (SimpleGroup) complexGroup);
+        updateParquetGroupWithData(jsonData, (SimpleGroup) complexGroup, path);
     }
 
-    private List<SimpleGroup> getRecords(List<SDKField> sdkFields, List<List<Object>> dataTable) {
+    @Deprecated
+    /**
+     * This SHOULD not be used
+     * going forward. All code
+     * should be routed through
+     * {@link ParquetDataFormatter#getBuffer(List)}
+     * API.
+     */
+    private List<SimpleGroup> getRecords(List<SDKField> sdkFields, List<List<Object>> dataTable) throws ConnectorSDKException {
         Map<String, String> map = new LinkedHashMap<>();
         Map<String, String> mapSDKFields = new LinkedHashMap<>();
         for (SDKField field : sdkFields) {
@@ -237,7 +264,15 @@ public class ParquetDataFormatter implements Formatter {
         return records;
     }
 
-    private int getRecord(List<List<Object>> dataTable, List<SDKField> sdkFields, GroupType schema, SimpleGroup record, int fieldIndex, int rowId) {
+    @Deprecated
+    /**
+     * This SHOULD not be used
+     * going forward. All code
+     * should be routed through
+     * {@link ParquetDataFormatter#getBuffer(List)}
+     * API.
+     */
+    private int getRecord(List<List<Object>> dataTable, List<SDKField> sdkFields, GroupType schema, SimpleGroup record, int fieldIndex, int rowId) throws ConnectorSDKException {
         int noOfFields = schema.getFieldCount();
         logger.log(Level.FINE, schema.toString());
         int nextFieldIndex = fieldIndex;
@@ -247,7 +282,7 @@ public class ParquetDataFormatter implements Formatter {
                 Object fieldValue = dataTable.get(rowId).get(nextFieldIndex);
                 nextFieldIndex = nextFieldIndex + 1;
                 leavesProcessed++;
-                updateParquetRecordWithPrimitiveValue(schema, fieldValue, record, p);
+                updateParquetRecordWithPrimitiveValue(schema, fieldValue, record, p, null);
             } else {
                 GroupType groupType = schema.getType(p).asGroupType();
                 logger.log(Level.FINE, schema.getType(p).getName() + " " +  schema.getType(p).getRepetition());
@@ -349,34 +384,52 @@ public class ParquetDataFormatter implements Formatter {
      * Method that invokes correct setter on
      * parquet record using the types defined
      * in parquet schema.
-     *
-     * @param schema             parquet schema of the GroupType record
+     *  @param schema             parquet schema of the GroupType record
      *                           of which current column is a part of.
      * @param currentColumnValue current column value.
      * @param currentRecord      Represents the current record in which
-     *                           value will be updated for column <code>currentColumnIndex</code>
-     * @param currentColumnIndex
+ *                           value will be updated for column <code>currentColumnIndex</code>
+     * @param currentColumnIndex current index for column.
+     * @param schemaPath
+     * @throws ConnectorSDKException
      */
-    private void updateParquetRecordWithPrimitiveValue(GroupType schema, Object currentColumnValue, SimpleGroup currentRecord, int currentColumnIndex) {
-        if (currentColumnValue == null) {
+    private void updateParquetRecordWithPrimitiveValue(GroupType schema,
+                                                       Object currentColumnValue,
+                                                       SimpleGroup currentRecord,
+                                                       int currentColumnIndex,
+                                                       TraversablePath schemaPath) throws ConnectorSDKException {
+        if (currentColumnValue == null || StringUtils.isEmpty(currentColumnValue.toString())) {
             return;
         }
-        PrimitiveType primitiveTypeField = schema.getType(currentColumnIndex).asPrimitiveType();
-        String type = primitiveTypeField.getPrimitiveTypeName().name();
+        final PrimitiveType primitiveTypeField = schema.getType(currentColumnIndex).asPrimitiveType();
+        final String type = primitiveTypeField.getPrimitiveTypeName().name();
+        final String currentFieldName = schema.getFieldName(currentColumnIndex);
+
         if (type.equalsIgnoreCase("binary")) {
-            if (currentColumnValue != null) {
-                currentRecord.append(schema.getFieldName(currentColumnIndex), currentColumnValue.toString());
-            }
+            applyStringValidationRule(schemaPath, currentColumnValue.toString());
+            currentRecord.append(currentFieldName, currentColumnValue.toString());
         } else if (type.equalsIgnoreCase("boolean")) {
-            currentRecord.add(schema.getFieldName(currentColumnIndex), getBooleanValueFromInt(currentColumnValue));
+            currentRecord.add(currentFieldName, getBooleanValueFromInt(currentColumnValue));
         } else if (type.equalsIgnoreCase("int32")) {
-            currentRecord.add(schema.getFieldName(currentColumnIndex), getIntValue(currentColumnValue));
+            int integerValue = getIntValue(currentColumnValue);
+            if(primitiveTypeField.getOriginalType() == OriginalType.DATE) {
+                applyStringValidationRule(schemaPath, currentColumnValue.toString());
+            } else {
+                applyIntegerValidationRule(schemaPath, integerValue);
+            }
+            currentRecord.add(currentFieldName, integerValue);
         } else if (type.equalsIgnoreCase("int64")) {
-            currentRecord.add(schema.getFieldName(currentColumnIndex), getLongValue(currentColumnValue));
+            long longValue = getLongValue(currentColumnValue);
+            if(primitiveTypeField.getOriginalType() == OriginalType.TIMESTAMP_MILLIS) {
+                applyStringValidationRule(schemaPath, currentColumnValue.toString());
+            } else {
+                applyLongValidationRule(schemaPath, longValue);
+            }
+            currentRecord.add(currentFieldName, longValue);
         } else if (type.equalsIgnoreCase("double")) {
-            currentRecord.add(schema.getFieldName(currentColumnIndex), getDoubleValue(currentColumnValue));
+            currentRecord.add(currentFieldName, getDoubleValue(currentColumnValue));
         } else if (type.equalsIgnoreCase("float")) {
-            currentRecord.add(schema.getFieldName(currentColumnIndex), getFloatValue(currentColumnValue));
+            currentRecord.add(currentFieldName, getFloatValue(currentColumnValue));
         }
     }
 
@@ -399,5 +452,55 @@ public class ParquetDataFormatter implements Formatter {
 
     private float getFloatValue(Object currentColumnValue) {
         return Float.parseFloat(currentColumnValue.toString());
+    }
+
+    private void applyStringValidationRule(TraversablePath schemaPath, String value) throws ConnectorSDKException {
+        if(!isRegistryEnabled) {
+            return;
+        }
+        final List<Rule<String>> validationRules = validationRegistry.getStringValidationRule(schemaPath);
+        for (Rule<String> rule : validationRules) {
+            try {
+                rule.apply(value);
+            } catch (ValidationException ex) {
+                handleValidationException(ex, schemaPath);
+            }
+        }
+    }
+
+    private void applyIntegerValidationRule(TraversablePath schemaPath, int value) throws ConnectorSDKException {
+        if(!isRegistryEnabled) {
+            return;
+        }
+        final List<Rule<Integer>> validationRules = validationRegistry.getIntegerValidationRule(schemaPath);
+        for (Rule<Integer> rule : validationRules) {
+            try {
+                rule.apply(value);
+            } catch (ValidationException ex) {
+                handleValidationException(ex, schemaPath);
+            }
+        }
+    }
+
+    private void applyLongValidationRule(TraversablePath schemaPath, long value) throws ConnectorSDKException {
+        if(!isRegistryEnabled) {
+            return;
+        }
+        final List<Rule<Long>> validationRules = validationRegistry.getLongValidationRule(schemaPath);
+        for (Rule<Long> rule : validationRules) {
+            try {
+                rule.apply(value);
+            } catch (ValidationException ex) {
+                handleValidationException(ex, schemaPath);
+            }
+        }
+    }
+
+    private void handleValidationException(ValidationException ex, TraversablePath schemaPath) throws ConnectorSDKException {
+        final String msg = "Error in validating field "
+            + schemaPath.buildFieldName()
+            + " Error: " + ex.getMessage();
+        logger.log(Level.SEVERE, msg);
+        throw new ConnectorSDKException(msg, ex);
     }
 }

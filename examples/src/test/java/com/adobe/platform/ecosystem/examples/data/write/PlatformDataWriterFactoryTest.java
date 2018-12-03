@@ -16,6 +16,7 @@
  */
 package com.adobe.platform.ecosystem.examples.data.write;
 
+import com.adobe.platform.ecosystem.examples.data.validation.api.ValidationRegistryFactory;
 import com.adobe.platform.ecosystem.examples.parquet.write.ParquetIOWriter;
 import com.adobe.platform.ecosystem.examples.parquet.write.ParquetIOWriterImpl;
 import com.adobe.platform.ecosystem.examples.catalog.model.FileDescription;
@@ -24,14 +25,20 @@ import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
 import com.adobe.platform.ecosystem.ut.BaseTest;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import static org.junit.Assert.assertTrue;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 public class PlatformDataWriterFactoryTest extends BaseTest {
 
+    @Mock
+    ValidationRegistryFactory registryFactory;
+
     @Before
     public void setUp() {
+        initMocks(this);
         FileDescription mockFileDescription = Mockito.mock(FileDescription.class);
         Mockito.when(dataset.getFileDescription()).thenReturn(mockFileDescription);
         Mockito.when(mockFileDescription.getFormat()).thenReturn(FileFormat.PARQUET);
@@ -40,7 +47,7 @@ public class PlatformDataWriterFactoryTest extends BaseTest {
     @Test
     public void testGetWriter() {
         ParquetIOWriter writer = new ParquetIOWriterImpl();
-        PlatformDataFormatterFactory formatterFactory = new PlatformDataFormatterFactory(writer, param);
+        PlatformDataFormatterFactory formatterFactory = new PlatformDataFormatterFactory(writer, param, registryFactory);
         PlatformDataWriterFactory platWriter = new PlatformDataWriterFactory(param, catService, dis, httpClient, formatterFactory);
         try {
             Mockito.when(dis.getBatchId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn("sfdsgsgsdgtw");

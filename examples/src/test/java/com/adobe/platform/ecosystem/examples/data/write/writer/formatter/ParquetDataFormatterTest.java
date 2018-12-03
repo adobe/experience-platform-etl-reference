@@ -16,6 +16,7 @@
  */
 package com.adobe.platform.ecosystem.examples.data.write.writer.formatter;
 
+import com.adobe.platform.ecosystem.examples.data.validation.api.ValidationRegistry;
 import com.adobe.platform.ecosystem.examples.parquet.exception.ParquetIOException;
 import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIODataType;
 import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIOField;
@@ -31,6 +32,7 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import java.io.File;
@@ -39,10 +41,14 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.mockito.MockitoAnnotations.initMocks;
+
 /**
  * @author vedhera on 2/26/2018
  */
 public class ParquetDataFormatterTest extends BaseTest {
+    @Mock
+    ValidationRegistry validationRegistry;
 
     private final ParquetFieldConverter fieldConverter = Mockito.mock(ParquetFieldConverter.class);
 
@@ -50,12 +56,14 @@ public class ParquetDataFormatterTest extends BaseTest {
 
     @Before
     public void setup() throws ParquetIOException, URISyntaxException {
+        initMocks(this);
+
         Mockito.when(fieldConverter.convert(Mockito.any())).thenReturn(getMockParquetIOFields());
         Mockito.when(writer.getSchema(Mockito.any())).thenReturn(getMockSchema());
         File file = readMockParquet();
         Mockito.when(writer.writeParquetFile(Mockito.any(),Mockito.any(),Mockito.any())).thenReturn(file);
 
-        parquetDataFormatter = new ParquetDataFormatter(writer,param,fieldConverter, new JsonObjectsExtractor());
+        parquetDataFormatter = new ParquetDataFormatter(writer,param,fieldConverter, new JsonObjectsExtractor(), validationRegistry);
     }
 
     @Test

@@ -17,7 +17,10 @@
 package com.adobe.platform.ecosystem.examples.data.write;
 
 import com.adobe.platform.ecosystem.examples.catalog.model.DataSet;
+import com.adobe.platform.ecosystem.examples.catalog.model.DataType;
 import com.adobe.platform.ecosystem.examples.catalog.model.SchemaField;
+import com.adobe.platform.ecosystem.examples.data.validation.api.ValidationRegistry;
+import com.adobe.platform.ecosystem.examples.data.validation.api.ValidationRegistryFactory;
 import com.adobe.platform.ecosystem.examples.parquet.write.ParquetIOWriter;
 import com.adobe.platform.ecosystem.examples.data.FileFormat;
 import com.adobe.platform.ecosystem.examples.data.wiring.DataWiringParam;
@@ -44,13 +47,16 @@ import java.util.List;
  */
 public class PlatformDataFormatterFactory implements DataFormatterFactory {
 
-    private ParquetIOWriter writer;
+    final private ParquetIOWriter writer;
 
-    private DataWiringParam param;
+    final private DataWiringParam param;
 
-    public PlatformDataFormatterFactory(ParquetIOWriter writer, DataWiringParam param) {
+    private final ValidationRegistryFactory registryFactory;
+
+    public PlatformDataFormatterFactory(ParquetIOWriter writer, DataWiringParam param, ValidationRegistryFactory registryFactory) {
         this.writer = writer;
         this.param = param;
+        this.registryFactory = registryFactory;
     }
 
     /**
@@ -64,10 +70,16 @@ public class PlatformDataFormatterFactory implements DataFormatterFactory {
                 formatter = new CSVDataFormatter(param);
                 break;
             case PARQUET:
-                ParquetFieldConverter<JSONObject> converter =
-                new JSONParquetFieldConverter(getFieldsFromDataSet());
+                final List<SchemaField> fields = getFieldsFromDataSet();
+                ParquetFieldConverter<JSONObject> converter = new JSONParquetFieldConverter(fields);
                 Extractor<JSONObject> extractor = new JsonObjectsExtractor();
-                formatter = new ParquetDataFormatter(writer, param, converter, extractor);
+                formatter = new ParquetDataFormatter(
+                    this.writer,
+                    this.param,
+                    converter,
+                    extractor,
+                    getValidationRegistry(fields)
+                );
                 break;
             case JSON:
                 formatter = new JSONDataFormatter();
@@ -83,5 +95,14 @@ public class PlatformDataFormatterFactory implements DataFormatterFactory {
         } else {
             return param.getDataSet().getFields(false, DataSet.FieldsFrom.FIELDS);
         }
+    }
+
+    private ValidationRegistry getValidationRegistry(List<SchemaField> fields) {
+        final SchemaField rootField = new SchemaField(
+            "root",
+            DataType.Field_ObjectType,
+            fields
+        );
+        return registryFactory.get(rootField);
     }
 }
