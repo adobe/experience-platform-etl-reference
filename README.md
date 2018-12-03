@@ -127,6 +127,80 @@ Following snippet helps in writing data to platform
  int returnStatus = platformWriter.write(sdkFields, dataTable);
 ```
 
+#### Validation
+XDM schema have certain rules for data that should be adhered to while generating parquet files. ETL-SDK supports validation
+for inbound data with XDM schema registered for a dataset.
+
+We can enable XDM schema validation with a system property:
+`-DenableSchemaValidation=true`
+
+Currently ETL-SDK validation performs validations for following logical XDM types:
+- String (*validations run on minlength, maxLength, enum*)
+    - string 
+        - ```
+          "sampleField": {
+            "type":"string",
+            "minLength" : 1,
+            "maxLength" : 10,
+            "enum":["value1", "value2"]
+          }
+          ```
+    - date (*validation support based on 'format' key needs to be added*)
+        - ```
+          "sampleField": {
+            "type":"string",
+            "format":"date"
+          }
+          ```
+    - date-time (*validation support based on 'format' key needs to be added*)
+        - ```
+          "sampleField": {
+            "type":"string",
+            "format":"date-time"
+          }
+          ```
+- Integer (*validations run on minimum, maximum* keys)
+    - byte
+        - ```
+          "sampleField": {
+            "type":"integer",
+            "minimum":-128,
+            "maximum":127
+          }
+          ```
+    - short
+        - ```
+          "sampleField": {
+            "type":"integer",
+            "minimum":-32768,
+            "maximum":32767
+          }
+          ```
+    - integer
+        - ```
+          "sampleField": {
+            "type":"integer",
+            "minimum":-2147483648
+            "maximum":2147483647
+          }
+          ```
+    - long
+        - ```
+          "sampleField": {
+            "type":"integer",
+            "minimum":-9007199254740992
+            "maximum":9007199254740991
+          }
+          ```
+- Note that the minimum and maximum values used in above `integer` types are the MIN and MAX values that the field can take. A field defined below for example will take type int and will be validated against the values present in schema ie 20 and 40 respectively.
+```
+"sampleField": {
+  "type":"integer",
+  "minimum": 20,
+  "maximum": 40
+}
+```
+
 # Contributing
 
 If you are interested in contributing to this project, check out our [contribution guidelines](CONTRIBUTING.md)!
