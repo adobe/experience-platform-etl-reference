@@ -1,22 +1,22 @@
 # ETL Ecosystem Integration Reference Code
 
-This repository contains example code for integration with Adobe Cloud Platform(ACP) via exposed HTTP APIs. Example code mainly covers following ACP Services 
+This repository contains example code for integration with Adobe Experience Platform(AEP) via exposed HTTP APIs. Example code mainly covers following AEP Services 
 
 - [Catalog](https://www.adobe.io/apis/cloudplatform/dataservices/services/allservices.html#!api-specification/markdown/narrative/technical_overview/catalog_architectural_overview/catalog_architectural_overview.md)
 - [Data Access](https://www.adobe.io/apis/cloudplatform/dataservices/services/allservices.html#!api-specification/markdown/narrative/technical_overview/data_access_architectural_overview/data_access_architectural_overview.md)
 - [Data Ingestion](https://www.adobe.io/apis/cloudplatform/dataservices/services/allservices.html#!api-specification/markdown/narrative/technical_overview/ingest_architectural_overview/ingest_architectural_overview.md)
 
-Reference documentation for integrating ETL tools with Adobe Cloud Platform - Data Services can be found [here](https://www.adobe.io/apis/cloudplatform/dataservices/services/allservices.html#!api-specification/markdown/narrative/integration_guides/etl_integration_guide/etl_integration_guide.md)
+Reference documentation for integrating ETL tools with Adobe Experience Platform - Data Services can be found [here](https://www.adobe.io/apis/cloudplatform/dataservices/services/allservices.html#!api-specification/markdown/narrative/integration_guides/etl_integration_guide/etl_integration_guide.md)
 
 ### Content
 
 #### examples 
-This folder contains java code for various operations on Adobe Cloud Platform. Few are some of the major implementation examples it has
+This folder contains java code for various operations on Adobe Experience Platform. Few are some of the major implementation examples it has
 
 - Typed classes for Catalog entities (com.adobe.platform.ecosystem.examples.catalog.model)
 - Invocation of Catalog service (com.adobe.platform.ecosystem.examples.catalog.impl)
-- Code to read data from Adobe Cloud Platform as CSV or as Parquet (using Data Access APIs - com.adobe.platform.ecosystem.examples.data.read) 
-- Code to write data to Adobe Cloud Platform as CSV or as Parquet (using Data Ingestion APIs - com.adobe.platform.ecosystem.examples.data.write)
+- Code to read data from Adobe Experience Platform as CSV or as Parquet (using Data Access APIs - com.adobe.platform.ecosystem.examples.data.read) 
+- Code to write data to Adobe Experience Platform as CSV or as Parquet (using Data Ingestion APIs - com.adobe.platform.ecosystem.examples.data.write)
 - Code for authentication with platform using [Adobe.io JWT Authentication](https://www.adobe.io/apis/cloudplatform/console/authentication/gettingstarted.html) (com.adobe.platform.ecosystem.examples.data.authentication)
 - Various utilities for JSON, HTTP etc. (com.adobe.platform.ecosystem.examples.data.util)
 - Test Cases
