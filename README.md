@@ -1,6 +1,6 @@
 # ETL Ecosystem Integration Reference Code
 
-This repository contains example code for integration with Adobe Experience Platform(AEP) via exposed HTTP APIs. Example code mainly covers following AEP Services 
+This repository contains example code for integration with Adobe Experience Platform (Platform) via exposed HTTP APIs. Example code mainly covers following Platform Services 
 
 - [Catalog](https://www.adobe.io/apis/cloudplatform/dataservices/services/allservices.html#!api-specification/markdown/narrative/technical_overview/catalog_architectural_overview/catalog_architectural_overview.md)
 - [Data Access](https://www.adobe.io/apis/cloudplatform/dataservices/services/allservices.html#!api-specification/markdown/narrative/technical_overview/data_access_architectural_overview/data_access_architectural_overview.md)
