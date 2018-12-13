@@ -45,7 +45,9 @@ public enum ParquetIODataType {
     DATE("date", PrimitiveType.PrimitiveTypeName.INT32),
     TIMESTAMP("timestamp", PrimitiveType.PrimitiveTypeName.INT64),
     BINARY("binary", PrimitiveType.PrimitiveTypeName.BINARY),
-    GROUP("group");
+    GROUP("group"),
+    LIST("list"),
+    Map("map");
     // TODO: Create more enums to support further data types like BYTE_ARRAY or BINARY.
 
     private final String parquetSchemaName;

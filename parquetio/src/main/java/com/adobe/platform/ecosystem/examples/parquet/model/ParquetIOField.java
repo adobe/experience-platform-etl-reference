@@ -50,11 +50,29 @@ public class ParquetIOField {
     }
 
     public boolean isPrimitive() {
-        return this.type != ParquetIODataType.GROUP;
+        return this.type != ParquetIODataType.GROUP
+            && this.type != ParquetIODataType.LIST
+            && this.type != ParquetIODataType.Map;
+    }
+
+    public boolean isMapType() {
+        return this.type == ParquetIODataType.Map;
+    }
+
+    public boolean isListType() {
+        return this.type == ParquetIODataType.LIST;
     }
 
     public boolean isRepetetive() {
         return this.repetitionType == ParquetIORepetitionType.REPEATED;
+    }
+
+    public boolean isRequired() {
+        return this.repetitionType == ParquetIORepetitionType.REQUIRED;
+    }
+
+    public boolean isOptional() {
+        return this.repetitionType == ParquetIORepetitionType.OPTIONAL;
     }
 
     public ParquetIORepetitionType getRepetitionType() {
