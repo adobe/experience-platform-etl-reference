@@ -116,6 +116,15 @@ public class ParquetDataFormatterTest extends BaseTest {
         return data;
     }
 
+    private List<JSONObject> getMockPipelineDataWithMapType() throws ParseException {
+        List<JSONObject> data = new ArrayList<>();
+        String jsonData = "{\"signals\": {\"auxiliaryProperties\": [{\"key\":\"Key1\",\"value\":\"Value1\"},{\"key\":\"Key2\",\"value\":\"Value2\"},{\"key\":\"Key3\",\"value\":\"Value3\"}]}}";
+        JSONParser parser = new JSONParser();
+        JSONObject row1 = (JSONObject) parser.parse(jsonData);
+        data.add(row1);
+        return data;
+    }
+
     private File readMockParquet() throws URISyntaxException {
         URL dir_url = ClassLoader.getSystemResource("sample.parquet");
         File file = new File(dir_url.toURI());

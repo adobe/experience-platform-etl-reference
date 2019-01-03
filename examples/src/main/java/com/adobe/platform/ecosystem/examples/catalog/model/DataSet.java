@@ -214,7 +214,7 @@ public class DataSet extends BaseModel {
     private List<SchemaField> getFieldsFromCatalogSchema(boolean useFlatNamesForLeafNodes) {
         List<SchemaField> fieldsList = new ArrayList<>();
         try {
-            CatalogService cs = getCatalogService();
+            CatalogService cs = CatalogFactory.getCatalogService();
             fieldsList = cs.getSchemaFields(
                     getImsOrg(),
                     ConnectorSDKUtil.getInstance().getAccessToken(),

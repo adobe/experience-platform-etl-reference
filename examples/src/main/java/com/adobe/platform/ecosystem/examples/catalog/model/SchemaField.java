@@ -22,6 +22,7 @@ import java.util.List;
 
 import com.adobe.platform.ecosystem.examples.data.validation.api.Rule;
 import com.adobe.platform.ecosystem.examples.data.validation.impl.rules.SchemaValidationRule;
+
 import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -87,7 +88,8 @@ public class SchemaField {
         this.subFields = subFields;
     }
 
-    private void getSchemaFieldFromObservableSchema(String name, JSONObject field, String parentHierarchy, boolean useFlatNameForLeafNodes) {
+    @SuppressWarnings("unchecked")
+	private void getSchemaFieldFromObservableSchema(String name, JSONObject field, String parentHierarchy, boolean useFlatNameForLeafNodes) {
         String type = (String) field.get(SDKConstants.CATALOG_SCHEMA_META_XDM_TYPE);
 
         if(StringUtils.isEmpty(type))
@@ -147,7 +149,14 @@ public class SchemaField {
             case "object":
                 this.name = name;
                 this.type = DataType.Field_ObjectType;
-                HashMap<?, ?> props = (HashMap<?, ?>)field.get("properties");
+                //Handle map case
+                String mapKeyType = (String) field.get(SDKConstants.CATALOG_SCHEMA_META_XDM_TYPE);
+                HashMap<?, ?> props;
+                if(mapKeyType != null && mapKeyType.equals("map")) {
+                    props = (HashMap<?, ?>) field.get("additionalProperties");
+                } else {
+                    props = (HashMap<?, ?>) field.get("properties");
+                }
                 List<SchemaField> schemaSubFields = new ArrayList<>();
                 props.forEach((key, value) -> {
                     JSONObject subFieldJson = (JSONObject) value;
@@ -187,6 +196,28 @@ public class SchemaField {
                     }
                     break;
                 }
+            case "map":
+                //Adding map key here
+                String key = "key";
+                String value = "value";
+                this.type = DataType.Field_MapType;
+                this.name = name;
+                schemaSubFields = new ArrayList<>();
+                String currentHeirachy = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
+                JSONObject defaultJSONForMapKey = new JSONObject();
+                defaultJSONForMapKey.put(SDKConstants.CATALOG_SCHEMA_META_XDM_TYPE, "string");
+                defaultJSONForMapKey.put(SDKConstants.CATALOG_SCHEMA_TYPE, "string");
+                SchemaField subSchemaFieldForKey = new SchemaField(key, defaultJSONForMapKey,
+                        currentHeirachy, useFlatNameForLeafNodes, DataSet.FieldsFrom.OBSERVABLE_SCHEMA);
+                schemaSubFields.add(subSchemaFieldForKey);
+                //Adding map value here
+                props = (HashMap<?, ?>) field.get("additionalProperties");
+                JSONObject subFieldJson = (JSONObject) props;
+                SchemaField subSchemaFieldForValue = new SchemaField(value, subFieldJson,
+                        currentHeirachy, useFlatNameForLeafNodes, DataSet.FieldsFrom.OBSERVABLE_SCHEMA);
+                schemaSubFields.add(subSchemaFieldForValue);
+                this.subFields = schemaSubFields;
+                break;
             default:
                 this.name = getNameForNonComplexField(name, parentHierarchy, field, useFlatNameForLeafNodes);
                 this.type = DataType.StringType;
@@ -216,7 +247,8 @@ public class SchemaField {
         }
     }
 
-    private void getSchemaField(JSONObject field, String parentHierarchy, boolean useFlatNameForLeafNodes) {
+    @SuppressWarnings({ "unused", "unchecked" })
+	private void getSchemaField(JSONObject field, String parentHierarchy, boolean useFlatNameForLeafNodes) {
         String type = (String) field.get(SDKConstants.CATALOG_SCHEMA_META_XDM_TYPE);
 
         if(StringUtils.isEmpty(type))
@@ -383,7 +415,7 @@ public class SchemaField {
     }
 
     public boolean getIsPrimitive() {
-        if(type != DataType.Field_ObjectType && type != DataType.Field_ArrayType) {
+        if(type != DataType.Field_ObjectType && type != DataType.Field_ArrayType && type != DataType.Field_MapType) {
             return true;
         } else
             return false;

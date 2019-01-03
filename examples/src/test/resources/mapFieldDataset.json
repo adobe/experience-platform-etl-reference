@@ -1,0 +1,218 @@
+{
+        "name": "TestVardanMapDT3",
+        "dule": {},
+        "statsCache": {},
+        "state": "DRAFT",
+        "imsOrg": "EDCE5A655A5E73FF0A494113@AdobeOrg",
+        "tags": {
+            "adobe/pqs/table": [
+                "mapdataset20keys_5"
+            ],
+            "aep/siphon/partitions": []
+        },
+        "lastBatchId": "3be19d72ea784fee9cbc3feca5f0b4cd",
+        "lastBatchStatus": "success",
+        "namespace": "ACP",
+        "createdUser": "acp_foundation_etl@AdobeID",
+        "createdClient": "acp_foundation_etl",
+        "updatedUser": "acp_foundation_etl@AdobeID",
+        "version": "1.0.0",
+        "created": 1544166496174,
+        "updated": 1544166496488,
+        "viewId": "5c0a1c60bc5abf14cd392e05",
+        "aspect": "production",
+        "status": "enabled",
+        "fields": [
+            {
+                "name": "_id",
+                "title": "Identifier",
+                "type": "string",
+                "format": "uri-reference",
+                "description": "The unique identifier for the ExperienceEvent.",
+                "meta:xdmType": "string",
+                "meta:xdmField": "@id"
+            },
+            {
+                "name": "identityMap",
+                "title": "Identity Map",
+                "type": "object",
+                "description": "Map of identities",
+                "meta:xdmType": "map",
+                "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "title": "Identifier",
+                                "type": "string",
+                                "description": "Identity of the consumer in the related namespace.",
+                                "meta:xdmType": "string",
+                                "meta:xdmField": "xdm:id"
+                            },
+                            "namespace": {
+                                "title": "Namespace",
+                                "description": "The namespace associated with the `xid` attribute and matched up with the AAM data source integration code.",
+                                "meta:xdmField": "xdm:namespace",
+                                "type": "object",
+                                "properties": {
+                                    "code": {
+                                        "title": "Code",
+                                        "type": "string",
+                                        "description": "The code is a human readable identifier for the namespace and can be used to request the technical namespace id which is used for identity graph processing.",
+                                        "meta:xdmType": "string",
+                                        "meta:xdmField": "xdm:code"
+                                    }
+                                },
+                                "required": [
+                                    "code"
+                                ],
+                                "xdmVersion": "0.9.9.7",
+                                "meta:altId": "_xdm.context.namespace",
+                                "meta:xdmType": "object",
+                                "meta:status": "stabilizing",
+                                "$schema": "http://json-schema.org/draft-06/schema#",
+                                "$id": "context/namespace",
+                                "_refId": "context/namespace"
+                            }
+                        },
+                        "meta:xdmType": "object"
+                    },
+                    "description": "List of values to the key",
+                    "meta:xdmType": "array"
+                }
+            },
+            {
+                "name": "timestamp",
+                "title": "Timestamp",
+                "type": "string",
+                "format": "date-time",
+                "description": "The time when the first event of the interaction occurred.",
+                "meta:xdmType": "date-time",
+                "meta:xdmField": "xdm:timestamp"
+            },
+            {
+                "name": "segmentMemberships",
+                "title": "Segment Memberships",
+                "description": "The segments associated with this experience event",
+                "type": "array",
+                "meta:xdmType": "array",
+                "subType": {
+                    "type": "object",
+                    "subFields": [
+                        {
+                            "name": "segmentID",
+                            "title": "Segment ID",
+                            "description": "The identity of the segment or snapshot definition in with the domain of the specific system that processes that type of segment.",
+                            "meta:xdmField": "xdm:segmentID",
+                            "type": "object",
+                            "meta:xdmType": "object",
+                            "subFields": [
+                                {
+                                    "name": "_id",
+                                    "title": "Identifier",
+                                    "type": "string",
+                                    "format": "uri-reference",
+                                    "description": "Identity of the Segment in the related namespace.",
+                                    "meta:xdmType": "string",
+                                    "meta:xdmField": "@id"
+                                },
+                                {
+                                    "name": "namespace",
+                                    "title": "Namespace",
+                                    "description": "The namespace associated with the `xid` attribute.",
+                                    "meta:xdmField": "xdm:namespace",
+                                    "type": "object",
+                                    "required": [
+                                        "code"
+                                    ],
+                                    "xdmVersion": "0.9.9.7",
+                                    "meta:altId": "_xdm.context.namespace",
+                                    "meta:xdmType": "object",
+                                    "meta:status": "stabilizing",
+                                    "$schema": "http://json-schema.org/draft-06/schema#",
+                                    "$id": "context/namespace",
+                                    "_refId": "context/namespace",
+                                    "subFields": [
+                                        {
+                                            "name": "code",
+                                            "title": "Code",
+                                            "type": "string",
+                                            "description": "The code is a human readable identifier for the namespace and can be used to request the technical namespace id which is used for identity graph processing.",
+                                            "meta:xdmType": "string",
+                                            "meta:xdmField": "xdm:code"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "name": "status",
+                            "title": "Status",
+                            "type": "string",
+                            "description": "Is the segment participation realized as part of the current request.",
+                            "default": "realized",
+                            "enum": [
+                                "existing",
+                                "realized",
+                                "exited"
+                            ],
+                            "meta:enum": {
+                                "existing": "Entity continues to be in the segment",
+                                "realized": "Entity is entering the segment",
+                                "exited": "Entity is exiting the segment"
+                            },
+                            "meta:xdmType": "string",
+                            "meta:xdmField": "xdm:status"
+                        }
+                    ]
+                },
+                "meta:xdmField": "xdm:segmentMemberships"
+            },
+            {
+                "name": "signals",
+                "title": "Signals",
+                "description": "Signals",
+                "type": "object",
+                "meta:xdmType": "object",
+                "subFields": [
+                    {
+                        "name": "auxiliaryProperties",
+                        "title": "Auxiliary Proprties",
+                        "type": "object",
+                        "meta:xdmType": "map",
+                        "description": "Holds a map of additional properties that come with an event but can not be defined in schema beforehand. These may also differ instance to instance.",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "meta:xdmType": "string"
+                            },
+                            "description": "List of values to the key",
+                            "meta:xdmType": "array"
+                        }
+                    }
+                ]
+            }
+        ],
+        "basePath": "adl://datalake49bxylbb8dl7.azuredatalakestore.net/platform/5c0a1c60bc5abf14cd392e04/datasetViewId=5c0a1c60bc5abf14cd392e05",
+        "fileDescription": {
+            "format": "parquet",
+            "persisted": false
+        },
+        "transforms": "@/dataSets/5c0a1c60bc5abf14cd392e04/views/5c0a1c60bc5abf14cd392e05/transforms",
+        "files": "@/dataSets/5c0a1c60bc5abf14cd392e04/views/5c0a1c60bc5abf14cd392e05/files",
+        "schema": "@/xdms/_customer/default/eemap3",
+        "observableSchema": {},
+        "schemaMetadata": {},
+        "schemaRef": {
+            "id": "https://ns.adobe.com/customer/EDCE5A655A5E73FF0A494113@AdobeOrg/default/eemap3",
+            "contentType": "application/vnd.adobe.xed+json"
+        },
+        "persistence": {
+            "adls": {
+                "location": "adl://datalake49bxylbb8dl7.azuredatalakestore.net/platform/5c0a1c60bc5abf14cd392e04/datasetViewId=5c0a1c60bc5abf14cd392e05",
+                "credentials": "@/dataSets/5c0a1c60bc5abf14cd392e04/credentials"
+            }
+        }
+    }

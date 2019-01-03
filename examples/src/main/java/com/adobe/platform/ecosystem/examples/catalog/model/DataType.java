@@ -33,5 +33,6 @@ public enum DataType {
     BinaryType,
     JsonArrayType,
     Field_ObjectType,
-    Field_ArrayType
+    Field_ArrayType,
+    Field_MapType
 }

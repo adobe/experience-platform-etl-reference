@@ -1,0 +1,22 @@
+{
+  "signals": {
+    "auxiliaryProperties": {
+      "sig6.96813705097984": ["sigval10", "sigval12"]
+    }
+  },
+  "identityMap": {
+    "MCID": [{
+      "namespace": {
+        "code": "MCID"
+      },
+      "id": "uuid93961362.0"
+    }],
+    "EMAIL": [{
+      "namespace": {
+        "code": "MCID"
+      },
+      "id": "uuid93978908.0"
+    }]
+  },
+  "_id": "id12387772.0"
+}

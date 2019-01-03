@@ -16,11 +16,23 @@
  */
 package com.adobe.platform.ecosystem.examples.parquet.write;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
+import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIODataType;
+import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIOField;
+import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIORepetitionType;
+import org.apache.parquet.schema.GroupType;
+import org.apache.parquet.schema.MessageType;
+import org.apache.parquet.schema.OriginalType;
+import org.apache.parquet.schema.PrimitiveType;
+import org.apache.parquet.schema.Type;
 import org.junit.Test;
 
 import com.adobe.platform.ecosystem.examples.parquet.ut.BaseTest;
@@ -48,5 +60,147 @@ public class ParquetIOWriterImplTest extends BaseTest {
     @Test
     public void getLocalFilePath() {
         assertTrue(ParquetIOUtil.getLocalFilePath(sampleParquetFileName) != null);
+    }
+
+    /**
+     * Adding map type schema below for reference:
+     *
+     * message Message {
+     *   required group identityMap (MAP) {
+     *     repeated group map {
+     *       optional binary identityKey;
+     *       optional int64 identityValue;
+     *     }
+     *   }
+     * }
+     */
+    @Test
+    public void testSchemaForMapType() {
+        List<ParquetIOField> fields = getMapTypeFields();
+        MessageType messageType = writer.getSchema(fields);
+        assertEquals(messageType.getFields().size(), 1);
+        assertEquals(messageType.getFields().get(0).getOriginalType(), OriginalType.MAP);
+        assertEquals(messageType.getFields().get(0).getName(), "identityMap");
+        GroupType mapField = messageType.getFields().get(0).asGroupType();
+        assertEquals(mapField.getRepetition(), Type.Repetition.REQUIRED);
+        assertEquals(mapField.getFields().size(), 1);
+        assertTrue(mapField.getFields().get(0) instanceof GroupType);
+        GroupType element = mapField.getFields().get(0).asGroupType();
+        assertEquals(element.getRepetition(), Type.Repetition.REPEATED);
+        assertEquals(element.getFields().size(), 2);
+        assertEquals(element.getFields().get(0).getName(), "identityKey");
+        assertEquals(element.getFields().get(0).asPrimitiveType().getPrimitiveTypeName(), PrimitiveType.PrimitiveTypeName.BINARY);
+        assertEquals(element.getFields().get(1).getName(), "identityValue");
+        assertEquals(element.getFields().get(1).asPrimitiveType().getPrimitiveTypeName(), PrimitiveType.PrimitiveTypeName.INT64);
+    }
+
+    private List<ParquetIOField> getMapTypeFields() {
+        ParquetIOField key =  new ParquetIOField(
+            "identityKey",
+            ParquetIODataType.BINARY,
+            ParquetIORepetitionType.OPTIONAL,
+            null
+        );
+
+        ParquetIOField value =  new ParquetIOField(
+            "identityValue",
+            ParquetIODataType.LONG,
+            ParquetIORepetitionType.OPTIONAL,
+            null
+        );
+
+        List<ParquetIOField> mapSubFields = new ArrayList<>();
+        mapSubFields.add(key);
+        mapSubFields.add(value);
+
+        ParquetIOField mapField = new ParquetIOField(
+            "identityMap",
+            ParquetIODataType.Map,
+            ParquetIORepetitionType.REQUIRED,
+            mapSubFields
+        );
+
+        List<ParquetIOField> fields = new ArrayList<>();
+        fields.add(mapField);
+        return fields;
+    }
+
+    /**
+     * Adding list type schema below for reference:
+     *
+     * <pre>
+     * message Message {
+     *   required group identityList (LIST) {
+     *     repeated group list {
+     *       optional group element {
+     *         optional binary listBinaryElement (UTF8);
+     *         optional int32 listIntegerElement;
+     *       }
+     *     }
+     *   }
+     * }
+     * </pre>
+     */
+    @Test
+    public void testSchemaForListType() {
+        List<ParquetIOField> fields = getListTypeFields();
+        MessageType messageType = writer.getSchema(fields);
+        assertEquals(messageType.getFields().size(), 1);
+        assertEquals(messageType.getFields().get(0).getOriginalType(), OriginalType.LIST);
+        assertEquals(messageType.getFields().get(0).getName(), "identityList");
+        GroupType identityListField = messageType.getFields().get(0).asGroupType();
+        assertEquals(identityListField.getRepetition(), Type.Repetition.REQUIRED);
+        assertEquals(identityListField.getFields().size(), 1);
+        assertTrue(identityListField.getFields().get(0) instanceof GroupType);
+        GroupType listElement = identityListField.getFields().get(0).asGroupType();
+        assertEquals(listElement.getRepetition(), Type.Repetition.REPEATED);
+        assertEquals(listElement.getFields().size(), 1);
+        assertTrue(listElement.getFields().get(0) instanceof GroupType);
+        GroupType actualElementType = listElement.getFields().get(0).asGroupType();
+        assertEquals(actualElementType.getRepetition(), Type.Repetition.OPTIONAL);
+        assertEquals(actualElementType.getFields().size(), 2);
+        assertEquals(actualElementType.getFields().get(0).getName(), "listBinaryElement");
+        assertEquals(actualElementType.getFields().get(0).asPrimitiveType().getPrimitiveTypeName(), PrimitiveType.PrimitiveTypeName.BINARY);
+        assertEquals(actualElementType.getFields().get(1).getName(), "listIntegerElement");
+        assertEquals(actualElementType.getFields().get(1).asPrimitiveType().getPrimitiveTypeName(), PrimitiveType.PrimitiveTypeName.INT32);
+    }
+
+    private List<ParquetIOField> getListTypeFields() {
+        ParquetIOField elementType = new ParquetIOField(
+            "listBinaryElement",
+            ParquetIODataType.STRING,
+            ParquetIORepetitionType.OPTIONAL,
+            null
+        );
+
+        ParquetIOField elementTypeInt = new ParquetIOField(
+            "listIntegerElement",
+            ParquetIODataType.INTEGER,
+            ParquetIORepetitionType.OPTIONAL,
+            null
+        );
+
+        List<ParquetIOField> listSubFields = new ArrayList<>();
+        listSubFields.add(elementType);
+        listSubFields.add(elementTypeInt);
+
+        ParquetIOField elementGroupType = new ParquetIOField(
+            "element",
+            ParquetIODataType.GROUP,
+            ParquetIORepetitionType.OPTIONAL,
+            listSubFields
+        );
+
+        ParquetIOField listField = new ParquetIOField(
+            "identityList",
+            ParquetIODataType.LIST,
+            ParquetIORepetitionType.REQUIRED,
+            Arrays.asList(elementGroupType)
+        );
+
+        List<ParquetIOField> fields = new ArrayList<>();
+        fields.add(listField);
+
+        return fields;
     }
 }

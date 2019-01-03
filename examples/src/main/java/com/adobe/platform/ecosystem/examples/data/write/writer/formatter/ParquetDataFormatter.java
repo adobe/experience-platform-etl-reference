@@ -37,8 +37,8 @@ import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIOField;
 import com.adobe.platform.ecosystem.examples.catalog.model.DataType;
 import com.adobe.platform.ecosystem.examples.data.write.field.converter.parquet.ParquetFieldConverter;
 import com.adobe.platform.ecosystem.examples.data.wiring.DataWiringParam;
-
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKUtil;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.example.data.simple.SimpleGroup;
@@ -50,6 +50,7 @@ import com.adobe.platform.ecosystem.examples.catalog.model.SchemaField;
 import com.adobe.platform.ecosystem.examples.constants.SDKConstants;
 import com.adobe.platform.ecosystem.examples.data.write.Formatter;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
+import com.google.gson.JsonObject;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -162,6 +163,7 @@ public class ParquetDataFormatter implements Formatter {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void updateParquetGroupWithData(JSONObject data, SimpleGroup currentGroup, TraversablePath path) throws ConnectorSDKException {
         GroupType schema = currentGroup.getType();
         int noOfFields = schema.getFieldCount();
@@ -171,34 +173,8 @@ public class ParquetDataFormatter implements Formatter {
 
             final TraversablePath clone =  TraversablePath.clone(path);
             clone.withNode(currentFieldName);
-
             if (columnType.isPrimitive()) {
-                if (columnType.isRepetition(Type.Repetition.REPEATED)) {
-                    if (data.get(currentFieldName) instanceof JSONArray) { // Regular case
-                        // Below is an assumption that json array will be present as value.
-                        JSONArray jsonValueArray = (JSONArray) data.get(currentFieldName);
-                        for (int j = 0; j < jsonValueArray.size(); j++) {
-                            Object value = jsonValueArray.get(j); // Value will be primitive.
-                            updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, colIndex, clone);
-                        }
-                    } else {
-                        Object value = data.get(currentFieldName);
-                        if(value instanceof String) {
-                            final String strValue = (String) value;
-                            if(strValue.split(",").length > 1) {
-                                final int index = colIndex;
-                                for(String token : strValue.split(",")) {
-                                    updateParquetRecordWithPrimitiveValue(schema, token, currentGroup, index, clone);
-                                }
-                            }
-                        } else {
-                            updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, colIndex, clone);
-                        }
-                    }
-                } else if (columnType.isRepetition(Type.Repetition.OPTIONAL)) {
-                    Object value = data.get(currentFieldName);
-                    updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, colIndex, clone);
-                }
+                addPrimitiveData(data, currentFieldName, colIndex,  currentGroup, clone);
             } else {
                 if (columnType.isRepetition(Type.Repetition.REPEATED)) {
                     if (data.get(currentFieldName) instanceof JSONArray) {
@@ -206,6 +182,17 @@ public class ParquetDataFormatter implements Formatter {
                         for (int j = 0; j < jsonValueArray.size(); j++) {
                             addComplexGroupToParquet(currentGroup, currentFieldName, (JSONObject) jsonValueArray.get(j), clone);
                         }
+                    } else if (schema.getOriginalType().equals(OriginalType.MAP)) {
+                         addComplexGroupToParquet(currentGroup, currentFieldName, data, clone);
+                    } else if (schema.getOriginalType().equals(OriginalType.LIST)) {
+                         for(Object key: data.keySet()) {
+                             final JSONArray jsonValueArray = (JSONArray) data.get(key);
+                             for (int j = 0; j < jsonValueArray.size(); j++) {
+                                 JSONObject jObj = new JSONObject();
+                                 jObj.put("element", jsonValueArray.get(j));
+                                 addComplexGroupToParquet(currentGroup, currentFieldName, jObj , clone);
+                             }
+                         }
                     } else {
                         final JSONObject value = (JSONObject) data.get(currentFieldName);
                         if(extractor.isExtractRequired(value)) {
@@ -218,9 +205,94 @@ public class ParquetDataFormatter implements Formatter {
                         }
                     }
                 } else {
-                    addComplexGroupToParquet(currentGroup, currentFieldName, (JSONObject) data.get(currentFieldName), clone);
+                    if (columnType.getOriginalType() != null && columnType.getOriginalType().equals(OriginalType.MAP)) {
+                        addMapToParquet(currentGroup, currentFieldName, (JSONObject) data.get(currentFieldName), clone);
+                    } else {
+                        addComplexGroupToParquet(currentGroup, currentFieldName, (JSONObject) data.get(currentFieldName), clone); 
+                    }
                 }
             }
+        }
+    }
+
+    private void addPrimitiveData(JSONObject data, String currentFieldName, int colIndex,  SimpleGroup currentGroup, TraversablePath path) throws ConnectorSDKException {
+        final TraversablePath clone =  TraversablePath.clone(path);
+        GroupType schema = currentGroup.getType();
+        final Type columnType = schema.getType(colIndex);
+        if (columnType.isRepetition(Type.Repetition.REPEATED)) {
+            if (data.get(currentFieldName) instanceof JSONArray) { // Regular case
+                // Below is an assumption that json array will be present as value.
+                JSONArray jsonValueArray = (JSONArray) data.get(currentFieldName);
+                for (int j = 0; j < jsonValueArray.size(); j++) {
+                    Object value = jsonValueArray.get(j); // Value will be primitive.
+                    updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, colIndex, clone);
+                }
+            } else {
+                Object value = data.get(currentFieldName);
+                if(value instanceof String) {
+                    final String strValue = (String) value;
+                    if(strValue.split(",").length > 1) {
+                        final int index = colIndex;
+                        for(String token : strValue.split(",")) {
+                            updateParquetRecordWithPrimitiveValue(schema, token, currentGroup, index, clone);
+                        }
+                    }
+                } else {
+                    updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, colIndex, clone);
+                }
+            }
+        } else if (columnType.isRepetition(Type.Repetition.OPTIONAL)) {
+            Object value = data.get(currentFieldName);
+            updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, colIndex, clone);
+        } else {
+            Object value = data.get(currentFieldName);
+            updateParquetRecordWithPrimitiveValue(schema, value, currentGroup, colIndex, clone);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void addMapToParquet(SimpleGroup currentGroup, String currentFieldName, JSONObject jsonObject, TraversablePath path) throws ConnectorSDKException {
+        GroupType schema = currentGroup.getType();
+        SimpleGroup mapGroup = new SimpleGroup(schema);
+        int colIndex = schema.getFieldIndex(currentFieldName);
+        GroupType mapType = schema.getType(colIndex).asGroupType();
+        GroupType mapGroupType = null;
+        if (mapType.getFieldCount() > 0) {
+            mapGroupType = mapType.getType(0).asGroupType();
+        }
+        SimpleGroup currentRecord = new SimpleGroup(mapType);
+
+        for(Object key: jsonObject.keySet()) {
+            SimpleGroup currentPair = new SimpleGroup(mapGroupType);
+            JSONObject jObjKey = new JSONObject();
+            jObjKey.put("key", key);
+
+            JSONObject jObjValue = new JSONObject();
+            jObjValue.put("element", jsonObject.get(key));
+
+            if (mapGroupType != null) {
+                String keyName = mapGroupType.getFieldName(0);
+                Type keyType = mapGroupType.getType(0);
+                TraversablePath clone =  TraversablePath.clone(path);
+                clone.withNode(keyName);
+                addMapData(keyType, jObjKey, keyName, clone, currentPair);
+
+                String valueName = mapGroupType.getFieldName(1);
+                Type valueType = mapGroupType.getType(1);
+                clone =  TraversablePath.clone(path);
+                clone.withNode(valueName);
+                addMapData(valueType, jObjValue, valueName, clone, currentPair);
+            }
+            currentRecord.add(0, currentPair);
+        }
+        currentGroup.add(colIndex, currentRecord);
+    }
+
+    private void addMapData(Type mapElementType, JSONObject data, String elementName, TraversablePath path, SimpleGroup currentRecord) throws ConnectorSDKException {
+        if(mapElementType.isPrimitive()) {
+            addPrimitiveData(data, elementName, 0, currentRecord, path);
+        } else {
+            addComplexGroupToParquet(currentRecord, elementName, data, path);
         }
     }
 

@@ -21,7 +21,10 @@ import java.util.*;
 
 import com.adobe.platform.ecosystem.examples.parquet.exception.ParquetIOErrorCode;
 import com.adobe.platform.ecosystem.examples.parquet.exception.ParquetIOException;
+import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIODataType;
 import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIOField;
+import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIORepetitionType;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.LocalFileSystem;
 import org.apache.hadoop.fs.Path;
@@ -50,22 +53,32 @@ public class ParquetIOWriterImpl implements ParquetIOWriter {
     @Override
     public MessageType getSchema(List<ParquetIOField> fields) {
         MessageTypeBuilder messageBuilder = Types.buildMessage();
-        for(ParquetIOField field : fields) {
-            if(field.isPrimitive()) {
-                PrimitiveType primitiveType = getPrimitiveTypeField(field);
-                messageBuilder.addField(primitiveType);
-            } else {
-                GroupType groupType = getGroupTypeField(field);
-                messageBuilder.addField(groupType);
-            }
+        for (ParquetIOField field : fields) {
+             messageBuilder.addField(
+                getTypeFromField(field)
+            );
         }
         return messageBuilder.named("Message");
+    }
+
+    Type getTypeFromField(final ParquetIOField field) {
+        if (field.isPrimitive()) {
+            return getPrimitiveTypeField(field);
+        } else if(field.isListType()) {
+            return getListType(field);
+        } else if (field.isMapType()) {
+            return getMapType(field);
+        } else {
+            return getGroupTypeField(field);
+        }
     }
 
     private PrimitiveType getPrimitiveTypeField(ParquetIOField field) {
         PrimitiveBuilder<PrimitiveType> primTypeBuilder = null;
         if(field.isRepetetive()) {
             primTypeBuilder =  Types.primitive(field.getType().getParquetPrimitiveType(), Type.Repetition.REPEATED);
+        } else if(field.isRequired()) {
+            primTypeBuilder =  Types.primitive(field.getType().getParquetPrimitiveType(), Type.Repetition.REQUIRED);
         } else {
             primTypeBuilder =  Types.primitive(field.getType().getParquetPrimitiveType(), Type.Repetition.OPTIONAL);
         }
@@ -91,8 +104,10 @@ public class ParquetIOWriterImpl implements ParquetIOWriter {
 
     private GroupType getGroupTypeField(ParquetIOField field) {
         GroupBuilder<GroupType> groupTypeBuilder;
-        if(field.isRepetetive()) {
+        if(field.isRepetetive() && field.getType() != ParquetIODataType.LIST) {
             groupTypeBuilder = Types.repeatedGroup();
+        } else if(field.isRequired()) {
+            groupTypeBuilder = Types.requiredGroup();
         } else {
             groupTypeBuilder = Types.optionalGroup();
         }
@@ -100,14 +115,64 @@ public class ParquetIOWriterImpl implements ParquetIOWriter {
         // Iterate on children and recursively populate groups.
         if(field.getSubFields() != null) {
             for(ParquetIOField subField : field.getSubFields()) {
-                if(subField.isPrimitive()) {
-                    groupTypeBuilder.addField(getPrimitiveTypeField(subField));
-                } else {
-                    groupTypeBuilder.addField(getGroupTypeField(subField));
-                }
+                groupTypeBuilder.addField(
+                    getTypeFromField(subField)
+                );
             }
         }
+        if (field.getType() == ParquetIODataType.LIST) {
+            return groupTypeBuilder.named("element");
+        }
         return groupTypeBuilder.named(field.getName());
+    }
+
+    private Type getListType(ParquetIOField field) {
+        ListBuilder<GroupType> listBuilder;
+        if (field.getRepetitionType() == ParquetIORepetitionType.REQUIRED) {
+            listBuilder = Types.requiredList();
+        } else {
+            listBuilder = Types.optionalList();
+        }
+
+        // Assumption here is that length of
+        // field.getSubFields() will be 1.
+        if (field.getSubFields().size()>1) {
+            listBuilder.element(
+              getGroupTypeField(field)
+                    );
+        } else {
+            listBuilder.element(
+                      getTypeFromField(field.getSubFields().get(0))
+                    );
+        }
+        return listBuilder.named(field.getName());
+    }
+
+    /**
+     * Util to create a 'map' {@link GroupType}
+     * from a {@link ParquetIOField} {@code field}.
+     * Assumption is to have the 'key' type as the first
+     * element and 'value` type as second element.
+     */
+    private GroupType getMapType(ParquetIOField field) {
+        final ParquetIOField key = field.getSubFields().get(0);
+        final ParquetIOField value = field.getSubFields().get(1);
+
+        MapBuilder<GroupType> mapBuilder;
+        if (field.getRepetitionType() == ParquetIORepetitionType.REQUIRED) {
+            mapBuilder = Types.requiredMap();
+        } else {
+            mapBuilder = Types.optionalMap();
+        }
+
+        mapBuilder.key(
+            getTypeFromField(key)
+        );
+
+        mapBuilder.value(
+            getTypeFromField(value)
+        );
+        return mapBuilder.named(field.getName());
     }
 
     public MessageType getSchema(Map<String, String> columnToTypeMap, String delimiter) {

@@ -322,7 +322,7 @@ public class DataSetTest extends BaseTest{
         DataSet dataSet = new DataSetExtension(jsonObject);
 
         final List<SchemaField> fieldList = dataSet.getFields(false, DataSet.FieldsFrom.SCHEMA);
-        assertEquals(fieldList.size(), 5);
+        assertEquals(fieldList.size(), 16);
 
     }
 

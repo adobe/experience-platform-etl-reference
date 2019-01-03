@@ -54,6 +54,8 @@ public class FieldConverterFunction {
             return ParquetIODataType.BINARY;
         } else if(catalogDataType == DataType.Field_ObjectType) {
             return ParquetIODataType.GROUP;
+        } else if(catalogDataType == DataType.Field_MapType) {
+            return ParquetIODataType.GROUP;
         }
         return null;
     });

@@ -24,10 +24,15 @@ import com.adobe.platform.ecosystem.examples.catalog.model.DataType;
 import com.adobe.platform.ecosystem.examples.catalog.model.SchemaField;
 import com.adobe.platform.ecosystem.examples.data.Pair;
 import com.adobe.platform.ecosystem.examples.data.functions.FieldConverterFunction;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import io.jsonwebtoken.lang.Collections;
+
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -52,7 +57,7 @@ public class JSONParquetFieldConverter implements ParquetFieldConverter<JSONObje
         for (Object key : data.keySet()) {
             LinkedList<String> fieldPath = new LinkedList<>();
             fieldPath.add(key.toString());
-            fields.add(createFieldFromJSON(fieldPath, data.get(key)));
+            fields.add(createFieldFromJSON(fieldPath, data.get(key), null));
         }
         return fields;
     }
@@ -68,9 +73,10 @@ public class JSONParquetFieldConverter implements ParquetFieldConverter<JSONObje
      * @param value
      * @return
      */
-    private ParquetIOField createFieldFromJSON(LinkedList<String> fieldPath, Object value) {
-        Pair<ParquetIODataType, ParquetIORepetitionType> pair = getParquetTypeAndRepetition(fieldPath);
-        if (pair.getFirst() != ParquetIODataType.GROUP) {
+    @SuppressWarnings("unchecked")
+    private ParquetIOField createFieldFromJSON(LinkedList<String> fieldPath, Object value, ParquetIORepetitionType repType) {
+        Pair<ParquetIODataType, ParquetIORepetitionType> pair = getParquetTypeAndRepetition(fieldPath, repType);
+        if (pair.getFirst() != ParquetIODataType.GROUP && pair.getFirst() != ParquetIODataType.Map && pair.getFirst() != ParquetIODataType.LIST) {
             ParquetIOField parquetIOField =
                     new ParquetIOField(
                             fieldPath.peekLast(),
@@ -79,19 +85,61 @@ public class JSONParquetFieldConverter implements ParquetFieldConverter<JSONObje
                             null
                     );
             return parquetIOField;
+        } else if (pair.getFirst() == ParquetIODataType.LIST) {
+            JSONObject jObj = getJsonObject(value, pair);
+            List<ParquetIOField> subFields = new ArrayList<>();
+            if (jObj == null) {
+                ParquetIOField subField =
+                        new ParquetIOField(
+                                "element",
+                                ParquetIODataType.STRING,
+                                ParquetIORepetitionType.OPTIONAL,
+                                null
+                        );
+                subFields.add(subField);
+            } else {
+                for (Object subKey : jObj.keySet()) {
+                    LinkedList<String> childLinkedList = (LinkedList<String>) fieldPath.clone();
+                    childLinkedList.addLast(subKey.toString());
+                    ParquetIOField subField =
+                            createFieldFromJSON(
+                                    childLinkedList,
+                                    jObj.get(childLinkedList.peekLast()),
+                                    null
+                            );
+
+                    subFields.add(subField);
+                }
+            }
+            ParquetIOField parquetIOField =
+                    new ParquetIOField(
+                            fieldPath.peekLast(),
+                            pair.getFirst(),
+                            pair.getSecond(),
+                            subFields
+                    );
+            return parquetIOField;
         } else {
             // Assumption, that even if pipeline does not have data, it will still have keys as reference.
             JSONObject jObj = getJsonObject(value, pair);
             List<ParquetIOField> subFields = new ArrayList<>();
             for (Object subKey : jObj.keySet()) {
+                ParquetIORepetitionType repTypeSubField = null;
+                if(pair.getFirst() == ParquetIODataType.Map && subKey.toString().equals("key")) {
+                    repTypeSubField = ParquetIORepetitionType.REQUIRED;
+                }
                 LinkedList<String> childLinkedList = (LinkedList<String>) fieldPath.clone();
                 childLinkedList.addLast(subKey.toString());
                 ParquetIOField subField =
                         createFieldFromJSON(
                                 childLinkedList,
-                                jObj.get(childLinkedList.peekLast())
+                                jObj.get(childLinkedList.peekLast()),
+                                repTypeSubField
                         );
                 subFields.add(subField);
+            }
+            if (pair.getFirst() == ParquetIODataType.Map) {
+                subFields.sort(Comparator.comparing(ParquetIOField::getName));
             }
             ParquetIOField parquetIOField =
                     new ParquetIOField(
@@ -104,11 +152,33 @@ public class JSONParquetFieldConverter implements ParquetFieldConverter<JSONObje
         }
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    private Object updateValueForList(LinkedList<String> fieldPath, Object value) {
+        SchemaField schemaField = null;
+        List<SchemaField> searchableSchemaFields = this.catalogSchemaFields;
+        Iterator pathIterator = fieldPath.iterator();
+        JSONObject listChildObject = new JSONObject();
+        while (pathIterator.hasNext()) {
+            String currentKey = (String) pathIterator.next();
+            schemaField = getCatalogSchemaFieldFromKey(currentKey, searchableSchemaFields);
+            // TODO: what if Schema field is NULL here?
+            if (schemaField.getSubFields() != null && schemaField.getSubFields().size() > 0)
+                searchableSchemaFields = schemaField.getSubFields();
+        }
+        if (schemaField.getArraySubType() == DataType.StringType) {
+            listChildObject.put("element", value);
+        } else if (schemaField.getArraySubType() == DataType.Field_ObjectType) {
+            listChildObject.put("element", value);
+        }
+        return listChildObject;
+    }
+
     /**
      * Inspects catalog data type
      * and returns the first element
      * for array group type.
      */
+    @SuppressWarnings("unchecked")
     private JSONObject getJsonObject(Object value, Pair<ParquetIODataType, ParquetIORepetitionType> pair) {
         if(pair.getFirst() == ParquetIODataType.GROUP && pair.getSecond() == ParquetIORepetitionType.REPEATED) {
             // Because of PLAT-14737, We will be receiving JsonObjects
@@ -117,6 +187,26 @@ public class JSONParquetFieldConverter implements ParquetFieldConverter<JSONObje
             if(value instanceof JSONArray) {
                 JSONArray array = (JSONArray) value;
                 return (JSONObject) array.get(0);
+            }
+        } else if(pair.getFirst() == ParquetIODataType.LIST && pair.getSecond() == ParquetIORepetitionType.REPEATED) {
+            if(value instanceof JSONArray) {
+                JSONArray array = (JSONArray) value;
+                if (array.get(0) instanceof JSONObject) {
+                    return (JSONObject) array.get(0);
+                } else {
+                    return null;
+                }
+            }
+        } else if (pair.getFirst() == ParquetIODataType.Map) {
+            if(value instanceof JSONObject) {
+                JSONObject mapObject = (JSONObject) value;
+                JSONObject firstPair = new JSONObject();
+                for(Object key: mapObject.keySet()) {
+                    firstPair.put("key", key);
+                    firstPair.put("value", mapObject.get(key));
+                    value = firstPair;
+                    break;
+                }
             }
         }
         return (JSONObject) value;
@@ -151,7 +241,7 @@ public class JSONParquetFieldConverter implements ParquetFieldConverter<JSONObje
      * @param fieldPath
      * @return
      */
-    private Pair<ParquetIODataType, ParquetIORepetitionType> getParquetTypeAndRepetition(LinkedList<String> fieldPath) {
+    private Pair<ParquetIODataType, ParquetIORepetitionType> getParquetTypeAndRepetition(LinkedList<String> fieldPath, ParquetIORepetitionType repType) {
         SchemaField schemaField = null;
         List<SchemaField> searchableSchemaFields = this.catalogSchemaFields;
         Iterator pathIterator = fieldPath.iterator();
@@ -177,15 +267,22 @@ public class JSONParquetFieldConverter implements ParquetFieldConverter<JSONObje
                 || schemaField.getType() == DataType.BinaryType
                 || schemaField.getType() == DataType.Field_ObjectType) {
             pair.setFirst(FieldConverterFunction.catalogToParquetFieldFunction.apply(schemaField.getType()));
-        } else if (schemaField.getType() == DataType.Field_ArrayType) {
+        } else if (schemaField.getType() == DataType.Field_ArrayType || schemaField.getType() == DataType.Field_MapType) {
             // We need to check the sub-array type for determining 'Group'
             // type for Parquet or not.
             pair.setSecond(ParquetIORepetitionType.REPEATED);
-            if (schemaField.getArraySubType() == DataType.Field_ObjectType) {
+            if (schemaField.getType() == DataType.Field_MapType) {
+                pair.setFirst(ParquetIODataType.Map);
+            } else if (schemaField.getType() == DataType.Field_ArrayType) {
+                pair.setFirst(ParquetIODataType.LIST);
+            } else if (schemaField.getArraySubType() == DataType.Field_ObjectType) {
                 pair.setFirst(ParquetIODataType.GROUP);
             } else {
                 pair.setFirst(FieldConverterFunction.catalogToParquetFieldFunction.apply(schemaField.getArraySubType()));
             }
+        }
+        if (repType != null) {
+            pair.setSecond(repType);
         }
         return pair;
     }

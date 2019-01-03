@@ -92,10 +92,10 @@ public class CatalogServiceTest extends BaseTest{
 
     @Test
     public void testGetSchema() throws IOException, ConnectorSDKException {
-        setupTestForHttpOutput(schemaSample);
+        setupTestForHttpOutput(mapSchemaSample);
         List<SchemaField> schemaFields = catService.getSchemaFields("testOrg", "testToken", "/testschema", true);
         assertTrue(schemaFields!=null);
-        assertTrue(schemaFields.size() == 4);
+        assertTrue(schemaFields.size() == 5);
     }
 
     @Test
