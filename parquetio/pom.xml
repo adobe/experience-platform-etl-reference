@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.adobe.platform</groupId>
     <artifactId>example-parquetIO</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.0.1</version>
     <packaging>jar</packaging>
     <description>This jar will take care conversion of CSV to Parquet &amp; vice-versa</description>
     <properties>
@@ -78,8 +78,6 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <finalName>parquet-io</finalName>
-                            <shadedArtifactAttached>false</shadedArtifactAttached>
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>
@@ -90,7 +88,6 @@
                                     </excludes>
                                 </filter>
                             </filters>
-                            <minimizeJar>true</minimizeJar>
                             <artifactSet>
                                 <includes>
                                     <include>*:*</include>
