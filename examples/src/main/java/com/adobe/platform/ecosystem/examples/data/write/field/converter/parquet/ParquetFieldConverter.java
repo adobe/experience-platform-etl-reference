@@ -17,6 +17,7 @@
 package com.adobe.platform.ecosystem.examples.data.write.field.converter.parquet;
 
 import com.adobe.platform.ecosystem.examples.parquet.model.ParquetIOField;
+import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
 
 import java.util.List;
 
@@ -35,5 +36,5 @@ public interface ParquetFieldConverter<T> {
      * @param data Data from which {@link ParquetIOField} will be constructed.
      * @return List of parquet-IO fields.
      */
-    List<ParquetIOField> convert(T data);
+    List<ParquetIOField> convert(T data) throws ConnectorSDKException;
 }

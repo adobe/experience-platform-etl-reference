@@ -172,7 +172,35 @@ public class ParquetDataFormatter implements Formatter {
             final TraversablePath clone =  TraversablePath.clone(path);
             clone.withNode(currentFieldName);
 
-            if (columnType.isPrimitive()) {
+            // This is a stop gap fix where we have inconsistent
+            // JSON keys in records received AND we take the first
+            // record to construct parquet schema. This results in
+            // absence of some fields in data which are present in schema
+            // (via first record) but absent in further records.
+            if (data.get(currentFieldName) == null) continue;
+
+            if (columnType.isRepetition(Type.Repetition.REPEATED) || columnType.getOriginalType() == OriginalType.LIST) {
+                if (checkIfPrimitiveArray(columnType)) {
+                    buildPrimitiveArray(currentGroup, columnType, data, clone);
+                } else {
+                    buildComplexArray(currentGroup, columnType, data, clone);
+                }
+            } else if (columnType.getOriginalType() == OriginalType.MAP) {
+                buildMap(currentGroup, columnType, clone, data);
+            } else if (columnType.isPrimitive()) {
+                Object value = data.get(currentFieldName);
+                updateParquetRecordWithPrimitiveValue(
+                    columnType,
+                    value,
+                    currentGroup,
+                    clone
+                );
+            } else {
+                Group complexGroup = currentGroup.addGroup(currentFieldName);
+                updateParquetGroupWithData((JSONObject) data.get(currentFieldName), (SimpleGroup) complexGroup, clone);
+            }
+
+            /*if (columnType.isPrimitive()) {
                 if (columnType.isRepetition(Type.Repetition.REPEATED)) {
                     if (data.get(currentFieldName) instanceof JSONArray) { // Regular case
                         // Below is an assumption that json array will be present as value.
@@ -220,13 +248,251 @@ public class ParquetDataFormatter implements Formatter {
                 } else {
                     addComplexGroupToParquet(currentGroup, currentFieldName, (JSONObject) data.get(currentFieldName), clone);
                 }
-            }
+            }*/
         }
     }
 
     private void addComplexGroupToParquet(Group currentGroup, String fieldName, JSONObject jsonData, TraversablePath path) throws ConnectorSDKException {
         Group complexGroup = currentGroup.addGroup(fieldName);
         updateParquetGroupWithData(jsonData, (SimpleGroup) complexGroup, path);
+    }
+
+    private boolean checkIfPrimitiveArray(Type columnType) {
+        final GroupType listGroup = columnType.asGroupType();
+
+        // Fail-fast checks for improper schema construction.
+        assert listGroup.getFieldCount() == 1;
+        assert listGroup.getType(0).getRepetition() == Type.Repetition.REPEATED;
+
+        final Type repeatedGroupList = listGroup.getType(0);
+
+        assert repeatedGroupList instanceof GroupType;
+        assert repeatedGroupList.asGroupType().getFieldCount() == 1;
+
+        final Type elementType = repeatedGroupList.asGroupType().getType(0);
+
+        return !(elementType instanceof GroupType);
+    }
+
+    /**
+     * Helper method to generate parquet-mr LIST
+     * type schema for adding primitive arrays.
+     * Sample schema for primitive LIST:
+     * <pre>
+     *     optional group identity (LIST) {
+     *       repeated group list {  // Capturing group referred below.
+     *         optional binary element (UTF8)
+     *       }
+     *     }
+     * </pre>
+     *
+     * @param currentGroup         current simple group
+     * @param primitiveArrayColumn metadata for current column type.
+     * @param data                 Json data
+     * @param path                 path representation for current field.
+     */
+    private void buildPrimitiveArray(SimpleGroup currentGroup,
+                                     Type primitiveArrayColumn,
+                                     JSONObject data,
+                                     TraversablePath path) throws ConnectorSDKException {
+        final GroupType listGroup = primitiveArrayColumn.asGroupType();
+        final Type repeatedGroupList = listGroup.getType(0);
+        final Type elementType = repeatedGroupList.asGroupType().getType(0); // Corresponds to 'element' above.
+
+        // Add base Group 'identity' for example above to 'currentGroup`
+        Group baseGroup = currentGroup.addGroup(primitiveArrayColumn.getName());
+
+        // PLAT-14737 Below check is because of Informatica's lack
+        // of support to produce array of values. We will get only
+        // single primitive value.
+        if (data.get(primitiveArrayColumn.getName()) instanceof JSONArray) {
+            JSONArray jsonValueArray = (JSONArray) data.get(primitiveArrayColumn.getName());
+            for (int j = 0; j < jsonValueArray.size(); j++) {
+                Object value = jsonValueArray.get(j); // Value will be primitive.
+                Group capturingGroup = baseGroup.addGroup(repeatedGroupList.getName());
+                updateParquetRecordWithPrimitiveValue(
+                    elementType,
+                    value,
+                    (SimpleGroup) capturingGroup,
+                    path
+                );
+            }
+
+        } else {
+            Object valueWithProbableCommaSeparator = data.get(primitiveArrayColumn.getName());
+            if(valueWithProbableCommaSeparator instanceof String) {
+                final String strValue = (String) valueWithProbableCommaSeparator;
+                if(strValue.split(",").length > 1) {
+                    for(String token : strValue.split(",")) {
+                        Group capturingGroup = baseGroup.addGroup(repeatedGroupList.getName());
+                        updateParquetRecordWithPrimitiveValue(
+                            elementType,
+                            token,
+                            (SimpleGroup) capturingGroup,
+                            path
+                        );
+                    }
+                }
+            } else {
+                Group capturingGroup = baseGroup.addGroup(repeatedGroupList.getName());
+                Object value = data.get(primitiveArrayColumn.getName());
+                updateParquetRecordWithPrimitiveValue(
+                    elementType,
+                    value,
+                    (SimpleGroup) capturingGroup,
+                    path
+                );
+            }
+        }
+    }
+
+    /**
+     * Helper method to generate parquet-mr LIST
+     * type schema for adding complex arrays.
+     * Sample schema for complex LIST:
+     * <pre>
+     *     optional group identity (LIST) {
+     *       repeated group list {
+     *         optional group element {
+     *             optional binary id (UTF8);
+     *             optional INT32 code;
+     *         }
+     *       }
+     *     }
+     * </pre>
+     *
+     * @param currentGroup       current simple group
+     * @param complexArrayColumn metadata for current column type.
+     * @param data               Json data
+     * @param path               path representation for current field.
+     */
+    private void buildComplexArray(SimpleGroup currentGroup,
+                                   Type complexArrayColumn,
+                                   JSONObject data,
+                                   TraversablePath path) throws ConnectorSDKException {
+        final GroupType listGroup = complexArrayColumn.asGroupType();
+        final Type repeatedGroupList = listGroup.getType(0);
+        final Type elementType = repeatedGroupList.asGroupType().getType(0); // Corresponds to 'element' above.
+
+        assert elementType instanceof GroupType;
+
+        // Add base Group 'identity' for example above to 'currentGroup`
+        Group baseGroup = currentGroup.addGroup(complexArrayColumn.getName());
+
+        // PLAT-14737 Below check is because of Informatica's lack
+        // of support to produce array of values. We will get only
+        // single primitive value.
+        if (data.get(complexArrayColumn.getName()) instanceof JSONArray) {
+            JSONArray jsonValueArray = (JSONArray) data.get(complexArrayColumn.getName());
+            for (int j = 0; j < jsonValueArray.size(); j++) {
+                Object value = jsonValueArray.get(j); // Value will be primitive.
+                Group capturingGroup = baseGroup.addGroup(repeatedGroupList.getName());
+
+                JSONObject capturingData = new JSONObject();
+                capturingData.put(elementType.getName(), value);
+
+                updateParquetGroupWithData(
+                    capturingData,
+                    (SimpleGroup) capturingGroup,
+                    path
+                );
+            }
+
+        } else {
+            // Another INFA hack to write only 1 values.
+            // We would receive a JSON object only when
+            // cardinality in INFA is turned off for 1-many
+            // relationships.
+            if (data.get(complexArrayColumn.getName()) instanceof JSONObject) {
+                final JSONObject jsonValue = (JSONObject) data.get(complexArrayColumn.getName());
+                if (extractor.isExtractRequired(jsonValue)) {
+                    final List<JSONObject> objects = extractor.extract(jsonValue);
+                    for (JSONObject extractedObject : objects) {
+                        // Corresponds to 'list' above
+                        Group capturingGroup = baseGroup.addGroup(repeatedGroupList.getName());
+
+                        JSONObject capturingData = new JSONObject();
+                        capturingData.put(elementType.getName(), extractedObject);
+
+                        updateParquetGroupWithData(
+                            capturingData,
+                            (SimpleGroup) capturingGroup,
+                            path
+                        );
+                    }
+                }
+            } else {
+                Group capturingGroup = baseGroup.addGroup(repeatedGroupList.getName());
+                Object value = data.get(complexArrayColumn.getName());
+
+                JSONObject capturingData = new JSONObject();
+                capturingData.put(elementType.getName(), value);
+
+                updateParquetGroupWithData(
+                    capturingData,
+                    (SimpleGroup) capturingGroup,
+                    path
+                );
+            }
+        }
+    }
+
+    /**
+     * <pre>
+     *     optional group identityMap (MAP) {
+     *       repeated group map {
+     *         required binary key (UTF8);
+     *         optional group value (LIST) {
+     *           repeated group list {
+     *             optional group element {
+     *               optional binary id (UTF8);
+     *               optional binary authenticatedState (UTF8);
+     *               optional boolean primary;
+     *             }
+     *           }
+     *         }
+     *       }
+     *     }
+     * </pre>
+     */
+    private void buildMap(SimpleGroup currentGroup, Type mapColumnType, TraversablePath path, JSONObject data) {
+        assert mapColumnType instanceof GroupType;
+
+        final GroupType mapGroupType = mapColumnType.asGroupType();
+
+        // Fail fast checks
+        assert mapGroupType.getFieldCount() == 1;
+        assert mapGroupType.getFields().get(0).getRepetition() == Type.Repetition.REPEATED;
+        assert mapGroupType.getFields().get(0) instanceof GroupType;
+
+        final GroupType repeatedMapGroupType = mapGroupType.getType(0).asGroupType();
+
+        assert repeatedMapGroupType.getFieldCount() == 2;
+
+        // Add base Group 'identityMap' for example above to 'currentGroup`
+        Group baseGroup = currentGroup.addGroup(mapColumnType.getName());
+        final JSONObject mapData = (JSONObject) data.get(mapColumnType.getName());
+
+        mapData
+            .keySet()
+            .stream()
+            .forEach(key -> {
+                final JSONObject capturingData = new JSONObject();
+                capturingData.put(SDKConstants.CATALOG_MAP_KEY, key);
+                capturingData.put(SDKConstants.CATALOG_MAP_VALUE, mapData.get(key));
+
+                final Group capturingGroup = baseGroup.addGroup(repeatedMapGroupType.getName());
+                try {
+                    updateParquetGroupWithData(
+                        capturingData,
+                        (SimpleGroup) capturingGroup,
+                        path
+                    );
+                } catch (ConnectorSDKException e) {
+                    // TODO: Add logger here!
+                    e.printStackTrace();
+                }
+            });
     }
 
     @Deprecated
@@ -282,7 +548,7 @@ public class ParquetDataFormatter implements Formatter {
                 Object fieldValue = dataTable.get(rowId).get(nextFieldIndex);
                 nextFieldIndex = nextFieldIndex + 1;
                 leavesProcessed++;
-                updateParquetRecordWithPrimitiveValue(schema, fieldValue, record, p, null);
+                updateParquetRecordWithPrimitiveValue(schema.getType(p), fieldValue, record, null);
             } else {
                 GroupType groupType = schema.getType(p).asGroupType();
                 logger.log(Level.FINE, schema.getType(p).getName() + " " +  schema.getType(p).getRepetition());
@@ -384,26 +650,24 @@ public class ParquetDataFormatter implements Formatter {
      * Method that invokes correct setter on
      * parquet record using the types defined
      * in parquet schema.
-     *  @param schema             parquet schema of the GroupType record
-     *                           of which current column is a part of.
+     *  @param primitiveType primitive type to which {@code} currentColumnValue
+     *      *                           will be added to.
      * @param currentColumnValue current column value.
      * @param currentRecord      Represents the current record in which
  *                           value will be updated for column <code>currentColumnIndex</code>
-     * @param currentColumnIndex current index for column.
      * @param schemaPath
      * @throws ConnectorSDKException
      */
-    private void updateParquetRecordWithPrimitiveValue(GroupType schema,
+    private void updateParquetRecordWithPrimitiveValue(Type primitiveType,
                                                        Object currentColumnValue,
                                                        SimpleGroup currentRecord,
-                                                       int currentColumnIndex,
                                                        TraversablePath schemaPath) throws ConnectorSDKException {
         if (currentColumnValue == null || StringUtils.isEmpty(currentColumnValue.toString())) {
             return;
         }
-        final PrimitiveType primitiveTypeField = schema.getType(currentColumnIndex).asPrimitiveType();
+        final PrimitiveType primitiveTypeField = primitiveType.asPrimitiveType();
         final String type = primitiveTypeField.getPrimitiveTypeName().name();
-        final String currentFieldName = schema.getFieldName(currentColumnIndex);
+        final String currentFieldName = primitiveType.getName();
 
         if (type.equalsIgnoreCase("binary")) {
             applyStringValidationRule(schemaPath, currentColumnValue.toString());

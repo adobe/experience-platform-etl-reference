@@ -26,49 +26,81 @@ import com.adobe.platform.ecosystem.examples.data.write.field.converter.parquet.
 import com.adobe.platform.ecosystem.examples.data.write.writer.extractor.JsonObjectsExtractor;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
 import com.adobe.platform.ecosystem.ut.BaseTest;
+import org.apache.commons.io.FileUtils;
 import org.apache.parquet.schema.MessageType;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
+import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
  * @author vedhera on 2/26/2018
  */
 public class ParquetDataFormatterTest extends BaseTest {
+
     @Mock
     ValidationRegistry validationRegistry;
+    @Rule
+    public final TemporaryFolder tempFolder = new TemporaryFolder(new File("target"));
 
     private final ParquetFieldConverter fieldConverter = Mockito.mock(ParquetFieldConverter.class);
 
     private ParquetDataFormatter parquetDataFormatter;
 
+    private static File file;
+
+    @BeforeClass
+    public static void before() throws URISyntaxException {
+        file = readMockParquet();
+    }
+
     @Before
-    public void setup() throws ParquetIOException, URISyntaxException {
+    public void setup() throws ParquetIOException, URISyntaxException, ConnectorSDKException, IOException {
         initMocks(this);
 
-        Mockito.when(fieldConverter.convert(Mockito.any())).thenReturn(getMockParquetIOFields());
-        Mockito.when(writer.getSchema(Mockito.any())).thenReturn(getMockSchema());
-        File file = readMockParquet();
-        Mockito.when(writer.writeParquetFile(Mockito.any(),Mockito.any(),Mockito.any())).thenReturn(file);
+        when(fieldConverter.convert(Mockito.any())).thenReturn(getMockParquetIOFields());
+        when(writer.getSchema(Mockito.any())).thenReturn(getMockSchema());
 
-        parquetDataFormatter = new ParquetDataFormatter(writer,param,fieldConverter, new JsonObjectsExtractor(), validationRegistry);
+        File destFile = new File(tempFolder.getRoot(), "sample.parquet");
+        FileUtils.copyFile(file, destFile);
+        Mockito.when(writer.writeParquetFile(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(destFile);
+
+        parquetDataFormatter = new ParquetDataFormatter(writer, param, fieldConverter, new JsonObjectsExtractor(), validationRegistry);
     }
 
     @Test
     public void testGetBuffer() throws ParseException, ConnectorSDKException {
         assert (parquetDataFormatter.getBuffer(getMockPipelineData()) != null);
+    }
+
+    @Test
+    public void testVariableData() throws ParseException, ConnectorSDKException {
+        //second row has lesser attributes
+        List<JSONObject> dataTable = new ArrayList<>();
+        JSONParser parser = new JSONParser();
+        JSONObject json1 = (JSONObject) parser.parse("{\"createtime\":0,\"id1\":\"value1\"}");
+        JSONObject json2 = (JSONObject) parser.parse("{\"id1\":\"value1\"}");
+        dataTable.add(json1);
+        dataTable.add(json2);
+        assert (parquetDataFormatter.getBuffer(dataTable) != null);
     }
 
     private List<ParquetIOField> getMockParquetIOFields() {
@@ -77,6 +109,10 @@ public class ParquetDataFormatterTest extends BaseTest {
         ParquetIOField visitorId_source_row_id = new ParquetIOField("source_row_id", ParquetIODataType.FLOAT, ParquetIORepetitionType.OPTIONAL, null);
         ParquetIOField visitorId_isPrimary = new ParquetIOField("isPrimary", ParquetIODataType.BOOLEAN, ParquetIORepetitionType.OPTIONAL, null);
         ParquetIOField visitorId_longValue = new ParquetIOField("longValue", ParquetIODataType.LONG, ParquetIORepetitionType.OPTIONAL, null);
+        ParquetIOField visitorId_longEmptyValue = new ParquetIOField("longEmptyValue", ParquetIODataType.LONG, ParquetIORepetitionType.OPTIONAL, null);
+        ParquetIOField visitorId_floatEmptyValue = new ParquetIOField("floatEmptyValue", ParquetIODataType.FLOAT, ParquetIORepetitionType.OPTIONAL, null);
+        ParquetIOField visitorId_booleanEmptyValue = new ParquetIOField("booleanEmptyValue", ParquetIODataType.BOOLEAN, ParquetIORepetitionType.OPTIONAL, null);
+        ParquetIOField visitorId_doubleEmptyValue = new ParquetIOField("doubleEmptyValue", ParquetIODataType.DOUBLE, ParquetIORepetitionType.OPTIONAL, null);
 
         List<ParquetIOField> visitorIdSubFields = new ArrayList<>();
         visitorIdSubFields.add(visitorId_value);
@@ -84,11 +120,17 @@ public class ParquetDataFormatterTest extends BaseTest {
         visitorIdSubFields.add(visitorId_source_row_id);
         visitorIdSubFields.add(visitorId_isPrimary);
         visitorIdSubFields.add(visitorId_longValue);
+        visitorIdSubFields.add(visitorId_longEmptyValue);
+        visitorIdSubFields.add(visitorId_floatEmptyValue);
+        visitorIdSubFields.add(visitorId_booleanEmptyValue);
+        visitorIdSubFields.add(visitorId_doubleEmptyValue);
 
         ParquetIOField visitorId = new ParquetIOField("visitorId", ParquetIODataType.GROUP, ParquetIORepetitionType.OPTIONAL, visitorIdSubFields);
 
         ParquetIOField dataSource_id = new ParquetIOField("id", ParquetIODataType.INTEGER, ParquetIORepetitionType.OPTIONAL, null);
-        ParquetIOField dataSource_tags = new ParquetIOField("tags", ParquetIODataType.STRING, ParquetIORepetitionType.REPEATED, null);
+
+        ParquetIOField dataSource_tags_element = new ParquetIOField("element", ParquetIODataType.STRING, ParquetIORepetitionType.OPTIONAL, null);
+        ParquetIOField dataSource_tags = new ParquetIOField("tags", ParquetIODataType.LIST, ParquetIORepetitionType.OPTIONAL, Collections.singletonList(dataSource_tags_element));
 
         List<ParquetIOField> dataSourceSubFields = new ArrayList<>();
         dataSourceSubFields.add(dataSource_id);
@@ -96,9 +138,28 @@ public class ParquetDataFormatterTest extends BaseTest {
 
         ParquetIOField dataSource = new ParquetIOField("dataSource", ParquetIODataType.GROUP, ParquetIORepetitionType.OPTIONAL, dataSourceSubFields);
 
+        ParquetIOField mapKey = new ParquetIOField("key", ParquetIODataType.STRING, ParquetIORepetitionType.OPTIONAL, null);
+        ParquetIOField mapValue = new ParquetIOField(
+            "value",
+            ParquetIODataType.GROUP,
+            ParquetIORepetitionType.OPTIONAL,
+            Arrays.asList(
+                new ParquetIOField("name", ParquetIODataType.STRING, ParquetIORepetitionType.OPTIONAL, null),
+                new ParquetIOField("percentage", ParquetIODataType.DOUBLE, ParquetIORepetitionType.OPTIONAL, null)
+            )
+        );
+
+        ParquetIOField mapField = new ParquetIOField(
+            "mapField",
+            ParquetIODataType.Map,
+            ParquetIORepetitionType.OPTIONAL,
+            Arrays.asList(mapKey, mapValue)
+        );
+
         List<ParquetIOField> fields = new ArrayList<>();
         fields.add(visitorId);
         fields.add(dataSource);
+        fields.add(mapField);
 
         return fields;
     }
@@ -109,15 +170,15 @@ public class ParquetDataFormatterTest extends BaseTest {
 
     private List<JSONObject> getMockPipelineData() throws ParseException {
         List<JSONObject> data = new ArrayList<>();
-        String jsonData = "{\"visitorId\":{\"value\":\"value1\",\"domain\":0,\"source_row_id\":0,\"isPrimary\":0,\"longValue\":1234},\"dataSource\":{\"id\":11,\"tags\":[\"tag1\",\"tag2\"]}}";
+        String jsonData = "{\"visitorId\":{\"value\":\"value1\",\"domain\":0,\"source_row_id\":0,\"isPrimary\":0,\"longValue\":1234,\"longEmptyValue\":\"\",\"floatEmptyValue\":\"\",\"doubleEmptyValue\":\"\",\"booleanEmptyValue\":\"\"},\"dataSource\":{\"id\":11,\"tags\":[\"tag1\",\"tag2\"]},\"mapField\":{\"key1\":{\"name\":\"Bob\",\"percentage\":98.9},\"key2\":{\"name\":\"Ryan\",\"percentage\":99.9}}}";
         JSONParser parser = new JSONParser();
         JSONObject row1 = (JSONObject) parser.parse(jsonData);
         data.add(row1);
         return data;
     }
 
-    private File readMockParquet() throws URISyntaxException {
-        URL dir_url = ClassLoader.getSystemResource("sample.parquet");
+    private static File readMockParquet() throws URISyntaxException {
+        URL dir_url = ClassLoader.getSystemResource("pdfTest.parquet");
         File file = new File(dir_url.toURI());
         return file;
     }
