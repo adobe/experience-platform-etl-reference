@@ -85,6 +85,7 @@ public class SDKConstants {
 
     public static final String CATALOG_FILE_DESCRIPTION_PERSISTED_KEY = "persisted";
     public static final String CATALOG_FILE_DESCRIPTION_DELIMITERS_KEY = "delimiters";
+    public static final String CATALOG_DATASET_DEFAULT_PROPERTY = "fields,schema,name,description,imsOrg,fileDescription,viewId,schemaRef";
 
     public static final String ENV_CLIENT_ID  = "CLIENT_ID";
     public static final String ENV_SECRET_KEY = "CLIENT_SECRET";
@@ -131,6 +132,7 @@ public class SDKConstants {
     public static final String HTTP_RETRY_WAITTIME_DEFAULT_PROPERTY = "com.adobe.platform.clientRetry.waitTime";
     public static final String DEFAULT_LOGGING_PROPERTY = "com.adobe.platform.connector.loggingLevel";
     public static final String CATALOG_FIELD_FILTER_PROPERTY = "com.adobe.platform.xdm.blacklist.filter";
+    public static final String DATASET_API_SYSTEM_PROPERTY = "dataSetProperties";
     public static final String CATALOG_FIELD_FILTER_DELIMITER = ",";
     public static final String ENABLE_SCHEMA_VALIDATION_SYSTEM_PROPERTY = "enableSchemaValidation";
 
