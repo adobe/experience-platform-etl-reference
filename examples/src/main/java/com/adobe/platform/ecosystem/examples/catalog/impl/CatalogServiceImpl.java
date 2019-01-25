@@ -20,6 +20,7 @@ import com.adobe.platform.ecosystem.examples.catalog.api.CatalogService;
 import com.adobe.platform.ecosystem.examples.catalog.model.*;
 import com.adobe.platform.ecosystem.examples.constants.SDKConstants;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
+import com.adobe.platform.ecosystem.examples.util.ConnectorSDKUtil;
 import com.adobe.platform.ecosystem.examples.util.HttpClientUtil;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -109,13 +110,21 @@ public class CatalogServiceImpl implements CatalogService {
     public DataSet getDataSet(String imsOrg, String authToken, String dataSetId) throws ConnectorSDKException {
         DataSet dataSet;
         try {
-            String catalogURI = this._endpoint + "/dataSets/" + dataSetId;
+            String catalogURI = this._endpoint + "/dataSets/" + dataSetId + "?properties=" + getDataSetProperties();
             dataSet = getEntity(catalogURI, imsOrg, authToken, dataSetId, false, DataSet.class);
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Error while fetching dataSet for dataSetId :" + e.getMessage());
             throw new ConnectorSDKException(e.getMessage(), e.getCause());
         }
         return dataSet;
+    }
+
+    private String getDataSetProperties() {
+        final String value = ConnectorSDKUtil.getSystemProperty(SDKConstants.DATASET_API_SYSTEM_PROPERTY);
+        if (value == null || value.isEmpty()) {
+            return SDKConstants.CATALOG_DATASET_DEFAULT_PROPERTY;
+        }
+        return value;
     }
 
 
