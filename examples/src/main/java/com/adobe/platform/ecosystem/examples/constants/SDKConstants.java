@@ -52,6 +52,8 @@ public class SDKConstants {
     public static final String CATALOG_STATUS = "status";
     public static final String CATALOG_FOLDERNAME = "folderName";
     public static final String CATALOG_ISLOOKUP = "isLookup";
+    public static final String CATALOG_MAP_KEY = "key";
+    public static final String CATALOG_MAP_VALUE = "value";
 
     /**
      * Below property has been reduced from 500 to 

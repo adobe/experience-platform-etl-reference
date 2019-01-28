@@ -26,6 +26,7 @@ import com.adobe.platform.ecosystem.examples.data.access.model.DataSetFileProces
 import com.adobe.platform.ecosystem.examples.data.ingestion.api.DataIngestionService;
 import com.adobe.platform.ecosystem.examples.data.wiring.DataWiringParam;
 import com.adobe.platform.ecosystem.examples.data.write.Formatter;
+import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKUtil;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -90,7 +91,7 @@ public class BaseTest {
     public static final String dataAccessJSONFileEntityResponse = "[  {    \"id\": 1,    \"firstname\": \"Deann\",    \"lastname\": \"Hutchinson\",    \"birthdate\": \"8/14/1970\",    \"gender\": \"female\"  },  {    \"id\": 2,    \"firstname\": \"Violette\",    \"lastname\": \"Vaughan\",    \"birthdate\": \"2/16/1939\",    \"gender\": \"\"  },  {    \"id\": 3,    \"firstname\": \"Robert\",    \"lastname\": \"Savage\",    \"birthdate\": \"8/5/1996\",    \"gender\": \"female\"  },  {    \"id\": 4,    \"firstname\": \"Oren\",    \"lastname\": \"Weber\",    \"birthdate\": \"4/27/1990\",    \"gender\": \"male\"  },  {    \"id\": 5,    \"firstname\": \"Dortha\",    \"lastname\": \"Murphy\",    \"birthdate\": \"3/27/1970\",    \"gender\": \"female\"  }]";
     public static final String jwtToken = "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiIzMThERURDNzU5QzM4QUU5MEE0OTVFQ0VAdGVjaGFjY3QuYWRvYmUuY29tIiwiYXVkIjoiaHR0cHM6Ly9pbXMtbmExLmFkb2JlbG9naW4uY29tL2MvMTA0NzVhMDE5NTliNDY3Nzg3YjhkNDNkZTgxZDY2YjkiLCJodHRwczovL2ltcy1uYTEuYWRvYmVsb2dpbi5jb20vcy9lbnRfZGF0YWNhdGFsb2dfc2RrIjp0cnVlLCJpc3MiOiI3Q0JFNzA0MDUxQjBGNzU5MEE0OTBENENAQWRvYmVPcmciLCJleHAiOjE1MTAyMDI3Mzl9.rkgIUanAefJxWgT5KFo5Xtyuz5wbH3W9bErKpipbZpQLKeMG4zhbKnBLg6muLz5HUOdX5PT_zasWiqdzv9IqV-f3yv_0RZ1N5pLR1C2tEkL7p5nGj89EQqGlSppf_mDurXS3R8K6CmL4nC8HaV6TB7e76iIkofqMGUORdSnt0jOzUFyy0REmX0C5c_pdHlXlpQYJ1xOXa-oAQsoWmPLtiXBPBM_AY8ma_heuyvhpreWvXoX_-uGcVUblr1Fbicy39T1R6HdummRGhL3vk-70RaVLOAokS7MoDBzekngza1_GersPLOPHd1R3oAkldCfDj419o_JxI-LnwupcL0i4cA";
 
-    public void setUp() throws Exception{
+    public void setUp() throws ConnectorSDKException {
         Map<String, String> credentials = new HashMap<>();
         File file = new File("src/test/resources/secret.key");
         credentials.put(SDKConstants.CREDENTIAL_CLIENT_KEY, "sampleClientKey");
