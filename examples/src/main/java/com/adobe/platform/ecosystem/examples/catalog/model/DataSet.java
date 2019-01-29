@@ -29,6 +29,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.adobe.platform.ecosystem.examples.filter.FilterFactory;
+import com.adobe.platform.ecosystem.examples.schemaregistry.SchemaRegistryFactory;
+import com.adobe.platform.ecosystem.examples.schemaregistry.api.SchemaRegistryService;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -37,6 +39,9 @@ import com.adobe.platform.ecosystem.examples.catalog.impl.CatalogFactory;
 import com.adobe.platform.ecosystem.examples.constants.SDKConstants;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKUtil;
+import org.mortbay.util.ajax.JSON;
+
+import static com.adobe.platform.ecosystem.examples.schemaregistry.SchemaRegistryFactory.getSchemaRegistryService;
 
 /**
  * Represent Dataset entity in Catalog.
@@ -53,6 +58,8 @@ public class DataSet extends BaseModel {
     private String description;
 
     private String schema;
+
+    private JSONObject schemaRef;
 
     private JSONObject dule;
 
@@ -85,6 +92,7 @@ public class DataSet extends BaseModel {
                 put(SDKConstants.CATALOG_DESCRIPTION, DataType.StringType);
                 put(SDKConstants.CONNECTION_ID, DataType.StringType);
                 put(SDKConstants.CATALOG_SCHEMA, DataType.StringType);
+                put(SDKConstants.CATALOG_SCHEMA_REF, DataType.Field_ObjectType);
                 put(SDKConstants.CATALOG_FIELDS, DataType.JsonArrayType);
                 put(SDKConstants.CATALOG_OBSERVABLE_SCHEMA, DataType.Field_ObjectType);
                 put(SDKConstants.CATALOG_DULE, DataType.Field_ObjectType);
@@ -101,7 +109,7 @@ public class DataSet extends BaseModel {
     public DataSet(JSONObject jsonObject) {
         super(jsonObject);
         Field[] fields = DataSet.class.getDeclaredFields();
-        super.populateFields(fields, _keys, this, jsonObject);
+        super.populateFields(fields, this._keys, this, jsonObject);
     }
 
     public String getBasePath() {
@@ -126,6 +134,10 @@ public class DataSet extends BaseModel {
         }
 
         return duleObj;
+    }
+
+    protected SchemaRegistryService getSchemaRegistryService() throws ConnectorSDKException {
+        return SchemaRegistryFactory.getSchemaRegistryService();
     }
 
     public String getSchema() {
@@ -204,11 +216,18 @@ public class DataSet extends BaseModel {
         } else if(fieldsFrom == FieldsFrom.SCHEMA) {
             if(this.schema != null && this.schema.length() > 0) {
                 fieldsList = getFieldsFromCatalogSchema(useFlatNamesForLeafNodes);
-            } else {
+            } else if(useSchemaRef()) {
+                fieldsList = getFieldsFromSchemaRegistry(useFlatNamesForLeafNodes);
+            }
+            else {
                 logger.warning("Schema path not defined for " + this.getId());
             }
         }
         return fieldsList;
+    }
+
+    private boolean useSchemaRef() {
+        return (this.schemaRef != null && (getSchemaRef().getId()!=null && !getSchemaRef().getId().isEmpty()));
     }
 
     private List<SchemaField> getFieldsFromCatalogSchema(boolean useFlatNamesForLeafNodes) {
@@ -239,8 +258,28 @@ public class DataSet extends BaseModel {
         return fieldsList;
     }
 
+    private List<SchemaField> getFieldsFromSchemaRegistry(boolean useFlatNamesForLeafNodes) {
+        List<SchemaField> fieldsList = new ArrayList<>();
+        try {
+            SchemaRegistryService srs = getSchemaRegistryService();
+            fieldsList = srs.getSchemaFields(
+                    getImsOrg(),
+                    ConnectorSDKUtil.getInstance().getAccessToken(),
+                    getSchemaRef(),
+                    useFlatNamesForLeafNodes
+            );
+        } catch(ConnectorSDKException e) {
+            logger.severe("Failed in getting schema registry service while listing fields for dataset id " + this.getId());
+        }
+        return fieldsList;
+    }
+
     protected CatalogService getCatalogService() throws ConnectorSDKException {
         return CatalogFactory.getCatalogService();
+    }
+
+    public SchemaRef getSchemaRef() {
+        return new SchemaRef(schemaRef);
     }
 
     public List<SchemaField> getFlattenedSchemaFields() {
@@ -322,6 +361,14 @@ public class DataSet extends BaseModel {
     @Override
     public DataSet build(JSONObject obj) {
         return new DataSet(obj);
+    }
+
+    public void setSchema(String schema){
+        this.schema = schema;
+    }
+
+    public void setSchemaRef(JSONObject jsonObject){
+        this.schemaRef = jsonObject;
     }
 
 }
