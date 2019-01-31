@@ -26,6 +26,7 @@ import com.adobe.platform.ecosystem.examples.data.access.model.DataSetFileProces
 import com.adobe.platform.ecosystem.examples.data.ingestion.api.DataIngestionService;
 import com.adobe.platform.ecosystem.examples.data.wiring.DataWiringParam;
 import com.adobe.platform.ecosystem.examples.data.write.Formatter;
+import com.adobe.platform.ecosystem.examples.schemaregistry.api.SchemaRegistryService;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKUtil;
 import org.apache.http.HttpEntity;
@@ -66,6 +67,7 @@ public class BaseTest {
     protected Batch batch = Mockito.mock(Batch.class);
     protected FileDescription fileDescription = Mockito.mock(FileDescription.class);
     protected Formatter formatter = Mockito.mock(Formatter.class);
+    protected SchemaRegistryService schemaRegistryService = Mockito.mock(SchemaRegistryService.class);
 
     public static final String datasetSample = "{\"testDSId\": {\"fields\":[],\"basePath\": \"adl://ADLPATH/adlpath\"}}";
     public static final String datasetInnerSample1 = "{\"fields\":[{\"name\":\"col1\",\"type\":\"string\"},{\"name\":\"col2\",\"type\":\"boolean\"},{\"name\":\"col3\",\"type\":\"string\"},{\"name\":\"col4\",\"type\":\"boolean\"},{\"name\":\"col5\",\"type\":\"long\"},{\"name\":\"col6\",\"type\":\"double\"},{\"name\":\"col7\",\"type\":\"float\"}]}";
@@ -73,8 +75,10 @@ public class BaseTest {
     public static final String batchResp = "@/abc/xyz/testBatch";
     public static final String batchIdResp = "{\"testBatch\":\"batchId\"}";
     public static final String credSample = "{\"credentials\": {\"id\":\"CredId\"}}";
-    public static final String datasetInnerSample = "{\"name\":\"dsvName\",\"viewId\":\"dsvId\",\"connectionId\":\"conId\",\"dule\":{\"loginState\":[\"Identified\"],\"specialTypes\":[\"S1\",\"S2\"]},\"fields\":[{\"name\":\"id1\",\"type\":\"string\"},{\"name\":\"createtime\",\"type\":\"long\"},{\"name\":\"date\",\"type\":\"date\"},{\"name\":\"Name\",\"type\":\"object\",\"subFields\":[{\"name\":\"firstName\",\"type\":\"string\"}]}],\"basePath\":\"adl://adlpath/adlpath\",\"fileDescription\":{\"persisted\":false,\"format\":\"csv\",\"delimiters\":[\",\"]}}";
-    public static final String lookupServiceOutput = "[\"{\\\"a1\\\":\\\"val\\\"}\",\"{\\\"a2\\\":\\\"val2\\\"}\"]";
+    public static final String datasetInnerSample = "{\"name\":\"dsvName\",\"viewId\":\"dsvId\",\"connectionId\":\"conId\",\"dule\":{\"loginState\":[\"Identified\"],\"specialTypes\":[\"S1\",\"S2\"]},\"fields\":[{\"name\":\"id1\",\"type\":\"string\"},{\"name\":\"createtime\",\"type\":\"long\"},{\"name\":\"date\",\"type\":\"date\"},{\"name\":\"Name\",\"type\":\"object\",\"subFields\":[{\"name\":\"firstName\",\"type\":\"string\"}]}],\"basePath\":\"adl://dlake2lqnxe5fo6qus.azuredatalakestore.net/platform/59ba55472db95600008696d8/datasetViewId=59ba55472db95600008696d9\",\"fileDescription\":{\"persisted\":false,\"format\":\"csv\",\"delimiters\":[\",\"]},\"schemaRef\":{\n" +
+            "      \"id\":\"testId\",\n" +
+            "      \"contentType\":\"testContentType\"\n" +
+            "   }}";public static final String lookupServiceOutput = "[\"{\\\"a1\\\":\\\"val\\\"}\",\"{\\\"a2\\\":\\\"val2\\\"}\"]";
     public static final String dummyAccessToken = "eyJ4NXUiOiJpbXNfbmExLXN0ZzEta2V5LTEuY2VyIiwiYWxnIjoiUlMyNTYifQ.eyJpZCI6IjE1MDk3MDExMDM0MDlfZjRlZWQwMDYtYjY5Ni00YjQ5LTliOGYtMTAyNzY4YjhlYTczX3VlMSIsImNsaWVudF9pZCI6Ik1DRFBfSEFSVkVTVEVSIiwidXNlcl9pZCI6Ik1DRFBfSEFSVkVTVEVSQEFkb2JlSUQiLCJ0eXBlIjoiYWNjZXNzX3Rva2VuIiwiYXMiOiJpbXMtbmExLXN0ZzEiLCJwYWMiOiJNQ0RQX0hBUlZFU1RFUl9zdGciLCJydGlkIjoiMTUwOTcwMTEwMzQwOV81NmQxNWY3ZS0yYjcwLTQ3MjYtOGQ5Ni1hNDdkNDg4N2VhYWRfdWUxIiwicnRlYSI6IjE1MTA5MTA3MDM0MDkiLCJtb2kiOiI2ZDk0M2UwMCIsImMiOiI0dVFzWVFzL0Z5VHhUekErWE1pa2pnPT0iLCJleHBpcmVzX2luIjoiODY0MDAwMDAiLCJzY29wZSI6InN5c3RlbSIsImNyZWF0ZWRfYXQiOiIxNTA5NzAxMTAzNDA5In0.exiCb1l9HNLjQgwhz_XFatzvUvhHWe7u4QBau8UiegiB-iOlOJvFds5QwaUj1fX2N3Ki8FZWQ0uCqCKJRKCFvFxitnElrmsNIS3lkQz1NWlfq2KK-qQS5pORyd05ZK95ep11Tokz-S_bUvjK-tE-HkZeFzpHLLL2ab9cDwBGSVdeofCUSm8LYnaC7YAlAYbC3kwSAFm6XewD9BHrOx6luYlEr7oPdZxIM-eBJ-Xe95eC6Dnm-UUbLVOyHUeQhYPO51CPUmTY6uaok7Ic3osP4038SrVtKRYijQtmEWsCPg4otlqN5NNkeJqP8jrLHv5n193jtDHdH_8V0GP-YZS8Dg";
     public static final String jwtExchangeResponse = "{\"access_token\":" + "\"" + dummyAccessToken + "\"" + "}";
     public static final String connectionSample = "{ \"conId\": { \"name\": \"testCon\", \"imsOrg\": \"testOrg\", \"dule\": { \"contracts\": [ \"C2\",  \"C3\", \"C4\", \"C5\", \"C6\" ] } }}";

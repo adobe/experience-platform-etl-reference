@@ -90,11 +90,11 @@ public class PlatformDataFormatterFactory implements DataFormatterFactory {
     }
 
     private List<SchemaField> getFieldsFromDataSet() {
-        if (!StringUtils.isEmpty(param.getDataSet().getSchema())) {
-            return param.getDataSet().getFields(false, DataSet.FieldsFrom.SCHEMA);
-        } else {
-            return param.getDataSet().getFields(false, DataSet.FieldsFrom.FIELDS);
+        List<SchemaField> fieldList = param.getDataSet().getFields(false, DataSet.FieldsFrom.SCHEMA);
+        if(fieldList==null || fieldList.isEmpty()){
+            fieldList = param.getDataSet().getFields(false, DataSet.FieldsFrom.FIELDS);
         }
+        return fieldList;
     }
 
     private ValidationRegistry getValidationRegistry(List<SchemaField> fields) {

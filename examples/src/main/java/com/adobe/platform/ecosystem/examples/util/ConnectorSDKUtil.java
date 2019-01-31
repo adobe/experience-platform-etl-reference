@@ -46,7 +46,7 @@ public class ConnectorSDKUtil {
     private static final Logger logger = Logger.getLogger(ConnectorSDKUtil.class.getName());
 
     private static List<ResourceName> URI_LIST = new ArrayList<>(Arrays.asList(ResourceName.CATALOG,
-            ResourceName.DATA_ACCESS, ResourceName.DATA_INGESTION));
+            ResourceName.DATA_ACCESS, ResourceName.DATA_INGESTION, ResourceName.SCHEMA_REGISTRY));
 
     private Map<ResourceName, String> resourceInstance;
     private static Map<String, Map<ResourceName, String>> envResourceMap;

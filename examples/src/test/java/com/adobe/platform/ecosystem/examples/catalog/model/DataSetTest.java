@@ -18,6 +18,7 @@ package com.adobe.platform.ecosystem.examples.catalog.model;
 
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
@@ -28,6 +29,7 @@ import java.util.Map;
 
 import com.adobe.platform.ecosystem.examples.catalog.api.CatalogService;
 import com.adobe.platform.ecosystem.examples.catalog.impl.CatalogFactory;
+import com.adobe.platform.ecosystem.examples.schemaregistry.api.SchemaRegistryService;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -43,6 +45,7 @@ public class DataSetTest extends BaseTest{
     DataSet ds = null;
     DataSet ds_Sample1 = null;
     DataSet ds_Sample2 = null;
+    DataSet ds_Sample3 = null;
 
     String datasetInnerSample1 = "{\"name\":\"dsvName\","
             + "\"viewId\":\"dsvId\",\"connectionId\":\"conId\",\"dule\":"
@@ -228,6 +231,44 @@ public class DataSetTest extends BaseTest{
             + " }"
             + "}";
 
+    String datasetInnerSample3 ="{"
+            + " \"version\": \"1.0.1\","
+            + " \"imsOrg\": \"EDCE5A655A5E73FF0A494113@AdobeOrg\","
+            + " \"name\": \"Data set for Testing\","
+            + " \"created\": 1527085987308,"
+            + " \"updated\": 1527085992694,"
+            + " \"createdClient\": \"acp_core_identity_data\","
+            + " \"createdUser\": \"acp_core_identity_data@AdobeID\","
+            + " \"updatedUser\": \"acp_foundation_dataTracker@AdobeID\","
+            + " \"namespace\": \"ACP\","
+            + " \"tags\": {"
+            + "  \"unifiedprofile\": ["
+            + "   \"enabled:true\","
+            + "   \"identityField:identities.id\","
+            + "   \"relatedModels:aaaprofile\""
+            + "  ]"
+            + " },"
+            + " \"dule\": {},"
+            + " \"statsCache\": {},"
+            + " \"lastBatchId\": \"ee702a5a792143b9b1437d0be598265b\","
+            + " \"lastBatchStatus\": \"success\","
+            + " \"lastSuccessfulBatch\": \"ee702a5a792143b9b1437d0be598265b\","
+            + " \"viewId\": \"5b057ba38fd95a01decdb923\","
+            + " \"aspect\": \"production\","
+            + " \"status\": \"enabled\","
+            + " \"fileDescription\": {"
+            + "  \"persisted\": true,"
+            + "  \"containerFormat\": \"parquet\","
+            + "  \"format\": \"parquet\""
+            + " },"
+            + " \"transforms\": \"@/dataSets/5b057ba38fd95a01decdb922/views/5b057ba38fd95a01decdb923/transforms\","
+            + " \"files\": \"@/dataSets/5b057ba38fd95a01decdb922/views/5b057ba38fd95a01decdb923/files\","
+            + " \"schemaRef\": {"
+            +       "\"id\": \"https://ns.adobe.com/model/Profile\","
+            +       "\"contentType\": \"application/vnd.adobe.xed+json\""
+            + " }"
+            + "}";
+
     @Before
     public void setupDataSet() throws Exception {
         setUp();
@@ -235,6 +276,7 @@ public class DataSetTest extends BaseTest{
         ds = getDataSetFromString(datasetInnerSample);
         ds_Sample1 = getDataSetFromString(datasetInnerSample1);
         ds_Sample2 = getDataSetFromString(datasetInnerSample2);
+        ds_Sample3 = getDataSetFromString(datasetInnerSample3);
     }
 
     @Test
@@ -306,6 +348,13 @@ public class DataSetTest extends BaseTest{
     }
 
     @Test
+    public void testGetSchemaRef(){
+        assertNotNull(ds.getSchemaRef());
+        assertEquals(ds.getSchemaRef().getId(), "testId");
+        assertEquals(ds.getSchemaRef().getContentType(), "testContentType");
+    }
+
+    @Test
     public void testGetSchemaFieldsFromCatalog() throws ParseException, ConnectorSDKException {
         System.setProperty("com.adobe.platform.xdm.blacklist.filter", "model/Profile.person");
 
@@ -326,6 +375,25 @@ public class DataSetTest extends BaseTest{
 
     }
 
+    @Test
+    public void testGetSchemaFieldsFromSchemaRegistry() throws ParseException, ConnectorSDKException {
+        JSONParser jsonParser = new JSONParser();
+        JSONObject jsonObject = (JSONObject)(jsonParser.parse(datasetInnerSample3));
+
+        when(schemaRegistryService.getSchemaFields(
+                anyString(),
+                anyString(),
+                anyObject(),
+                eq(false)
+        )).thenReturn(ds_Sample2.getFields(DataSet.FieldsFrom.OBSERVABLE_SCHEMA));
+
+        DataSet dataSet = new DataSetExtension(jsonObject);
+
+        final List<SchemaField> fieldList = dataSet.getFields(false, DataSet.FieldsFrom.SCHEMA);
+        //No blacklisting currently
+        assertEquals(fieldList.size(), 6);
+    }
+
     class DataSetExtension extends DataSet {
         public DataSetExtension(JSONObject jsonObject) {
             super(jsonObject);
@@ -334,6 +402,11 @@ public class DataSetTest extends BaseTest{
         @Override
         protected CatalogService getCatalogService() throws ConnectorSDKException {
             return catService;
+        }
+
+        @Override
+        protected SchemaRegistryService getSchemaRegistryService() throws ConnectorSDKException {
+            return schemaRegistryService;
         }
     }
 }

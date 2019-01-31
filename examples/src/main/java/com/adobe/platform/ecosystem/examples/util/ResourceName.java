@@ -22,6 +22,7 @@ package com.adobe.platform.ecosystem.examples.util;
 public enum ResourceName {
     ADOBE_IO("adobeio", "adobeioEndPoint"),
     CATALOG("catalog", "catalogEndPoint"),
+    SCHEMA_REGISTRY("schemaRegistry", "schemaRegistryEndPoint"),
     IMS("ims", "imsEndPoint"),
     LOOKUP("lookup", "lookupEndPoint"),
     DATA_ACCESS("dataAccess", "dataAccessEndpoint"),
