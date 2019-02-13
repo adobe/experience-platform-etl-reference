@@ -35,7 +35,7 @@ public class FlushHandler {
     private final long fileMaxSize = 256*1024*1024l;
     private long sizeOfRecord;
     private long rowsProcessed;
-    private List<?> dataTable;
+    private List<Object> dataTable;
 
     public FlushHandler(long sizeOfRecord){
         //Keep size as 3 times the first record
@@ -63,7 +63,7 @@ public class FlushHandler {
         if(this.dataTable==null){
             this.dataTable = new ArrayList<>();
         }
-        this.dataTable = Stream.concat(this.dataTable.stream(), recordsTobeAdded.stream()).collect(Collectors.toList());
+        dataTable.addAll(recordsTobeAdded);
     }
 
     public List<?> getDataTable() {
