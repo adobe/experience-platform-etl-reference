@@ -60,7 +60,7 @@ public class SchemaRegistryServiceTest extends BaseTest {
         setupTestForHttpOutput(schemaSample);
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("id" , "https://ns.adobe.com/test/Id");
-        jsonObject.put("contentType" , "application/vnd.adobe.xed+json");
+        jsonObject.put("contentType" , "application/vnd.adobe.xed+json; version=1.0");
         SchemaRef schemaRef = new SchemaRef(jsonObject);
         List<SchemaField> schemaFields = schemaRegistryService.getSchemaFields("testOrg", "testToken", schemaRef, true);
         assertTrue(schemaFields !=  null);
