@@ -187,7 +187,7 @@ public class SchemaRegistryServiceImpl implements SchemaRegistryService {
                     imsOrg,
                     authToken,
                     metaAltId,
-                    getContentType(schemaRef.getContentType()),
+                    getContentType(schemaRef),
                     true,
                     Schema.class
             ).getSchemaFields(useFlatNamesForLeafNodes);
@@ -202,7 +202,14 @@ public class SchemaRegistryServiceImpl implements SchemaRegistryService {
     rawContentType - application/vnd.adobe.xed+json; version=1
     contentType - application/vnd.adobe.xed-full+json; version=1
     */
-    private String getContentType(String rawContentType) {
-        return String.format("%sxed-full%s", rawContentType.split("xed")[0], rawContentType.split("xed")[1]);
+    private String getContentType(SchemaRef schemaRef) throws ConnectorSDKException {
+        String[] tokens = schemaRef.getContentType().split(";");
+        for(int i=0;i<tokens.length;i++){
+            if(tokens[i].contains("version")){
+                return "application/vnd.adobe.xed-full+json; " + tokens[i];
+            }
+        }
+        logger.log(Level.SEVERE, "version property not specified for fetching schema {0}", schemaRef);
+        throw new ConnectorSDKException("version not specified for fetching schema with id=" + schemaRef.getId());
     }
 }
