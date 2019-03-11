@@ -65,27 +65,35 @@ public class ParquetDataFormatter implements Formatter {
 
     private DataWiringParam param;
 
-    private final ParquetFieldConverter<JSONObject> fieldConverter;
-
     private final Extractor<JSONObject> extractor;
 
     private final ValidationRegistry validationRegistry;
 
     private final boolean isRegistryEnabled;
 
+    private final ParquetFieldConverter<JSONObject> jsonFieldConverter;
+
+    private final ParquetFieldConverter<List<SchemaField>> schemaFieldConverter;
+
+    private boolean isFullSchemaRequired;
+
     private static Logger logger = Logger.getLogger(ParquetDataFormatter.class.getName());
 
     public ParquetDataFormatter(ParquetIOWriter writer,
                                 DataWiringParam param,
-                                ParquetFieldConverter<JSONObject> fieldConverter,
+                                ParquetFieldConverter<JSONObject> jsonFieldConverter,
+                                ParquetFieldConverter<List<SchemaField>> schemaFieldConverter,
                                 Extractor<JSONObject> extractor,
-                                ValidationRegistry validationRegistry) {
+                                ValidationRegistry validationRegistry,
+                                boolean isFullSchemaRequired) {
         this.writer = writer;
         this.param = param;
-        this.fieldConverter = fieldConverter;
+        this.jsonFieldConverter = jsonFieldConverter;
         this.extractor = extractor;
         this.validationRegistry = validationRegistry;
         this.isRegistryEnabled = getRegistryEnabled();
+        this.schemaFieldConverter = schemaFieldConverter;
+        this.isFullSchemaRequired = isFullSchemaRequired;
     }
 
     private boolean getRegistryEnabled() {
@@ -135,14 +143,10 @@ public class ParquetDataFormatter implements Formatter {
     @Override
     public byte[] getBuffer(List<JSONObject> dataTable) throws ConnectorSDKException {
         try {
-            // 1.Get schema from the first JSON object.
-            JSONObject referenceObject = dataTable.get(0);
-            List<ParquetIOField> parquetIOFields = fieldConverter.convert(referenceObject);
+            // 1. Use the output from schema builder to get schema for parquet-IO SDK.
+            MessageType schema = writer.getSchema(getParquetIOFields(dataTable));
 
-            // 2. Use the output from schema builder to get schema for parquet-IO SDK.
-            MessageType schema = writer.getSchema(parquetIOFields);
-
-            // 3. For each data row convert data object to Group record.
+            // 2. For each data row convert data object to Group record.
             List<SimpleGroup> records = new ArrayList<>();
             for (JSONObject row : dataTable) {
                 SimpleGroup parquetRow = new SimpleGroup(schema);
@@ -766,5 +770,15 @@ public class ParquetDataFormatter implements Formatter {
             + " Error: " + ex.getMessage();
         logger.log(Level.SEVERE, msg);
         throw new ConnectorSDKException(msg, ex);
+    }
+
+    private List<ParquetIOField> getParquetIOFields(List<JSONObject> dataTable) throws ConnectorSDKException {
+        if (isFullSchemaRequired) {
+            return schemaFieldConverter.convert(
+                    param.getDataSet().getSchemaFieldsFromSchemaRef()
+            );
+        } else {
+            return jsonFieldConverter.convert(dataTable.get(0));
+        }
     }
 }

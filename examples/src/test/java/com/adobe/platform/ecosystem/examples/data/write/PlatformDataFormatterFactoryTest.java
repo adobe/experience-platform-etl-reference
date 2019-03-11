@@ -44,6 +44,7 @@ public class PlatformDataFormatterFactoryTest extends BaseTest {
     public void testGetFormatter() {
         ParquetIOWriter writer = new ParquetIOWriterImpl();
         PlatformDataFormatterFactory platFormatter = new PlatformDataFormatterFactory(writer, param, registryFactory);
+        platFormatter.setWriteAttributes(new WriteAttributes.WriteAttributesBuilder().build());
         assertTrue(platFormatter.getFormatter(FileFormat.CSV) != null);
         assertTrue(platFormatter.getFormatter(FileFormat.PARQUET) != null);
         assertTrue(platFormatter.getFormatter(FileFormat.JSON) != null);

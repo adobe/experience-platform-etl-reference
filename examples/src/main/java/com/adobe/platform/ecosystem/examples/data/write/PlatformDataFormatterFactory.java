@@ -21,20 +21,22 @@ import com.adobe.platform.ecosystem.examples.catalog.model.DataType;
 import com.adobe.platform.ecosystem.examples.catalog.model.SchemaField;
 import com.adobe.platform.ecosystem.examples.data.validation.api.ValidationRegistry;
 import com.adobe.platform.ecosystem.examples.data.validation.api.ValidationRegistryFactory;
+import com.adobe.platform.ecosystem.examples.data.write.field.converter.parquet.catalog.CachedCatalogSchemaParquetFieldConverter;
+import com.adobe.platform.ecosystem.examples.data.write.field.converter.parquet.catalog.CatalogSchemaParquetFieldConverter;
+import com.adobe.platform.ecosystem.examples.data.write.writer.extractor.Extractor;
+import com.adobe.platform.ecosystem.examples.data.write.writer.extractor.JsonObjectsExtractor;
 import com.adobe.platform.ecosystem.examples.parquet.write.ParquetIOWriter;
 import com.adobe.platform.ecosystem.examples.data.FileFormat;
 import com.adobe.platform.ecosystem.examples.data.wiring.DataWiringParam;
 import com.adobe.platform.ecosystem.examples.data.write.field.converter.parquet.JSONParquetFieldConverter;
 import com.adobe.platform.ecosystem.examples.data.write.field.converter.parquet.ParquetFieldConverter;
-import com.adobe.platform.ecosystem.examples.data.write.writer.extractor.Extractor;
-import com.adobe.platform.ecosystem.examples.data.write.writer.extractor.JsonObjectsExtractor;
 import com.adobe.platform.ecosystem.examples.data.write.writer.formatter.CSVDataFormatter;
 import com.adobe.platform.ecosystem.examples.data.write.writer.formatter.JSONDataFormatter;
 import com.adobe.platform.ecosystem.examples.data.write.writer.formatter.ParquetDataFormatter;
-import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONObject;
 
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * Created by vedhera on 8/25/2017.
@@ -53,10 +55,19 @@ public class PlatformDataFormatterFactory implements DataFormatterFactory {
 
     private final ValidationRegistryFactory registryFactory;
 
+    private WriteAttributes writeAttributes;
+
+    private static final Logger logger = Logger.getLogger(PlatformDataFormatterFactory.class.getName());
+
     public PlatformDataFormatterFactory(ParquetIOWriter writer, DataWiringParam param, ValidationRegistryFactory registryFactory) {
         this.writer = writer;
         this.param = param;
         this.registryFactory = registryFactory;
+    }
+
+    public PlatformDataFormatterFactory setWriteAttributes(WriteAttributes writeAttributes) {
+        this.writeAttributes = writeAttributes;
+        return this;
     }
 
     /**
@@ -71,14 +82,20 @@ public class PlatformDataFormatterFactory implements DataFormatterFactory {
                 break;
             case PARQUET:
                 final List<SchemaField> fields = getFieldsFromDataSet();
-                ParquetFieldConverter<JSONObject> converter = new JSONParquetFieldConverter(fields);
+                final ParquetFieldConverter<JSONObject> jsonConverter = new JSONParquetFieldConverter(fields);
                 Extractor<JSONObject> extractor = new JsonObjectsExtractor();
+                final ParquetFieldConverter<List<SchemaField>> schemaFieldConverter = new CachedCatalogSchemaParquetFieldConverter(
+                        new CatalogSchemaParquetFieldConverter()
+                );
                 formatter = new ParquetDataFormatter(
-                    this.writer,
-                    this.param,
-                    converter,
-                    extractor,
-                    getValidationRegistry(fields)
+                        this.writer,
+                        this.param,
+                        jsonConverter,
+                        schemaFieldConverter,
+                        extractor,
+                        getValidationRegistry(fields),
+                        writeAttributes.isFullSchemaRequired()
+
                 );
                 break;
             case JSON:

@@ -87,7 +87,7 @@ public class FieldConverterFunctionTest {
     }
 
     @Test
-    public void testInvalidConversion() {
-        assert (function.apply(DataType.Field_ArrayType) == null);
+    public void testArrayConversion() {
+        assert (function.apply(DataType.Field_ArrayType) == ParquetIODataType.LIST);
     }
 }
