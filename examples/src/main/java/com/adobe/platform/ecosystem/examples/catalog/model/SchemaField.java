@@ -254,7 +254,7 @@ public class SchemaField {
             );
 
             // This will populate subFields for 'object' type values.
-            populateForObjectType(
+            populateForMapOrObjectType(
                 mapValue,
                 additionalProps,
                 parentHierarchy,
