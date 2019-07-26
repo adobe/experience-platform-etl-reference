@@ -30,9 +30,12 @@ public class WriteAttributes {
 
     private boolean isEOF;
 
+    private boolean fullSchemaRequired;
+
     private WriteAttributes(WriteAttributesBuilder writeAttributesBuilder) {
         this.setFlushStrategyRequired(writeAttributesBuilder.getIsFlushStrategyRequired());
         this.setSizeOfRecord(writeAttributesBuilder.getSizeOfRecord());
+        this.setFullSchemaRequired(writeAttributesBuilder.isFullSchemaRequired());
         if(sizeOfRecord>0 && isFlushStrategyRequired){
             setFlushHandler(new FlushHandler(sizeOfRecord));
         }
@@ -62,11 +65,23 @@ public class WriteAttributes {
         this.isEOF = isEOF;
     }
 
+    public boolean isFullSchemaRequired() {
+        return fullSchemaRequired;
+    }
+
+    public WriteAttributes setFullSchemaRequired(boolean fullSchemaRequired) {
+        this.fullSchemaRequired = fullSchemaRequired;
+        return this;
+    }
+
     public static class WriteAttributesBuilder{
 
         private Boolean isFlushStrategyRequired = false;
 
         private long sizeOfRecord;
+
+        //Setting default value to false.
+		private boolean isFullSchemaRequired = false;
 
         public Boolean getIsFlushStrategyRequired() {
             return isFlushStrategyRequired;
@@ -84,6 +99,10 @@ public class WriteAttributes {
         public WriteAttributesBuilder withSizeOfRecord(long sizeOfRecord) {
             this.sizeOfRecord = sizeOfRecord;
             return this;
+        }
+
+        public boolean isFullSchemaRequired() {
+            return isFullSchemaRequired;
         }
 
         public WriteAttributes build(){

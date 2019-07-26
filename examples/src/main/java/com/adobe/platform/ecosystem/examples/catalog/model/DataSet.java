@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -77,6 +78,8 @@ public class DataSet extends BaseModel {
 
     private static final Logger logger = Logger.getLogger(BaseModel.class
             .getName());
+
+    private Optional<List<SchemaField>> schemaFieldFromSchemaRef = Optional.empty();
 
     public static enum FieldsFrom {
         FIELDS,
@@ -369,6 +372,13 @@ public class DataSet extends BaseModel {
 
     public void setSchemaRef(JSONObject jsonObject){
         this.schemaRef = jsonObject;
+    }
+
+    public List<SchemaField> getSchemaFieldsFromSchemaRef() {
+        if (!schemaFieldFromSchemaRef.isPresent()) {
+            schemaFieldFromSchemaRef = Optional.of(this.getFields(FieldsFrom.SCHEMA));
+        }
+        return schemaFieldFromSchemaRef.get();
     }
 
 }

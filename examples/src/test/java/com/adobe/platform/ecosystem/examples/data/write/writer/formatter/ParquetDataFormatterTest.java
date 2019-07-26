@@ -67,6 +67,8 @@ public class ParquetDataFormatterTest extends BaseTest {
 
     private static File file;
 
+    private final ParquetFieldConverter schemaFieldConverter = Mockito.mock(ParquetFieldConverter.class);
+
     @BeforeClass
     public static void before() throws URISyntaxException {
         file = readMockParquet();
@@ -83,7 +85,7 @@ public class ParquetDataFormatterTest extends BaseTest {
         FileUtils.copyFile(file, destFile);
         Mockito.when(writer.writeParquetFile(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(destFile);
 
-        parquetDataFormatter = new ParquetDataFormatter(writer, param, fieldConverter, new JsonObjectsExtractor(), validationRegistry);
+        parquetDataFormatter = new ParquetDataFormatter(writer, param, fieldConverter, schemaFieldConverter, new JsonObjectsExtractor(), validationRegistry, false);
     }
 
     @Test

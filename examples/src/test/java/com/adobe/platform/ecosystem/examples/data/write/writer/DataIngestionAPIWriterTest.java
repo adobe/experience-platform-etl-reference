@@ -72,8 +72,8 @@ public class DataIngestionAPIWriterTest extends BaseTest {
     @Test
     public void testConstructor() throws Exception {
 
-        Formatter platFormatter = new PlatformDataFormatterFactory(writer, param, registryFactory).getFormatter(PARQUET_FILE_FORMAT);
-         DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, PARQUET_FILE_FORMAT, platFormatter, writeAttributes, catService);
+        Formatter platFormatter = new PlatformDataFormatterFactory(writer, param, registryFactory).setWriteAttributes(writeAttributes).getFormatter(PARQUET_FILE_FORMAT);
+        DataIngestionAPIWriter disWriter = new DataIngestionAPIWriter(dis, param, PARQUET_FILE_FORMAT, platFormatter, writeAttributes, catService);
         assertTrue(disWriter != null);
 
         platFormatter = new PlatformDataFormatterFactory(writer, param, registryFactory).getFormatter(CSV_FILE_FORMAT);
