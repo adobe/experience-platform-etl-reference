@@ -16,6 +16,9 @@
  */
 package com.adobe.platform.ecosystem.examples.data.write;
 
+import java.util.Map;
+import java.util.Set;
+
 /**
  * @author vardgupt
  *
@@ -32,10 +35,15 @@ public class WriteAttributes {
 
     private boolean fullSchemaRequired;
 
+    private boolean validateData;
+
+    private Map<String,Set<String>> batchTags;
+
     private WriteAttributes(WriteAttributesBuilder writeAttributesBuilder) {
         this.setFlushStrategyRequired(writeAttributesBuilder.getIsFlushStrategyRequired());
         this.setSizeOfRecord(writeAttributesBuilder.getSizeOfRecord());
         this.setFullSchemaRequired(writeAttributesBuilder.isFullSchemaRequired());
+        this.setValidateData(writeAttributesBuilder.getValidateData());
         if(sizeOfRecord>0 && isFlushStrategyRequired){
             setFlushHandler(new FlushHandler(sizeOfRecord));
         }
@@ -65,6 +73,25 @@ public class WriteAttributes {
         this.isEOF = isEOF;
     }
 
+    private void setBatchTags(Map<String,Set<String>> batchTags)
+    {
+        this.batchTags = batchTags;
+    }
+    public Map<String,Set<String>> getBatchTags()
+    {
+        if(batchTags == null || batchTags.isEmpty())
+            return null;
+        return batchTags;
+    }
+
+    /**
+     * Invoked when full schema is required by the user,
+     * in the case of varying fields in different data records.
+     *
+     * If the set of fields remain consistent across data records in a single API call,
+     * this flag can be set to false.
+     *
+     */
     public boolean isFullSchemaRequired() {
         return fullSchemaRequired;
     }
@@ -74,14 +101,31 @@ public class WriteAttributes {
         return this;
     }
 
+    /**
+     * Invoked on user demand of data validation via schema fields.
+     *
+     */
+    public void setValidateData(boolean validateData) {
+        this.validateData = validateData;
+    }
+
+    public boolean isDataValidationWithSchema() {
+        return validateData;
+    }
+
     public static class WriteAttributesBuilder{
 
         private Boolean isFlushStrategyRequired = false;
 
         private long sizeOfRecord;
 
+        private Map<String,Set<String>> batchTags;
+
         //Setting default value to false.
 		private boolean isFullSchemaRequired = false;
+
+        //Setting default to false.
+        private boolean validateData = false;
 
         public Boolean getIsFlushStrategyRequired() {
             return isFlushStrategyRequired;
@@ -101,8 +145,21 @@ public class WriteAttributes {
             return this;
         }
 
+        public Map<String, Set<String>> getBatchTags() {
+            return batchTags;
+        }
+
+        public WriteAttributesBuilder withBatchTags(Map<String, Set<String>> batchTags) {
+            this.batchTags = batchTags;
+            return this;
+        }
+
         public boolean isFullSchemaRequired() {
             return isFullSchemaRequired;
+        }
+
+        public boolean getValidateData() {
+            return validateData;
         }
 
         public WriteAttributes build(){

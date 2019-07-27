@@ -58,8 +58,14 @@ public class SchemaRef {
         return contentType;
     }
 
-    public void setContentType(String contentType) {
+    public SchemaRef setContentType(String contentType) {
         this.contentType = contentType;
+        return this;
+    }
+
+    public boolean isValid() {
+        return id != null && !id.isEmpty()
+                && contentType != null && !contentType.isEmpty();
     }
 
     @Override

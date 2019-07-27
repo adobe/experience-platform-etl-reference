@@ -33,6 +33,7 @@ import com.adobe.platform.ecosystem.examples.data.write.field.converter.parquet.
 import com.adobe.platform.ecosystem.examples.data.write.writer.formatter.CSVDataFormatter;
 import com.adobe.platform.ecosystem.examples.data.write.writer.formatter.JSONDataFormatter;
 import com.adobe.platform.ecosystem.examples.data.write.writer.formatter.ParquetDataFormatter;
+import org.apache.commons.lang.StringUtils;
 import org.json.simple.JSONObject;
 
 import java.util.List;
@@ -65,16 +66,11 @@ public class PlatformDataFormatterFactory implements DataFormatterFactory {
         this.registryFactory = registryFactory;
     }
 
-    public PlatformDataFormatterFactory setWriteAttributes(WriteAttributes writeAttributes) {
-        this.writeAttributes = writeAttributes;
-        return this;
-    }
-
     /**
      * {@inheritDoc}
      */
     @Override
-    public Formatter getFormatter(FileFormat fileFormat) {
+    public Formatter getFormatter(FileFormat fileFormat, WriteAttributes writeAttributes) {
         Formatter formatter = null;
         switch (fileFormat) {
             case CSV:
@@ -94,7 +90,8 @@ public class PlatformDataFormatterFactory implements DataFormatterFactory {
                         schemaFieldConverter,
                         extractor,
                         getValidationRegistry(fields),
-                        writeAttributes.isFullSchemaRequired()
+                        writeAttributes.isFullSchemaRequired(),
+                        writeAttributes.isDataValidationWithSchema()
 
                 );
                 break;
@@ -106,14 +103,6 @@ public class PlatformDataFormatterFactory implements DataFormatterFactory {
         return formatter;
     }
 
-    private List<SchemaField> getFieldsFromDataSet() {
-        List<SchemaField> fieldList = param.getDataSet().getFields(false, DataSet.FieldsFrom.SCHEMA);
-        if(fieldList==null || fieldList.isEmpty()){
-            fieldList = param.getDataSet().getFields(false, DataSet.FieldsFrom.FIELDS);
-        }
-        return fieldList;
-    }
-
     private ValidationRegistry getValidationRegistry(List<SchemaField> fields) {
         final SchemaField rootField = new SchemaField(
             "root",
@@ -121,5 +110,19 @@ public class PlatformDataFormatterFactory implements DataFormatterFactory {
             fields
         );
         return registryFactory.get(rootField);
+    }
+
+    private List<SchemaField> getFieldsFromDataSet() {
+        if (!StringUtils.isEmpty(param.getDataSet().getSchema()) || dataSetContainsValidSchemaRef(param.getDataSet())) {
+            return param.getDataSet().getFields(false, DataSet.FieldsFrom.SCHEMA);
+        } else {
+            return param.getDataSet().getFields(false, DataSet.FieldsFrom.FIELDS);
+        }
+    }
+
+    private boolean dataSetContainsValidSchemaRef(DataSet dataSet) {
+        return dataSet.getSchemaRef() != null
+                && !dataSet.getSchemaRef().getId().isEmpty()
+                && !dataSet.getSchemaRef().getContentType().isEmpty();
     }
 }

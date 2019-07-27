@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Logger;
 
 import com.adobe.platform.ecosystem.examples.catalog.function.DataTypeFunction;
 import com.adobe.platform.ecosystem.examples.data.validation.api.Rule;
@@ -60,6 +61,8 @@ public class SchemaField {
     private Dule dule;
 
     private List<Rule<?>> rules;
+
+    private static final Logger logger = Logger.getLogger(SchemaField.class.getName());
 
     public SchemaField(JSONObject field, boolean useFlatNamesForLeafNodes) {
         this(field, "", useFlatNamesForLeafNodes);
@@ -174,12 +177,13 @@ public class SchemaField {
 
     private void populateForArrayType(SchemaField schemaField, JSONObject field, String parentHierarchy, boolean useFlatNameForLeafNodes) {
         final JSONObject items = (JSONObject) field.get(SDKConstants.ITEMS);
-        if (items != null) {
+        if (items != null && !items.isEmpty()) {
             // TODO: Add support for Array of Arrays. Peek on 'type' property in 'items'.
             // TODO: Add support for Array of Maps. Peek on 'type' property in 'items'.
-            HashMap<?, ?> props = (HashMap<?, ?>) items.get("properties");
+
             List<SchemaField> schemaSubFieldsArray = new ArrayList<>();
-            if (props != null) {
+            if (items.get("type")!= null && items.get("type").equals("object")) {
+                HashMap<?, ?> props = (HashMap<?, ?>) items.get("properties");
                 schemaField.arraySubType = DataType.Field_ObjectType;
                 props.forEach((key, value) -> {
                     JSONObject subFieldJson = (JSONObject) value;
@@ -194,6 +198,8 @@ public class SchemaField {
                     schemaSubFieldsArray.add(subSchemaField);
                 });
                 schemaField.subFields = schemaSubFieldsArray;
+            } else if (items.get("type")!= null && items.get("type").equals("array")) { // Handle Array of Array
+
             } else {
                 String typeOfSubType = (String) items.get(SDKConstants.TYPE);
                 schemaField.arraySubType = DataTypeFunction.primitiveFunction().apply(typeOfSubType);
@@ -205,7 +211,7 @@ public class SchemaField {
     }
 
     private void populateForMapOrObjectType(final SchemaField schemaField, JSONObject field, String parentHierarchy, boolean useFlatNameForLeafNodes) {
-        if (field.get("additionalProperties") == null) {
+        if (field.get("additionalProperties") == null || field.get("additionalProperties") instanceof Boolean) {
             populateForObjectType(schemaField, field, parentHierarchy, useFlatNameForLeafNodes);
         } else {
             populateForMapType(schemaField, field, parentHierarchy, useFlatNameForLeafNodes);
@@ -215,6 +221,11 @@ public class SchemaField {
     private void populateForObjectType(SchemaField schemaField, JSONObject field, String parentHierarchy, boolean useFlatNameForLeafNodes) {
         HashMap<?, ?> props = (HashMap<?, ?>) field.get("properties");
         List<SchemaField> schemaSubFields = new ArrayList<>();
+
+        if (props == null) {
+            logger.severe("No properties for fieldName:" + schemaField.getName() + " of type:" + schemaField.getType());
+            return;
+        }
         props.forEach((key, value) -> {
             JSONObject subFieldJson = (JSONObject) value;
             final String currentHierarchy = getNewHeirarchy(schemaField.name, parentHierarchy);

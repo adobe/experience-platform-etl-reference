@@ -26,6 +26,7 @@ import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.adobe.platform.ecosystem.examples.data.validation.SchemaKeysBasedDataValidator;
 import com.adobe.platform.ecosystem.examples.data.validation.api.Rule;
 import com.adobe.platform.ecosystem.examples.data.validation.api.ValidationRegistry;
 import com.adobe.platform.ecosystem.examples.data.validation.exception.ValidationException;
@@ -51,6 +52,11 @@ import com.adobe.platform.ecosystem.examples.constants.SDKConstants;
 import com.adobe.platform.ecosystem.examples.data.write.Formatter;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
 
+import org.joda.time.DateTime;
+import org.joda.time.Days;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.DateTimeFormatterBuilder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.mortbay.util.ajax.JSON;
@@ -77,6 +83,16 @@ public class ParquetDataFormatter implements Formatter {
 
     private boolean isFullSchemaRequired;
 
+    private boolean validateData;
+
+    private SchemaKeysBasedDataValidator dataValidator;
+
+    private static final String ISO_DATETIME_FORMAT_PATTERN = "yyyy-MM-dd' 'HH:mm:ss.SSS";
+
+    private static final String ISO_DATETIME_FORMAT_PATTERN_STRICT = "yyyy-MM-dd'T'HH:mm:ss.SSS";
+
+    private static final String DATE_FORMAT_PATTERN = "yyyy-MM-dd";
+
     private static Logger logger = Logger.getLogger(ParquetDataFormatter.class.getName());
 
     public ParquetDataFormatter(ParquetIOWriter writer,
@@ -85,7 +101,8 @@ public class ParquetDataFormatter implements Formatter {
                                 ParquetFieldConverter<List<SchemaField>> schemaFieldConverter,
                                 Extractor<JSONObject> extractor,
                                 ValidationRegistry validationRegistry,
-                                boolean isFullSchemaRequired) {
+                                boolean isFullSchemaRequired,
+                                boolean validateData) {
         this.writer = writer;
         this.param = param;
         this.jsonFieldConverter = jsonFieldConverter;
@@ -94,6 +111,7 @@ public class ParquetDataFormatter implements Formatter {
         this.isRegistryEnabled = getRegistryEnabled();
         this.schemaFieldConverter = schemaFieldConverter;
         this.isFullSchemaRequired = isFullSchemaRequired;
+        this.validateData = validateData;
     }
 
     private boolean getRegistryEnabled() {
@@ -143,6 +161,13 @@ public class ParquetDataFormatter implements Formatter {
     @Override
     public byte[] getBuffer(List<JSONObject> dataTable) throws ConnectorSDKException {
         try {
+
+            //If user has enabled data validation then records are validated against schemaFields.
+            if(validateData) {
+                List<SchemaField> schemaFields = param.getDataSet().getFieldsList();
+                dataValidator.validateData(schemaFields, dataTable);
+            }
+
             // 1. Use the output from schema builder to get schema for parquet-IO SDK.
             MessageType schema = writer.getSchema(getParquetIOFields(dataTable));
 
@@ -150,7 +175,12 @@ public class ParquetDataFormatter implements Formatter {
             List<SimpleGroup> records = new ArrayList<>();
             for (JSONObject row : dataTable) {
                 SimpleGroup parquetRow = new SimpleGroup(schema);
-                updateParquetGroupWithData(row, parquetRow, TraversablePath.path());
+                try {
+                    updateParquetGroupWithData(row, parquetRow, TraversablePath.path());
+                } catch (Exception ex) {
+                    logger.log(Level.SEVERE, "Error while generatig the parquet from record: {0}", row.toString());
+                    throw ex;
+                }
                 records.add(parquetRow);
             }
 
@@ -160,6 +190,9 @@ public class ParquetDataFormatter implements Formatter {
             byte[] buffer = getDataBuffer(fileId, records);
             return buffer;
 
+        } catch (ConnectorSDKException ex) {
+            logger.severe("Error while getting buffer from data table: " + ex);
+            throw ex;
         } catch (Exception ex) {
             logger.severe("Error while getting buffer from data table: " + ex);
             throw new ConnectorSDKException("Error while getting buffer from data table", ex);
@@ -677,23 +710,47 @@ public class ParquetDataFormatter implements Formatter {
             applyStringValidationRule(schemaPath, currentColumnValue.toString());
             currentRecord.append(currentFieldName, currentColumnValue.toString());
         } else if (type.equalsIgnoreCase("boolean")) {
-            currentRecord.add(currentFieldName, getBooleanValueFromInt(currentColumnValue));
+            if (currentColumnValue instanceof Boolean)
+                currentRecord.add(currentFieldName, (boolean) currentColumnValue);
+            else
+                currentRecord.add(currentFieldName, getBooleanValueFromInt(currentColumnValue));
         } else if (type.equalsIgnoreCase("int32")) {
-            int integerValue = getIntValue(currentColumnValue);
-            if(primitiveTypeField.getOriginalType() == OriginalType.DATE) {
-                applyStringValidationRule(schemaPath, currentColumnValue.toString());
-            } else {
-                applyIntegerValidationRule(schemaPath, integerValue);
+            int integerValue;
+            try {
+                integerValue = getIntValue(currentColumnValue);
+                if (primitiveTypeField.getOriginalType() == OriginalType.DATE) {
+                    applyStringValidationRule(schemaPath, currentColumnValue.toString());
+                } else {
+                    applyIntegerValidationRule(schemaPath, integerValue);
+                }
+            } catch (NumberFormatException nfe) {
+                final String originalType = primitiveTypeField.getOriginalType().name();
+                if ("DATE".compareToIgnoreCase(originalType) == 0) {
+                    integerValue = getEpochDay(currentColumnValue);
+                } else {
+                    throw nfe;
+                }
             }
             currentRecord.add(currentFieldName, integerValue);
         } else if (type.equalsIgnoreCase("int64")) {
-            long longValue = getLongValue(currentColumnValue);
-            if(primitiveTypeField.getOriginalType() == OriginalType.TIMESTAMP_MILLIS) {
-                applyStringValidationRule(schemaPath, currentColumnValue.toString());
-            } else {
-                applyLongValidationRule(schemaPath, longValue);
+            long longValue;
+            try {
+                longValue = getLongValue(currentColumnValue);
+                if (primitiveTypeField.getOriginalType() == OriginalType.TIMESTAMP_MILLIS) {
+                    applyStringValidationRule(schemaPath, currentColumnValue.toString());
+                } else {
+                    applyLongValidationRule(schemaPath, longValue);
+                }
+            } catch (NumberFormatException nfe) {
+                final String originalType = primitiveTypeField.getOriginalType().name();
+                if ("TIMESTAMP_MILLIS".compareToIgnoreCase(originalType) == 0) {
+                    longValue = getEpochMillis(currentColumnValue);
+                } else {
+                    throw nfe;
+                }
             }
             currentRecord.add(currentFieldName, longValue);
+
         } else if (type.equalsIgnoreCase("double")) {
             currentRecord.add(currentFieldName, getDoubleValue(currentColumnValue));
         } else if (type.equalsIgnoreCase("float")) {
@@ -775,10 +832,28 @@ public class ParquetDataFormatter implements Formatter {
     private List<ParquetIOField> getParquetIOFields(List<JSONObject> dataTable) throws ConnectorSDKException {
         if (isFullSchemaRequired) {
             return schemaFieldConverter.convert(
-                    param.getDataSet().getSchemaFieldsFromSchemaRef()
+                    param.getDataSet().getFieldsList()
             );
         } else {
             return jsonFieldConverter.convert(dataTable.get(0));
         }
+    }
+
+    private int getEpochDay(Object currentColumnValue) {
+        DateTime epoch = new DateTime(0);
+        DateTimeFormatter dateFormatter = DateTimeFormat.forPattern(DATE_FORMAT_PATTERN);
+        DateTime dateTimeValue = dateFormatter.parseDateTime(currentColumnValue.toString());
+        Days daysSinceEpoch = Days.daysBetween(epoch, dateTimeValue);
+        return daysSinceEpoch.getDays();
+    }
+
+    private long getEpochMillis(Object currentColumnValue) {
+        DateTimeFormatter dateFormatter = new DateTimeFormatterBuilder()
+                .appendOptional(DateTimeFormat.forPattern(ISO_DATETIME_FORMAT_PATTERN).getParser())
+                .appendOptional(DateTimeFormat.forPattern(ISO_DATETIME_FORMAT_PATTERN_STRICT).getParser())
+                // adding support for parsing the ISO date with both 'T' and space separtaor
+                .appendTimeZoneOffset("Z", true, 2, 4).toFormatter();
+        DateTime dateTimeValue = dateFormatter.parseDateTime(currentColumnValue.toString());
+        return dateTimeValue.getMillis();
     }
 }

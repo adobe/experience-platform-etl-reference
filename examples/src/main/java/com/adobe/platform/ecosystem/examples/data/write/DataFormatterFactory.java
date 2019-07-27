@@ -33,9 +33,10 @@ public interface DataFormatterFactory {
      * Interface to return formatter
      * based on file type.
      * @param fileFormat
+     * @param writeAttributes
      * @return Concrete implementation of {@link Formatter} based on
      * <code>fileFormat.</code>
      * @throws ConnectorSDKException
      */
-    Formatter getFormatter(FileFormat fileFormat) throws ConnectorSDKException;
+    Formatter getFormatter(FileFormat fileFormat, WriteAttributes writeAttributes) throws ConnectorSDKException;
 }
