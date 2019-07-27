@@ -45,7 +45,7 @@ import org.mortbay.util.ajax.JSON;
 import static com.adobe.platform.ecosystem.examples.schemaregistry.SchemaRegistryFactory.getSchemaRegistryService;
 
 /**
- * Represent Dataset entity in Catalog.
+ * Represent DataSet entity in Catalog.
  */
 public class DataSet extends BaseModel {
     private static final Map<String, DataType> _keys;
@@ -66,9 +66,9 @@ public class DataSet extends BaseModel {
 
     private JSONArray fields;
 
-    private JSONObject observableSchema;
-
     private JSONObject fileDescription;
+
+    private JSONObject observableSchema;
 
     private Dule duleObj = null;
 
@@ -78,8 +78,6 @@ public class DataSet extends BaseModel {
 
     private static final Logger logger = Logger.getLogger(BaseModel.class
             .getName());
-
-    private Optional<List<SchemaField>> schemaFieldFromSchemaRef = Optional.empty();
 
     public static enum FieldsFrom {
         FIELDS,
@@ -94,9 +92,9 @@ public class DataSet extends BaseModel {
                 put(SDKConstants.CATALOG_DSV, DataType.StringType);
                 put(SDKConstants.CATALOG_DESCRIPTION, DataType.StringType);
                 put(SDKConstants.CONNECTION_ID, DataType.StringType);
+                put(SDKConstants.CATALOG_FIELDS, DataType.JsonArrayType);
                 put(SDKConstants.CATALOG_SCHEMA, DataType.StringType);
                 put(SDKConstants.CATALOG_SCHEMA_REF, DataType.Field_ObjectType);
-                put(SDKConstants.CATALOG_FIELDS, DataType.JsonArrayType);
                 put(SDKConstants.CATALOG_OBSERVABLE_SCHEMA, DataType.Field_ObjectType);
                 put(SDKConstants.CATALOG_DULE, DataType.Field_ObjectType);
                 put(SDKConstants.CATALOG_FILE_DESCRIPTION,
@@ -137,10 +135,6 @@ public class DataSet extends BaseModel {
         }
 
         return duleObj;
-    }
-
-    protected SchemaRegistryService getSchemaRegistryService() throws ConnectorSDKException {
-        return SchemaRegistryFactory.getSchemaRegistryService();
     }
 
     public String getSchema() {
@@ -217,20 +211,15 @@ public class DataSet extends BaseModel {
                 logger.warning("Observable Schema not defined for dataset id " + this.getId());
             }
         } else if(fieldsFrom == FieldsFrom.SCHEMA) {
-            if(this.schema != null && this.schema.length() > 0) {
+            if (this.schema != null && this.schema.length() > 0) {
                 fieldsList = getFieldsFromCatalogSchema(useFlatNamesForLeafNodes);
-            } else if(useSchemaRef()) {
+            } else if (this.schemaRef != null && this.getSchemaRef().isValid()) {
                 fieldsList = getFieldsFromSchemaRegistry(useFlatNamesForLeafNodes);
-            }
-            else {
+            } else {
                 logger.warning("Schema path not defined for " + this.getId());
             }
         }
         return fieldsList;
-    }
-
-    private boolean useSchemaRef() {
-        return (this.schemaRef != null && (getSchemaRef().getId()!=null && !getSchemaRef().getId().isEmpty()));
     }
 
     private List<SchemaField> getFieldsFromCatalogSchema(boolean useFlatNamesForLeafNodes) {
@@ -246,7 +235,7 @@ public class DataSet extends BaseModel {
 
             final String schemaId = this.schema.replace("@/xdms/", "");
             // Perform Catalog field filtering.
-            return FilterFactory
+            fieldsList = FilterFactory
                     .provideSchemaFieldFilter()
                     .stream()
                     .filter(schemaFilter -> schemaFilter.canApply(schemaId))
@@ -256,7 +245,7 @@ public class DataSet extends BaseModel {
                     );
 
         } catch (ConnectorSDKException e) {
-            logger.severe("Failed in getting catalog service while listing fields for dataset id " + this.getId());
+            logger.log(Level.SEVERE,"Failed in getting catalog service while listing fields for dataset id " + this.getId(), e);
         }
         return fieldsList;
     }
@@ -271,18 +260,19 @@ public class DataSet extends BaseModel {
                     getSchemaRef(),
                     useFlatNamesForLeafNodes
             );
+            //No FilterFactory Currently
         } catch(ConnectorSDKException e) {
             logger.severe("Failed in getting schema registry service while listing fields for dataset id " + this.getId());
         }
         return fieldsList;
     }
 
-    protected CatalogService getCatalogService() throws ConnectorSDKException {
-        return CatalogFactory.getCatalogService();
+    protected SchemaRegistryService getSchemaRegistryService() throws ConnectorSDKException {
+        return SchemaRegistryFactory.getSchemaRegistryService();
     }
 
-    public SchemaRef getSchemaRef() {
-        return new SchemaRef(schemaRef);
+    protected CatalogService getCatalogService() throws ConnectorSDKException {
+        return CatalogFactory.getCatalogService();
     }
 
     public List<SchemaField> getFlattenedSchemaFields() {
@@ -294,7 +284,7 @@ public class DataSet extends BaseModel {
             return flatFieldsList;
         } else {
             flatFieldsList = recursivelyPopulateSchemaField(getFields(true, fieldsFrom));
-             return flatFieldsList;
+            return flatFieldsList;
         }
     }
 
@@ -324,9 +314,13 @@ public class DataSet extends BaseModel {
         try {
             return new FileDescription(fileDescription);
         } catch (ConnectorSDKException csdke) {
-            logger.severe("Error getting file description. Dataset id " + this.getId());
+            logger.log(Level.SEVERE,"Error getting file description. Dataset id " + this.getId(), csdke);
         }
         return null;
+    }
+
+    public SchemaRef getSchemaRef() {
+        return new SchemaRef(schemaRef);
     }
 
     private List<SchemaField> recursivelyPopulateSchemaField(
@@ -338,7 +332,7 @@ public class DataSet extends BaseModel {
         for (SchemaField field : fields) {
             if ((field.getType() != DataType.Field_ObjectType    //Checking if not object and not array
                     && field.getType() != DataType.Field_ArrayType)
-                || (field.getType() == DataType.Field_ArrayType    //Checking if array but without subfields, hence primitive.
+                    || (field.getType() == DataType.Field_ArrayType    //Checking if array but without subfields, hence primitive.
                     && field.getSubFields() == null)) {
                 flatFields.add(field);
             } else {
@@ -358,6 +352,10 @@ public class DataSet extends BaseModel {
         return flatFields;
     }
 
+    public List<SchemaField> getFieldsList() {
+        return fieldsList;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -365,20 +363,4 @@ public class DataSet extends BaseModel {
     public DataSet build(JSONObject obj) {
         return new DataSet(obj);
     }
-
-    public void setSchema(String schema){
-        this.schema = schema;
-    }
-
-    public void setSchemaRef(JSONObject jsonObject){
-        this.schemaRef = jsonObject;
-    }
-
-    public List<SchemaField> getSchemaFieldsFromSchemaRef() {
-        if (!schemaFieldFromSchemaRef.isPresent()) {
-            schemaFieldFromSchemaRef = Optional.of(this.getFields(FieldsFrom.SCHEMA));
-        }
-        return schemaFieldFromSchemaRef.get();
-    }
-
 }

@@ -34,5 +34,12 @@ public enum DataType {
     JsonArrayType,
     Field_ObjectType,
     Field_ArrayType,
-    Field_MapType
+    Field_MapType;
+
+    public static boolean isPrimitiveDataType(DataType type) {
+        return  type != null &&
+                !type.equals(Field_MapType) &&
+                !type.equals(Field_ArrayType) &&
+                !type.equals(Field_ObjectType);
+    }
 }
