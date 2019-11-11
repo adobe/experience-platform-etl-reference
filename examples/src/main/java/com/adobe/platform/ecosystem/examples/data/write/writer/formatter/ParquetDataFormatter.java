@@ -40,6 +40,7 @@ import com.adobe.platform.ecosystem.examples.data.write.field.converter.parquet.
 import com.adobe.platform.ecosystem.examples.data.wiring.DataWiringParam;
 
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKUtil;
+import com.adobe.platform.ecosystem.examples.util.EpochUtil;
 import org.apache.commons.lang.StringUtils;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.example.data.simple.SimpleGroup;
@@ -86,12 +87,6 @@ public class ParquetDataFormatter implements Formatter {
     private boolean validateData;
 
     private SchemaKeysBasedDataValidator dataValidator;
-
-    private static final String ISO_DATETIME_FORMAT_PATTERN = "yyyy-MM-dd' 'HH:mm:ss.SSS";
-
-    private static final String ISO_DATETIME_FORMAT_PATTERN_STRICT = "yyyy-MM-dd'T'HH:mm:ss.SSS";
-
-    private static final String DATE_FORMAT_PATTERN = "yyyy-MM-dd";
 
     private static Logger logger = Logger.getLogger(ParquetDataFormatter.class.getName());
 
@@ -726,7 +721,7 @@ public class ParquetDataFormatter implements Formatter {
             } catch (NumberFormatException nfe) {
                 final String originalType = primitiveTypeField.getOriginalType().name();
                 if ("DATE".compareToIgnoreCase(originalType) == 0) {
-                    integerValue = getEpochDay(currentColumnValue);
+                    integerValue = EpochUtil.getEpochDay(currentColumnValue);
                 } else {
                     throw nfe;
                 }
@@ -744,7 +739,7 @@ public class ParquetDataFormatter implements Formatter {
             } catch (NumberFormatException nfe) {
                 final String originalType = primitiveTypeField.getOriginalType().name();
                 if ("TIMESTAMP_MILLIS".compareToIgnoreCase(originalType) == 0) {
-                    longValue = getEpochMillis(currentColumnValue);
+                    longValue = EpochUtil.getEpochMillis(currentColumnValue);
                 } else {
                     throw nfe;
                 }
@@ -837,23 +832,5 @@ public class ParquetDataFormatter implements Formatter {
         } else {
             return jsonFieldConverter.convert(dataTable.get(0));
         }
-    }
-
-    private int getEpochDay(Object currentColumnValue) {
-        DateTime epoch = new DateTime(0);
-        DateTimeFormatter dateFormatter = DateTimeFormat.forPattern(DATE_FORMAT_PATTERN);
-        DateTime dateTimeValue = dateFormatter.parseDateTime(currentColumnValue.toString());
-        Days daysSinceEpoch = Days.daysBetween(epoch, dateTimeValue);
-        return daysSinceEpoch.getDays();
-    }
-
-    private long getEpochMillis(Object currentColumnValue) {
-        DateTimeFormatter dateFormatter = new DateTimeFormatterBuilder()
-                .appendOptional(DateTimeFormat.forPattern(ISO_DATETIME_FORMAT_PATTERN).getParser())
-                .appendOptional(DateTimeFormat.forPattern(ISO_DATETIME_FORMAT_PATTERN_STRICT).getParser())
-                // adding support for parsing the ISO date with both 'T' and space separtaor
-                .appendTimeZoneOffset("Z", true, 2, 4).toFormatter();
-        DateTime dateTimeValue = dateFormatter.parseDateTime(currentColumnValue.toString());
-        return dateTimeValue.getMillis();
     }
 }
