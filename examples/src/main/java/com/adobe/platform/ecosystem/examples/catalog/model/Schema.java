@@ -19,6 +19,7 @@ package com.adobe.platform.ecosystem.examples.catalog.model;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.json.simple.JSONObject;
@@ -28,6 +29,8 @@ import com.adobe.platform.ecosystem.examples.constants.SDKConstants;
 
 /**
  * Represent Schema entity in XDM Registry.
+ *
+ * @author vedhera on 7/20/2018.
  */
 public class Schema extends BaseModel {
 
@@ -55,11 +58,27 @@ public class Schema extends BaseModel {
                 return null;
             }
             fieldsList = new ArrayList<>();
+            if(isAdhocSchema()) {
+                logger.log(Level.SEVERE, "Found Adhoc Schema, fetching properties from inside namespace.");
+                props = getPropertiesObjectAdhoc(props);
+            }
             props.forEach((key, value) -> {
                 fieldsList.add(new SchemaField((String)key, (JSONObject) value, useFlatNamesForLeafNodes, DataSet.FieldsFrom.OBSERVABLE_SCHEMA));
             });
         }
         return fieldsList;
+    }
+
+    private HashMap<?,?> getPropertiesObjectAdhoc(HashMap<?,?> props) {
+        final String namespace = (String) rawSchema.get(SDKConstants.META_NAMESPACE);
+        final JSONObject properties = (JSONObject) props.get(namespace);
+        return (HashMap<?, ?>)properties.get(SDKConstants.PROPERTIES);
+    }
+
+    private boolean isAdhocSchema() {
+        final List<String> metaExtendsList = (List<String>)rawSchema.get(SDKConstants.META_EXTENDS);
+        return (metaExtendsList != null && !metaExtendsList.isEmpty())
+                ? metaExtendsList.contains(SDKConstants.ADHOC_CLASS) : false;
     }
 
     @Override

@@ -59,8 +59,7 @@ public class PlatformDataWriterFactory implements DataWriterFactory {
     @Override
     public Writer getWriter(WriteAttributes writeAttributes) throws ConnectorSDKException {
         FileFormat format = param.getDataSet().getFileDescription().getFormat();
-        formatterFactory.setWriteAttributes(writeAttributes);
-        Formatter formatter = formatterFactory.getFormatter(format);
+        Formatter formatter = formatterFactory.getFormatter(format, writeAttributes);
         return new DataIngestionAPIWriter(dis, param, format, formatter, writeAttributes, cs);
     }
 }

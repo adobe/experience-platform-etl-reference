@@ -85,7 +85,7 @@ public class ParquetDataFormatterTest extends BaseTest {
         FileUtils.copyFile(file, destFile);
         Mockito.when(writer.writeParquetFile(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(destFile);
 
-        parquetDataFormatter = new ParquetDataFormatter(writer, param, fieldConverter, schemaFieldConverter, new JsonObjectsExtractor(), validationRegistry, false);
+        parquetDataFormatter = new ParquetDataFormatter(writer, param, fieldConverter, schemaFieldConverter, new JsonObjectsExtractor(), validationRegistry, false, false);
     }
 
     @Test

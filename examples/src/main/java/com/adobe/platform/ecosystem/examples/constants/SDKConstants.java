@@ -143,4 +143,9 @@ public class SDKConstants {
     public static final String ENABLE_SCHEMA_VALIDATION_SYSTEM_PROPERTY = "enableSchemaValidation";
 
     public static final String SIMPLE_FILE_UPLOAD_LIMIT = "simplefileUploadLimit";
+
+    public static final String CATALOG_BATCH_TAGS = "tags";
+    public static final String META_EXTENDS = "meta:extends";
+    public static final Object META_NAMESPACE = "meta:datasetNamespace";
+    public static final String ADHOC_CLASS = "https://ns.adobe.com/xdm/data/adhoc";
 }
