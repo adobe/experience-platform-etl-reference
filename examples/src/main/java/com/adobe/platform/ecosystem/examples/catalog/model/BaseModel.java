@@ -43,6 +43,8 @@ abstract public class BaseModel implements EntityBuilder {
 
     private String imsOrg;
 
+    private String sandboxName;
+
     private long created;
 
     protected static final Map<String, DataType> _keys;
@@ -54,6 +56,7 @@ abstract public class BaseModel implements EntityBuilder {
             put(SDKConstants.CATALOG_ID, DataType.StringType);
             put(SDKConstants.CATALOG_NAME, DataType.StringType);
             put(SDKConstants.CATALOG_IMSORG, DataType.StringType);
+            put(SDKConstants.CATALOG_SANDBOX_NAME, DataType.StringType);
             put(SDKConstants.CATALOG_CREATED_KEY, DataType.LongType);
         }};
     }
@@ -82,6 +85,10 @@ abstract public class BaseModel implements EntityBuilder {
     }
 
     public String getImsOrg() {return imsOrg;}
+
+    public String getSandboxName() {
+        return sandboxName;
+    }
 
     public long getCreated() {
         return created;

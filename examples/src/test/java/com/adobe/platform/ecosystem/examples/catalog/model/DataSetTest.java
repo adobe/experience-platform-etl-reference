@@ -17,6 +17,7 @@
 package com.adobe.platform.ecosystem.examples.catalog.model;
 
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
@@ -363,6 +364,7 @@ public class DataSetTest extends BaseTest{
 
         when(catService.getSchemaFields(
                 anyString(),
+                any(),
                 anyString(),
                 eq("/xdms/model/Profile"),
                 eq(false)
@@ -382,6 +384,7 @@ public class DataSetTest extends BaseTest{
 
         when(schemaRegistryService.getSchemaFields(
                 anyString(),
+                any(),
                 anyString(),
                 anyObject(),
                 eq(false)

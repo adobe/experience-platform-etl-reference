@@ -83,6 +83,7 @@ public class DataIngestionAPIWriter implements Writer {
         batchId =
                 dis.getBatchId(
                         this.param.getImsOrg(),
+                        this.param.getSandboxName(),
                         this.param.getAuthToken(),
                         getPayLoadForBatchCreation()
                 );
@@ -183,7 +184,7 @@ public class DataIngestionAPIWriter implements Writer {
             }
             byte[] buffer = formatter.getBuffer(sdkFields, dataTable);
             logger.log(Level.INFO,"Buffer received for " + outputFileFormat + " file, total records flushed: "+dataTable.size());
-            if(dis.writeToBatch(batchId, this.param.getDataSet().getId(), this.param.getImsOrg(), this.param.getAuthToken(), outputFileFormat, buffer) == 0){
+            if(dis.writeToBatch(batchId, this.param.getDataSet().getId(), this.param.getImsOrg(), this.param.getSandboxName(), this.param.getAuthToken(), outputFileFormat, buffer) == 0){
                 if(flushHandler!=null)
                     flushHandler.reset();
                 return 0;
@@ -199,7 +200,7 @@ public class DataIngestionAPIWriter implements Writer {
     private int flushRecords(List<JSONObject> dataRecords, FlushHandler flushHandler) throws ConnectorSDKException{
         byte[] buffer = formatter.getBuffer(dataRecords);
         logger.log(Level.INFO,"Buffer received for " + outputFileFormat + " file, total records flushed: "+dataRecords.size());
-        if(dis.writeToBatch(batchId, this.param.getDataSet().getId(), this.param.getImsOrg(), this.param.getAuthToken(), outputFileFormat, buffer) == 0){
+        if(dis.writeToBatch(batchId, this.param.getDataSet().getId(), this.param.getImsOrg(), this.param.getSandboxName(), this.param.getAuthToken(), outputFileFormat, buffer) == 0){
             if(flushHandler!=null)
                 flushHandler.reset();
             return 0;
@@ -219,7 +220,7 @@ public class DataIngestionAPIWriter implements Writer {
 		logger.log(Level.FINER, "Inside markBatchCompletion with status " + isSuccess);
 		int outputResponse = -1;
 		if (isSuccess) {
-			outputResponse = dis.signalBatchCompletion(batchId, this.param.getImsOrg(), this.param.getAuthToken());
+			outputResponse = dis.signalBatchCompletion(batchId, this.param.getImsOrg(), this.param.getSandboxName(), this.param.getAuthToken());
 			logger.log(Level.FINER, "signalBatchCompletion triggered");
 		}
 
@@ -227,6 +228,7 @@ public class DataIngestionAPIWriter implements Writer {
 			try {
 				final Batch batch = catalogService.pollForBatchProcessingCompletion(
 						param.getImsOrg(),
+                        this.param.getSandboxName(),
 						param.getAuthToken(),
 						batchId
 				);

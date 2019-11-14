@@ -24,6 +24,7 @@ import com.adobe.platform.ecosystem.examples.catalog.model.SchemaRef;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * XDMRegistryService interface.
@@ -36,11 +37,13 @@ public interface SchemaRegistryService {
      * Fetch Schema from XDM Registry
      *
      * @param imsOrg                   imsOrg in context.
+     * @param sandboxName              x-sandbox-name in context.
      * @param authToken                authToken
      * @param schemaRef                schemaRef
      * @param useFlatNamesForLeafNodes flag for flattening names at leaf nodes.
      * @return List of SchemaFields.
      * @throws ConnectorSDKException
      */
-    List<SchemaField> getSchemaFields(String imsOrg, String authToken, SchemaRef schemaRef, boolean useFlatNamesForLeafNodes) throws ConnectorSDKException;
+    List<SchemaField> getSchemaFields(String imsOrg, String sandboxName, String authToken, SchemaRef schemaRef,
+                                      boolean useFlatNamesForLeafNodes) throws ConnectorSDKException;
 }

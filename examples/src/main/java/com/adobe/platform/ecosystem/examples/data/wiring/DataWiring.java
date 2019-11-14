@@ -35,6 +35,7 @@ import com.adobe.platform.ecosystem.examples.data.write.PlatformDataWriterFactor
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
 import org.apache.http.client.HttpClient;
 
+import java.util.Optional;
 import java.util.logging.Logger;
 
 /**
@@ -57,11 +58,15 @@ public class DataWiring implements Wiring {
 
     public DataWiring(String imsOrg, DataSet dataSet)
             throws ConnectorSDKException {
-        this(imsOrg, dataSet, null);
+        this(imsOrg, null, dataSet, null);
     }
 
-    public DataWiring(String imsOrg, DataSet dataSet, HttpClient httpClient) throws ConnectorSDKException{
-        this.param = new DataWiringParam(imsOrg, dataSet);
+    public DataWiring(String imsOrg, String sandboxName, DataSet dataSet) throws ConnectorSDKException {
+        this(imsOrg, sandboxName, dataSet, null);
+    }
+
+    public DataWiring(String imsOrg, String sandboxName, DataSet dataSet, HttpClient httpClient) throws ConnectorSDKException {
+        this.param = new DataWiringParam(imsOrg, sandboxName, dataSet);
         this.cs = CatalogFactory.getCatalogService(httpClient);
         this.das = DataAccessServiceFactory.getDataAccessService(httpClient);
         this.dis = DataIngestionServiceFactory.getDataIngestionService(httpClient);

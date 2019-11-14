@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.Assert.assertTrue;
 
@@ -94,14 +95,14 @@ public class DataAccessServiceTest extends BaseTest {
 
     @Test
     public void testDataAccessAPIForTwoFilesEntries() throws ConnectorSDKException {
-        List<DataSetFileProcessingEntity> dataSetFileEntries = das.getDataSetFileEntries("testOrg", "testToken", "testDSFId");
+        List<DataSetFileProcessingEntity> dataSetFileEntries = das.getDataSetFileEntries("testOrg", "sandboxName", "testToken", "testDSFId");
         assertTrue(dataSetFileEntries.size() == 2);
     }
 
     @Test
     public void testDataAccessAPIForException() throws ConnectorSDKException {
         try {
-            List<DataSetFileProcessingEntity> dataSetFileEntries = das.getDataSetFileEntries("testOrg", "testToken", "failDSFId");
+            List<DataSetFileProcessingEntity> dataSetFileEntries = das.getDataSetFileEntries("testOrg", "sandboxName","testToken", "failDSFId");
         } catch (Exception ex) {
             assertTrue(ex instanceof ConnectorSDKException);
         }
@@ -109,7 +110,7 @@ public class DataAccessServiceTest extends BaseTest {
 
     @Test
     public void testGetDataSetFilesFromBatchId() throws ConnectorSDKException {
-        List<DataAccessFileEntity> dataSetFileEntries = das.getDataSetFilesFromBatchId("testOrg", "testToken", "batchId");
+        List<DataAccessFileEntity> dataSetFileEntries = das.getDataSetFilesFromBatchId("testOrg", "sandboxName","testToken", "batchId");
         assertTrue(dataSetFileEntries.size() == 1);
     }
 }

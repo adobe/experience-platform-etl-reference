@@ -31,6 +31,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -62,7 +63,8 @@ public class SchemaRegistryServiceTest extends BaseTest {
         jsonObject.put("id" , "https://ns.adobe.com/test/Id");
         jsonObject.put("contentType" , "application/vnd.adobe.xed+json; version=1.0");
         SchemaRef schemaRef = new SchemaRef(jsonObject);
-        List<SchemaField> schemaFields = schemaRegistryService.getSchemaFields("testOrg", "testToken", schemaRef, true);
+        List<SchemaField> schemaFields = schemaRegistryService.getSchemaFields("testOrg", "sandboxName",
+                "testToken", schemaRef, true);
         assertTrue(schemaFields !=  null);
         assertEquals(schemaFields.size(),4);
     }

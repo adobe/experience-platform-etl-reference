@@ -254,7 +254,8 @@ public class JSONReaderProcessor extends ReaderProcessor{
             HttpClientUtil httpClientUtil = new HttpClientUtil(httpClient);
             HttpGet request = new HttpGet(builder.build());
             request.setHeader("Range","bytes="+offset+"-"+limit);
-            httpClientUtil.addHeader(request, param.getAuthToken(), param.getImsOrg(), SDKConstants.CONNECTION_HEADER_JSON_CONTENT);
+            httpClientUtil.addHeader(request, param.getAuthToken(), param.getImsOrg(), param.getSandboxName(),
+                    SDKConstants.CONNECTION_HEADER_JSON_CONTENT);
             HttpResponse response = httpClientUtil.executeRequest(request, false);
             //TODO Check for error code in response
             StringBuffer result = new StringBuffer();

@@ -128,6 +128,12 @@ public class ConnectorSDKUtil {
             String clientKey = System.getenv(SDKConstants.ENV_CLIENT_ID);
             String secretKey = System.getenv(SDKConstants.ENV_SECRET_KEY);
             String metaScope = System.getenv(SDKConstants.ENV_METASCOPE_KEY);
+
+            Optional<String> sandboxName = Optional.empty();
+            if(System.getenv(SDKConstants.ENV_SANDBOX_NAME) != null) {
+                sandboxName = Optional.of(System.getenv(SDKConstants.ENV_SANDBOX_NAME));
+            }
+
             if((StringUtils.isEmpty(token) && StringUtils.isEmpty(pathToFile)) ||
                     (StringUtils.isNotEmpty(env) && StringUtils.isNotEmpty(imsOrg) &&
                     StringUtils.isNotEmpty(clientKey) && StringUtils.isNotEmpty(secretKey) && StringUtils.isNotEmpty(metaScope))) {
@@ -143,6 +149,9 @@ public class ConnectorSDKUtil {
                 String technicalAccount = System.getenv(SDKConstants.ENV_TECHNICAL_ACCOUNT_KEY);
                 connectionAttributes.put(SDKConstants.CREDENTIAL_TECHNICAL_ACCOUNT_KEY, technicalAccount);
                 connectionAttributes.put(SDKConstants.CREDENTIAL_TOKEN_KEY, metaScope);
+                if(sandboxName.isPresent()) {
+                    connectionAttributes.put(SDKConstants.CREDENTIAL_X_SANDBOX_NAME, sandboxName.get());
+                }
                 initialize(connectionAttributes);
             }
             initializeLogger();

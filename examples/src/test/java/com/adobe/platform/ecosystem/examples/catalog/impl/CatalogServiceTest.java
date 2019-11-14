@@ -35,6 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -68,14 +69,14 @@ public class CatalogServiceTest extends BaseTest{
     @Test
     public void testGetDataset() throws ConnectorSDKException, IOException {
         setupTestForHttpOutput(datasetSample);
-        DataSet ds = catService.getDataSet("testOrg", "testToken", "testDSId");
+        DataSet ds = catService.getDataSet("testOrg", "sandboxName", "testToken", "testDSId");
         assertTrue(ds.getBasePath().startsWith("adl://"));
     }
 
     @Test
     public void testGetDatasetException() throws ConnectorSDKException {
         try {
-            catService.getDataSet(null, null, null);
+            catService.getDataSet(null, null, null, null);
             fail("Exception should have been thrown");
         } catch (ConnectorSDKException ce) {
             //Test passed here
@@ -85,7 +86,7 @@ public class CatalogServiceTest extends BaseTest{
     @Test
     public void testGetConnection() throws IOException, ConnectorSDKException {
         setupTestForHttpOutput(connectionSample);
-        Connection connection = catService.getConnection("testOrg", "testToken", "conId");
+        Connection connection = catService.getConnection("testOrg", "sandboxName", "testToken", "conId");
         assertTrue(connection!=null);
         assertTrue("conId".equals(connection.getId()));
     }
@@ -93,7 +94,7 @@ public class CatalogServiceTest extends BaseTest{
     @Test
     public void testGetSchema() throws IOException, ConnectorSDKException {
         setupTestForHttpOutput(schemaSample);
-        List<SchemaField> schemaFields = catService.getSchemaFields("testOrg", "testToken", "/testschema", true);
+        List<SchemaField> schemaFields = catService.getSchemaFields("testOrg", "sandboxName", "testToken", "/testschema", true);
         assertTrue(schemaFields!=null);
         assertTrue(schemaFields.size() == 4);
     }
@@ -101,7 +102,7 @@ public class CatalogServiceTest extends BaseTest{
     @Test
     public void testGetConnectionException() throws ConnectorSDKException {
         try {
-            catService.getConnection(null, null, null);
+            catService.getConnection(null, null, null, null);
             fail("Exception should have been thrown");
         } catch (ConnectorSDKException ce) {
             //Test passed here
@@ -112,7 +113,8 @@ public class CatalogServiceTest extends BaseTest{
     public void testGetDatasets() throws ConnectorSDKException, IOException {
         setupTestForHttpOutput(datasetSample);
         Map<String,String> params = new HashMap<>();
-        List<DataSet> listDS = catService.getDataSets("testOrg", "testToken",params,CatalogAPIStrategy.ONCE);
+        List<DataSet> listDS = catService.getDataSets("testOrg", "sandboxName", "testToken",
+                params, CatalogAPIStrategy.ONCE);
         assertTrue(listDS.size() > 0);
     }
 
@@ -125,7 +127,7 @@ public class CatalogServiceTest extends BaseTest{
         getStringAsHttpOutputStreamForGetBatchId(batchIdResp);
 
         try {
-            catService.createBatch("testOrg", "testToken", new JSONObject());
+            catService.createBatch("testOrg", "sandboxName", "testToken", new JSONObject());
         }catch (Exception ex){
             assertTrue(ex instanceof ConnectorSDKException);
         }
@@ -134,7 +136,7 @@ public class CatalogServiceTest extends BaseTest{
     @Test
     public void testCreateBatchException() throws ConnectorSDKException {
         try {
-            catService.createBatch(null, null, null);
+            catService.createBatch(null, null, null, null);
             fail("Exception should have been thrown");
         } catch (ConnectorSDKException ce) {
             //Test passed here
@@ -146,13 +148,13 @@ public class CatalogServiceTest extends BaseTest{
         setupTestForHttpOutput(batchSample);
         getStringAsHttpOutputStream(batchSample);
 
-        catService.getBatchByBatchId("testOrg", "testToken","testBatch");
+        catService.getBatchByBatchId("testOrg", "sandboxName", "testToken","testBatch");
     }
 
     @Test
     public void testGetBatchByBatchIdException() throws ConnectorSDKException {
         try {
-            catService.getBatchByBatchId(null, null, null);
+            catService.getBatchByBatchId(null, null, null, null);
             fail("Exception should have been thrown");
         } catch (ConnectorSDKException ce) {
             //Test passed here
@@ -164,7 +166,8 @@ public class CatalogServiceTest extends BaseTest{
         setupTestForHttpOutput(credSample);
         getStringAsHttpOutputStream(credSample);
         Map<String,String> params = new HashMap<>();
-        List<DataSetFile> listDSF = catService.getDataSetFiles("testOrg", "testToken", params, CatalogAPIStrategy.ONCE);
+        List<DataSetFile> listDSF = catService.getDataSetFiles("testOrg", "sandboxName", "testToken",
+                params, CatalogAPIStrategy.ONCE);
         assertTrue(!listDSF.isEmpty());
     }
 
@@ -172,7 +175,8 @@ public class CatalogServiceTest extends BaseTest{
     public void testGetDataSetView() throws UnsupportedOperationException, IOException, ConnectorSDKException{
         setupTestForHttpOutput(datasetSample);
         getStringAsHttpOutputStream(datasetSample);
-        DataSetView dsv = catService.getDataSetView("testOrg", "testToken", "testDSId");
+        DataSetView dsv = catService.getDataSetView("testOrg", "sandboxName", "testToken",
+                "testDSId");
         assertTrue(dsv!=null);
         assertTrue("testDSId".equals(dsv.getId()));
     }
@@ -200,7 +204,8 @@ public class CatalogServiceTest extends BaseTest{
             }
             return null;
         });
-        Batch batch = catService.pollForBatchProcessingCompletion("testOrg", "testToken", "testBatch");
+        Batch batch = catService.pollForBatchProcessingCompletion("testOrg", "sandboxName",
+                "testToken", "testBatch");
         assertEquals("success", batch.getStatus());
     }
 }

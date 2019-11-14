@@ -228,6 +228,7 @@ public class DataSet extends BaseModel {
             CatalogService cs = getCatalogService();
             fieldsList = cs.getSchemaFields(
                     getImsOrg(),
+                    getSandboxName(),
                     ConnectorSDKUtil.getInstance().getAccessToken(),
                     this.schema.replace("@", ""),
                     useFlatNamesForLeafNodes
@@ -256,6 +257,7 @@ public class DataSet extends BaseModel {
             SchemaRegistryService srs = getSchemaRegistryService();
             fieldsList = srs.getSchemaFields(
                     getImsOrg(),
+                    getSandboxName(),
                     ConnectorSDKUtil.getInstance().getAccessToken(),
                     getSchemaRef(),
                     useFlatNamesForLeafNodes
