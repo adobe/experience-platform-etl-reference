@@ -31,7 +31,7 @@ public class DataWiringTest extends BaseTest{
         setUp();
         setupTestForHttpOutput(credSample);
         setupDataset();
-        dataWiring = new DataWiring("testImsOrg", dataset,httpClient);
+        dataWiring = new DataWiring("testImsOrg", "sandboxName", dataset, httpClient);
     }
 
     @Test

@@ -45,11 +45,11 @@ public class PlatformDataReaderFactoryTest extends BaseTest{
         setUpHttpForJwtResponse();
         Mockito.when(dataset.getName()).thenReturn("daName");
         Mockito.when(dataset.getViewId()).thenReturn("dataSetViewId1");
-        Mockito.when(catService.getDataSetView(Mockito.any(),Mockito.any(),Mockito.any())).thenReturn(dsv);
-        Mockito.when(catService.getDataSetFiles(Mockito.any(),Mockito.any(),Mockito.any(),Mockito.any())).thenReturn(Arrays.asList(dataSetFile));
-        Mockito.when(catService.getBatches(Mockito.anyString(),Mockito.anyString(),Mockito.anyMap(), eq(CatalogAPIStrategy.REPEATED))).thenReturn(getBatches());
-        Mockito.when(das.getDataSetFileEntries(Mockito.anyString(),Mockito.anyString(),Mockito.anyString())).thenReturn(getFileEntities());
-        Mockito.when(das.getDataSetFilesFromBatchId(Mockito.anyString(),Mockito.anyString(),Mockito.anyString())).thenReturn(getDataAccessFiles());
+        Mockito.when(catService.getDataSetView(Mockito.any(),Mockito.any(),Mockito.any(),Mockito.any())).thenReturn(dsv);
+        Mockito.when(catService.getDataSetFiles(Mockito.any(),Mockito.any(),Mockito.any(),Mockito.any(),Mockito.any())).thenReturn(Arrays.asList(dataSetFile));
+        Mockito.when(catService.getBatches(Mockito.anyString(),Mockito.any(),Mockito.anyString(),Mockito.anyMap(), eq(CatalogAPIStrategy.REPEATED))).thenReturn(getBatches());
+        Mockito.when(das.getDataSetFileEntries(Mockito.anyString(),Mockito.any(),Mockito.anyString(),Mockito.anyString())).thenReturn(getFileEntities());
+        Mockito.when(das.getDataSetFilesFromBatchId(Mockito.anyString(),Mockito.any(),Mockito.anyString(),Mockito.anyString())).thenReturn(getDataAccessFiles());
 
         // Init readAttributeProperties.
         readAttributeMap = new HashMap<>();

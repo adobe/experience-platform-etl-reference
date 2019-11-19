@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -102,6 +103,7 @@ public class SchemaRegistryServiceImpl implements SchemaRegistryService {
 
     private <T extends BaseModel> T getEntity(String entityEndpoint,
                                               String imsOrg,
+                                              String sandboxName,
                                               String authToken,
                                               String metaAltId,
                                               String contentType,
@@ -109,6 +111,7 @@ public class SchemaRegistryServiceImpl implements SchemaRegistryService {
                                               Class<T> clazz) throws ConnectorSDKException, ParseException, URISyntaxException {
         T entity = getEntities(entityEndpoint,
                 imsOrg,
+                sandboxName,
                 authToken,
                 contentType,
                 new HashMap<>(),
@@ -123,6 +126,7 @@ public class SchemaRegistryServiceImpl implements SchemaRegistryService {
 
     private <T extends BaseModel> List<T> getEntities(String entityEndpoint,
                                                       String imsOrg,
+                                                      String sandboxName,
                                                       String authToken,
                                                       String contentType,
                                                       Map<String, String> params,
@@ -133,7 +137,7 @@ public class SchemaRegistryServiceImpl implements SchemaRegistryService {
         URIBuilder builder = new URIBuilder(entityEndpoint);
         addParam(builder, params);
         HttpGet request = new HttpGet(builder.build());
-        httpClientUtil.addHeader(request, authToken, imsOrg, contentType);
+        httpClientUtil.addHeader(request, authToken, imsOrg, sandboxName, contentType);
         String response = httpClientUtil.execute(request);
         JSONParser parser = new JSONParser();
         JSONObject jsonObject = (JSONObject) parser.parse(response);
@@ -152,7 +156,8 @@ public class SchemaRegistryServiceImpl implements SchemaRegistryService {
         }
         if (checkForRecursiveAPICall(strategy, entities)) {
             //updateOffsetsForNextAPICall(params);
-            entities.addAll(getEntities(entityEndpoint, imsOrg, authToken, contentType, params, strategy, false, clazz));
+            entities.addAll(getEntities(entityEndpoint, imsOrg, sandboxName, authToken, contentType, params, strategy,
+                    false, clazz));
         }
         return entities;
     }
@@ -175,7 +180,8 @@ public class SchemaRegistryServiceImpl implements SchemaRegistryService {
      * {@inheritDoc}
      */
     @Override
-    public List<SchemaField> getSchemaFields(String imsOrg, String authToken, SchemaRef schemaRef, boolean useFlatNamesForLeafNodes)
+    public List<SchemaField> getSchemaFields(String imsOrg, String sandboxName, String authToken, SchemaRef schemaRef,
+                                             boolean useFlatNamesForLeafNodes)
     throws ConnectorSDKException {
         List<SchemaField> schemaFields = new ArrayList<>();
         try {
@@ -185,6 +191,7 @@ public class SchemaRegistryServiceImpl implements SchemaRegistryService {
             schemaFields = getEntity(
                     schemaRegistryURI,
                     imsOrg,
+                    sandboxName,
                     authToken,
                     metaAltId,
                     getContentType(schemaRef),

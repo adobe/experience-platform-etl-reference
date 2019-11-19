@@ -147,12 +147,16 @@ public class HttpClientUtil {
         return response;
     }
 
-    public void addHeader(HttpRequest request, String authToken, String imsOrg, String contentType)
+    public void addHeader(HttpRequest request, String authToken, String imsOrg, String sandboxName, String contentType)
             throws ConnectorSDKException {
         request.setHeader("Content-Type", contentType);
         request.setHeader("Accept", contentType);
         request.setHeader("Authorization", "Bearer " + authToken);
         request.setHeader(SDKConstants.CONNECTION_HEADER_IMS_ORG_KEY, imsOrg);
+        if(sandboxName != null) {
+            logger.info("sandboxName: " + sandboxName);
+            request.setHeader(SDKConstants.CONNECTION_HEADER_X_SANDBOX_NAME, sandboxName);
+        }
         request.setHeader(SDKConstants.CONNECTION_HEADER_X_API_KEY,
                 ConnectorSDKUtil.getInstance().getConnectionProperty(SDKConstants.CREDENTIAL_CLIENT_KEY));
     }

@@ -23,6 +23,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.http.Header;
 import org.apache.http.HeaderElement;
@@ -56,14 +57,14 @@ public class DataAccessAPIReaderTest extends BaseTest {
         Mockito.when(httpResponse.getStatusLine()).thenReturn(statusLine);
         Mockito.when(statusLine.getStatusCode()).thenReturn(200);
         Mockito.when(httpResponse.getEntity()).thenReturn(httpEntity);
-        Mockito.when(catService.getDataSetFiles(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(getDataSetFiles());
+        Mockito.when(catService.getDataSetFiles(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn(getDataSetFiles());
         Mockito.when(dataset.getFileDescription()).thenReturn(fileDescription);
         Mockito.when(fileDescription.getDelimiter()).thenReturn(',');
         setupHttpClientMocking();
     }
 
     private void setupHttpClientMocking() throws Exception {
-        Mockito.when(das.getDataSetFileEntries(Mockito.any(), Mockito.any(), Mockito.any())).thenAnswer(
+        Mockito.when(das.getDataSetFileEntries(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenAnswer(
                 (invocation -> {
                     Object[] args = invocation.getArguments();
                     String imsOrg = (String) args[0];
@@ -171,7 +172,7 @@ public class DataAccessAPIReaderTest extends BaseTest {
 
     @Test
     public void testReadOnceJSON() throws ConnectorSDKException {
-        DataWiringParam mockParam = new DataWiringParam("JSONImsOrg", dataset);
+        DataWiringParam mockParam = new DataWiringParam("JSONImsOrg", "sandboxName", dataset);
         dataAccessAPIReader = new DataAccessAPIReader(catService,das,mockParam,httpClient, new ParquetIOImpl().getParquetIOReader(true), null);
         JSONArray array = dataAccessAPIReader.read(4);
         assert(array.size() == 4);
@@ -179,7 +180,7 @@ public class DataAccessAPIReaderTest extends BaseTest {
 
     @Test
     public void testReadMoreThanOnceJSON() throws ConnectorSDKException {
-        DataWiringParam mockParam = new DataWiringParam("JSONImsOrg", dataset);
+        DataWiringParam mockParam = new DataWiringParam("JSONImsOrg", "sandboxName", dataset);
         dataAccessAPIReader = new DataAccessAPIReader(catService,das,mockParam,httpClient, new ParquetIOImpl().getParquetIOReader(true), null);
         JSONArray array = dataAccessAPIReader.read(4);
         assert(array.size() == 4);

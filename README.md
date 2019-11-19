@@ -57,6 +57,8 @@ Following snippet can be used to generate access token which can be used to call
   connectionAttributes.put(SDKConstants.CREDENTIAL_TECHNICAL_ACCOUNT_KEY, technical_account_id);   //From Adobe.io auth flow
   connectionAttributes.put(SDKConstants.CREDENTIAL_IMS_ORG_KEY, organization_id);   //From admin
   connectionAttributes.put(SDKConstants.CREDENTIAL_META_SCOPE_KEY, "ent_dataservices_sdk");
+  connectionAttributes.put(SDKConstants.CREDENTIAL_META_SCOPE_KEY, "ent_dataservices_sdk");
+  connectionAttributes.put(SDKConstants.CREDENTIAL_X_SANDBOX_NAME, "sandboxName");
   
   //This will give you access token string
   String access_token = ConnectorSDKUtil.getInstance().getAccessToken();
@@ -100,6 +102,8 @@ Following snippet helps in reading data from platform
 Following snippet helps in writing data to platform
 ```
  DataWiring dataWiring = new DataWiring(ims_org_id, dataset_object);
+or 
+ DataWiring dataWiring = new DataWiring(ims_org_id, sandboxName, dataset_object);
  WriteAttributes writeAttributes = new WriteAttributes.WriteAttributesBuilder().
 					withFlushStrategy(true).
 					withSizeOfRecord(maximum_size_of_single_record).

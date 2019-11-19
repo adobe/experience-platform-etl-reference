@@ -171,7 +171,8 @@ public class CSVReaderProcessor extends ReaderProcessor {
         try {
             URIBuilder builder = new URIBuilder(entity.getHref());
             HttpGet request = new HttpGet(builder.build());
-            httpClientUtil.addHeader(request,param.getAuthToken(),param.getImsOrg(),SDKConstants.CONNECTION_HEADER_JSON_CONTENT);
+            httpClientUtil.addHeader(request,param.getAuthToken(),param.getImsOrg(),param.getSandboxName(),
+                    SDKConstants.CONNECTION_HEADER_JSON_CONTENT);
             httpClientUtil.setHeader(request, getHttpHeaders());
 
             logger.log(Level.FINE,request.getRequestLine().getUri());

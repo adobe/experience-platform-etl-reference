@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class BaseTest {
     protected HttpClient httpClient = Mockito.mock(HttpClient.class);
@@ -61,7 +62,7 @@ public class BaseTest {
     protected DataSet dataset = Mockito.mock(DataSet.class);
     protected DataSetView dsv = Mockito.mock(DataSetView.class);
     protected DataSetFile dataSetFile = Mockito.mock(DataSetFile.class);
-    protected DataWiringParam param = new DataWiringParam("imsOrg", dataset);
+    protected DataWiringParam param = new DataWiringParam("imsOrg", "sandboxName", dataset);
     protected DataAccessService das = Mockito.mock(DataAccessService.class);
     protected DataIngestionService dis = Mockito.mock(DataIngestionService.class);
     protected Batch batch = Mockito.mock(Batch.class);

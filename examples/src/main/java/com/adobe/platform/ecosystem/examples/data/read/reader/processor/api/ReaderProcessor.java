@@ -115,7 +115,7 @@ abstract public class ReaderProcessor {
     }
 
     private void initDataSetFileProcessingSet(String dataSetFileId) throws ConnectorSDKException {
-        dataSetFileProcessingSet = das.getDataSetFileEntries(param.getImsOrg(),param.getAuthToken(),dataSetFileId);
+        dataSetFileProcessingSet = das.getDataSetFileEntries(param.getImsOrg(),param.getSandboxName(),param.getAuthToken(),dataSetFileId);
     }
 
     protected void checkErrorResponseCode(HttpResponse response) throws ConnectorSDKException {

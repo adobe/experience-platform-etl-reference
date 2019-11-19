@@ -79,7 +79,7 @@ public class ETLAuthConnectionTest extends BaseTest{
         ETLAuthConnection etlAuthConnection = new ETLAuthConnection();
         getStringAsHttpOutputStream("");
         try {
-            etlAuthConnection.validateConnection( "accessToken", "imsOrg");
+            etlAuthConnection.validateConnection( "accessToken", "imsOrg", "sandboxName");
             assertTrue(false);
         }catch (Exception ex){
             assertTrue(ex instanceof ConnectorSDKException);
@@ -91,7 +91,7 @@ public class ETLAuthConnectionTest extends BaseTest{
         ETLAuthConnection etlAuthConnection = new ETLAuthConnection();
         getStringAsHttpOutputStream(new JSONObject().toString());
         try {
-            etlAuthConnection.validateConnection( "accessToken", "imsOrg");
+            etlAuthConnection.validateConnection( "accessToken", "imsOrg", "sandboxName");
             assertTrue(false);
         }catch (Exception ex){
             assertTrue(ex instanceof ConnectorSDKException);

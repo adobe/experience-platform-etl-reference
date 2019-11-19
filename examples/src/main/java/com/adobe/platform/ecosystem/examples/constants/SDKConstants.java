@@ -23,6 +23,7 @@ public class SDKConstants {
     public static final String KEYS = "_keys";
 
     public static final String CONNECTION_IMS_ORG_KEY = "imsOrg";
+    public static final String CONNECTION_HEADER_X_SANDBOX_NAME = "x-sandbox-name";
     public static final String CONNECTION_HEADER_IMS_ORG_KEY = "x-gw-ims-org-id";
     public static final String CONNECTION_HEADER_JSON_CONTENT = "application/json";
     public static final String CONNECTION_HEADER_X_API_KEY = "x-api-key";
@@ -63,7 +64,8 @@ public class SDKConstants {
      * schema's (profile/experienceevent).
      */
     public static final int CATALOG_MAX_LIMIT_PER_API_CALL = 100;
-    
+
+    public static final String CATALOG_SANDBOX_NAME = "x-sandbox-name";
     public static final String CATALOG_QUERY_PARAM_LIMIT = "limit";
     public static final String CATALOG_QUERY_PARAM_OFFSET = "offset";
     public static final String CATALOG_QUERY_PARAM_SORT = "sort";
@@ -84,6 +86,7 @@ public class SDKConstants {
     public static final String CREDENTIAL_TECHNICAL_ACCOUNT_KEY = "technicalAccount";
     public static final String CREDENTIAL_TOKEN_KEY = "token";
     public static final String CREDENTIAL_PRIVATE_KEY_PATH = "privateKeyPath";
+    public static final String CREDENTIAL_X_SANDBOX_NAME = "sandboxName";
     public static final String CREDENTIAL_IMS_ORG_KEY = CONNECTION_IMS_ORG_KEY;
 
     public static final String CATALOG_FILE_DESCRIPTION_PERSISTED_KEY = "persisted";
@@ -101,6 +104,7 @@ public class SDKConstants {
     public static final String ENV_IMS_ORG_KEY = "IMS_ORG";
     public static final String ENV_KEY = "ENVIRONMENT";
     public static final String ENV_METASCOPE_KEY = "META_SCOPE";
+    public static final String ENV_SANDBOX_NAME = "SANDBOX_NAME";
 
     public static final String SUB_TYPE = "subType";
     public static final String SUB_FIELDS = "subFields";

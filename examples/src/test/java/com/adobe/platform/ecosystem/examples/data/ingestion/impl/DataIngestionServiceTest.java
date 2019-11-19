@@ -28,6 +28,8 @@ import com.adobe.platform.ecosystem.examples.data.FileFormat;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
 import com.adobe.platform.ecosystem.ut.BaseTest;
 
+import java.util.Optional;
+
 /**
  * Created by vardgupt on 10/10/2017.
  */
@@ -67,7 +69,7 @@ public class DataIngestionServiceTest extends BaseTest {
     @Test(expected = ConnectorSDKException.class)
     public void testGetBatchId() throws Exception {
         setupTestForHttpOutput(batchSample);
-        dis.getBatchId("testIMSOrg","testAccessToken", payload);
+        dis.getBatchId("testIMSOrg", "sandboxName", "testAccessToken", payload);
     }
 
     @Test
@@ -75,7 +77,7 @@ public class DataIngestionServiceTest extends BaseTest {
         String bufferString = "testData";
         try{
             setupTestForHttpOutput(batchSample);
-            dis.writeToBatch("testBatchId", "testDataSetId", "testIMSOrg", "testAccessToken", FileFormat.PARQUET, bufferString.getBytes());
+            dis.writeToBatch("testBatchId", "testDataSetId", "testIMSOrg", "sandboxName", "testAccessToken", FileFormat.PARQUET, bufferString.getBytes());
         }
         catch(Exception e){
             assertTrue(true);
@@ -86,7 +88,7 @@ public class DataIngestionServiceTest extends BaseTest {
     public void testSignalBatchCompletion() throws ConnectorSDKException {
         try{
             setupTestForHttpOutput(batchSample);
-            dis.signalBatchCompletion("testBatchId", "testIMSOrg", "testAccessToken");
+            dis.signalBatchCompletion("testBatchId", "testIMSOrg", "sandboxName", "testAccessToken");
         }
         catch(Exception e){
             assertFalse(true);

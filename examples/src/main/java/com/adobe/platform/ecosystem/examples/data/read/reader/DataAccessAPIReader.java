@@ -133,7 +133,7 @@ public class DataAccessAPIReader implements Reader {
     }
 
     private List<DataSetFileProcessingEntity> initDataSetFileProcessingSet(DataAccessService das,DataWiringParam param,String dataSetFileId) throws ConnectorSDKException {
-        return das.getDataSetFileEntries(param.getImsOrg(),param.getAuthToken(),dataSetFileId);
+        return das.getDataSetFileEntries(param.getImsOrg(),param.getSandboxName(),param.getAuthToken(),dataSetFileId);
     }
 
     private List<String> initDataSetFileSet(CatalogService cs, DataAccessService das, DataWiringParam param,ReadAttributes readAttributes) throws ConnectorSDKException {
@@ -153,8 +153,10 @@ public class DataAccessAPIReader implements Reader {
                 params.put(SDKConstants.CATALOG_QUERY_PARAM_SORT, SDKConstants.CATALOG_QUERY_PARAM_DESC_CREATED);
             }
 
-            for(Batch batch : cs.getBatches(param.getImsOrg(),param.getAuthToken(),params, CatalogAPIStrategy.REPEATED)){
-                for(DataAccessFileEntity fileEntity : das.getDataSetFilesFromBatchId(param.getImsOrg(),param.getAuthToken(),batch.getId())) {
+            for(Batch batch : cs.getBatches(param.getImsOrg(),param.getSandboxName(),param.getAuthToken(),params,
+                    CatalogAPIStrategy.REPEATED)){
+                for(DataAccessFileEntity fileEntity : das.getDataSetFilesFromBatchId(param.getImsOrg(),param.getSandboxName(),
+                        param.getAuthToken() ,batch.getId())) {
                     // This check is because the batch information in Catalog
                     // does not have dataSet/dataSetView information. So we might
                     // be fetching batches from different dataSet id with a given time and epoch range.
@@ -165,7 +167,8 @@ public class DataAccessAPIReader implements Reader {
             }
         } else {
             int fileCount = Integer.parseInt(ConnectorSDKUtil.getInstance().getOrDefaultConfigValue(DEFAULT_DATASETFILE_COUNT_KEY));
-            for(DataSetFile dsf : cs.getDataSetFiles(param.getImsOrg(), param.getAuthToken(), getQueryParam(param.getDataSet().getViewId(), fileCount), CatalogAPIStrategy.ONCE)) {
+            for(DataSetFile dsf : cs.getDataSetFiles(param.getImsOrg(), param.getSandboxName(), param.getAuthToken(),
+                    getQueryParam(param.getDataSet().getViewId(), fileCount), CatalogAPIStrategy.ONCE)) {
                 dataSetFileSet.add(dsf.getId());
             }
         }

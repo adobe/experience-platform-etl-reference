@@ -74,7 +74,7 @@ public class DataIngestionServiceImpl implements DataIngestionService {
      * @see com.adobe.platform.ecosystem.examples.data.ingestion.api.DataIngestionService#getBatch(java.lang.String, java.lang.String)
      */
     @Override
-    public String getBatchId(String imsOrg, String accessToken, JSONObject payload) throws ConnectorSDKException {
+    public String getBatchId(String imsOrg, String sandboxName, String accessToken, JSONObject payload) throws ConnectorSDKException {
 
         logger.log(Level.INFO,"creating batch under imsOrg: "+imsOrg);
 
@@ -89,7 +89,7 @@ public class DataIngestionServiceImpl implements DataIngestionService {
             StringEntity requestEntity = new StringEntity(payload.toString(),
                     ContentType.APPLICATION_JSON);
             request.setEntity(requestEntity);
-            httpClientUtil.addHeader(request, accessToken, imsOrg, SDKConstants.CONNECTION_HEADER_JSON_CONTENT);
+            httpClientUtil.addHeader(request, accessToken, imsOrg, sandboxName, SDKConstants.CONNECTION_HEADER_JSON_CONTENT);
             response = httpClientUtil.execute(request);
         } catch (Exception e) {
             logger.severe("Printing response: " + response);
@@ -117,7 +117,7 @@ public class DataIngestionServiceImpl implements DataIngestionService {
      * @see com.adobe.platform.ecosystem.examples.data.ingestion.api.DataIngestionService#writeToBatch(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, byte[])
      */
     @Override
-    public int writeToBatch(String batchId, String dataSetId, String imsOrg, String accessToken, FileFormat fileFormat, byte[] buffer) throws ConnectorSDKException {
+    public int writeToBatch(String batchId, String dataSetId, String imsOrg, String sandboxName, String accessToken, FileFormat fileFormat, byte[] buffer) throws ConnectorSDKException {
         int outputResponse = -1;
         InputStream stream;
         logger.log(Level.INFO,"Going to write for batchId with imsOrg:"+imsOrg);
@@ -150,7 +150,7 @@ public class DataIngestionServiceImpl implements DataIngestionService {
      * @see com.adobe.platform.ecosystem.examples.data.ingestion.api.DataIngestionService#signalBatchCompletion(java.lang.String, java.lang.String, java.lang.String)
      */
     @Override
-    public int signalBatchCompletion(String batchId, String imsOrg, String accessToken) throws ConnectorSDKException {
+    public int signalBatchCompletion(String batchId, String imsOrg, String sandboxName, String accessToken) throws ConnectorSDKException {
         int outputResponse = -1;
         logger.log(Level.FINER,"Inside signalBatchCompletion");
         try {
@@ -160,7 +160,7 @@ public class DataIngestionServiceImpl implements DataIngestionService {
             builder.setPath(builder.getPath() + "/batches/"+batchId);
             builder.setParameter("action", DIS_BATCH_COMPLETION_SIGNAL_KEYWORD);
             HttpPost request = new HttpPost(builder.build());
-            httpClientUtil.addHeader(request, accessToken, imsOrg, SDKConstants.CONNECTION_HEADER_JSON_CONTENT);
+            httpClientUtil.addHeader(request, accessToken, imsOrg, sandboxName, SDKConstants.CONNECTION_HEADER_JSON_CONTENT);
             String response = httpClientUtil.execute(request);
             logger.log(Level.INFO,"Batch Completion signalled and got response "+response);
             outputResponse = 0;

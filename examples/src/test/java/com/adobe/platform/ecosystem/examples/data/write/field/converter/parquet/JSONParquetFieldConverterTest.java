@@ -36,6 +36,7 @@ import java.util.List;
 
 import static com.adobe.platform.ecosystem.examples.constants.SDKConstants.CATALOG_MAP_KEY;
 import static com.adobe.platform.ecosystem.examples.constants.SDKConstants.CATALOG_MAP_VALUE;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -65,6 +66,7 @@ public class JSONParquetFieldConverterTest extends BaseTest {
 
         when(catalogService.getSchemaFields(
             anyString(),
+            any(),
             anyString(),
             eq("/xdms/context/profile"),
             anyBoolean()

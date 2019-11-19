@@ -37,6 +37,18 @@ public interface CatalogService {
     /**
      * Fetch data sets from catalog
      * @param imsOrg imsOrg in context.
+     * @param sandboxName x-sandbox-name in context.
+     * @param authToken authToken
+     * @param params params
+     * @param strategy strategy
+     * @return List of Datasets.
+     * @throws ConnectorSDKException
+     */
+    List<DataSet> getDataSets(String imsOrg, String sandboxName, String authToken, Map<String, String> params, CatalogAPIStrategy strategy) throws ConnectorSDKException;
+
+    /**
+     * Fetch data sets from catalog
+     * @param imsOrg imsOrg in context.
      * @param authToken authToken
      * @param params params
      * @param strategy strategy
@@ -48,13 +60,14 @@ public interface CatalogService {
     /**
      * Fetch Schema from XDM Registry via catalog
      * @param imsOrg imsOrg in context.
+     * @param sandboxName x-sandbox-name in context.
      * @param authToken authToken
      * @param schemaPath schemaPath
      * @param useFlatNamesForLeafNodes boolean
      * @return List of SchemaFields.
      * @throws ConnectorSDKException
      */
-    List<SchemaField> getSchemaFields(String imsOrg, String authToken, String schemaPath, boolean useFlatNamesForLeafNodes) throws ConnectorSDKException;
+    List<SchemaField> getSchemaFields(String imsOrg, String sandboxName, String authToken, String schemaPath, boolean useFlatNamesForLeafNodes) throws ConnectorSDKException;
 
     /**
      * Get data set corresponding to the given connection ID
@@ -63,7 +76,18 @@ public interface CatalogService {
      * @param connectionId
      * @return
      * */
-    Connection getConnection(String imsOrg, String authToken, String connectionId) throws ConnectorSDKException ;
+    Connection getConnection(String imsOrg, String sandboxName, String authToken, String connectionId) throws ConnectorSDKException ;
+
+    /**
+     * Get data set corresponding to the given <code>dataSetId</code>
+     * @param imsOrg
+     * @param sandboxName
+     * @param authToken
+     * @param dataSetId
+     * @return
+     * @throws ConnectorSDKException
+     */
+    DataSet getDataSet(String imsOrg, String sandboxName, String authToken, String dataSetId) throws ConnectorSDKException;
 
     /**
      * Get data set corresponding to the given <code>dataSetId</code>
@@ -78,11 +102,12 @@ public interface CatalogService {
     /**
      * Create batch in catalog for the payload
      * @param imsOrg
+     * @param sandboxName
      * @param authToken
      * @param payload
      * @return
      */
-    Batch createBatch(String imsOrg, String authToken, JSONObject payload) throws ConnectorSDKException;
+    Batch createBatch(String imsOrg, String sandboxName, String authToken, JSONObject payload) throws ConnectorSDKException;
 
     /**
      * API to continuously fetch the batch
@@ -92,53 +117,58 @@ public interface CatalogService {
      *
      * @param batchId
      * @param imsOrg
+     * @param sandboxName
      * @param accessToken
      * @return
      */
-    Batch pollForBatchProcessingCompletion(String imsOrg, String accessToken, String batchId) throws ConnectorSDKException;
+    Batch pollForBatchProcessingCompletion(String imsOrg, String sandboxName, String accessToken, String batchId) throws ConnectorSDKException;
 
     /**
      * Get batch from the catalog for the given batchId
      * @param imsOrg
+     * @param sandboxName
      * @param authToken
      * @param batchId
      * @return
      */
-    Batch getBatchByBatchId(String imsOrg, String authToken,
+    Batch getBatchByBatchId(String imsOrg, String sandboxName, String authToken,
             String batchId) throws ConnectorSDKException;
 
     /**
      * Gets latest {@code count} number of DataSetfiles
      * from Catalog.
      * @param imsOrg
+     * @param sandboxName
      * @param authToken
      * @param params
      * @param strategy
      * @return
      * @throws ConnectorSDKException
      */
-    List<DataSetFile> getDataSetFiles(String imsOrg, String authToken, Map<String, String> params, CatalogAPIStrategy strategy) throws ConnectorSDKException;
+    List<DataSetFile> getDataSetFiles(String imsOrg, String sandboxName, String authToken, Map<String, String> params, CatalogAPIStrategy strategy) throws ConnectorSDKException;
 
     /**
      * Gets DataSetView metadata from Catalog
      * for {@code viewId} datasetview id.
      * @param imsOrg
+     * @param sandboxName
      * @param authToken
      * @param viewId
      * @return
      * @throws ConnectorSDKException
      */
-    DataSetView getDataSetView(String imsOrg, String authToken, String viewId) throws ConnectorSDKException;
+    DataSetView getDataSetView(String imsOrg, String sandboxName, String authToken, String viewId) throws ConnectorSDKException;
 
     /**
      * Get's list of {@link Batch} from Catalog given
      * time range parameters.
      * @param imsOrg
+     * @param sandboxName
      * @param authToken
      * @param params
      * @param strategy
      * @return
      * @throws ConnectorSDKException
      */
-    List<Batch> getBatches(String imsOrg, String authToken, Map<String, String> params, CatalogAPIStrategy strategy) throws ConnectorSDKException;
+    List<Batch> getBatches(String imsOrg, String sandboxName, String authToken, Map<String, String> params, CatalogAPIStrategy strategy) throws ConnectorSDKException;
 }

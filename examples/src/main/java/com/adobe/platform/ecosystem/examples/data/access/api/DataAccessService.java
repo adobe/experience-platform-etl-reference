@@ -35,6 +35,18 @@ public interface DataAccessService {
      * Lists all file entities present
      * in a datasetfile path(folderName).
      * @param imsOrg ImsOrg
+     * @param sandboxName x-sandbox-name
+     * @param accessToken Access Token
+     * @param dataSetFileId DataSetFile id in Catalog metastore.
+     * @return List<{@link DataSetFileProcessingEntity}> List of files present under one <code>dataSetFileId</code>.
+     * @throws ConnectorSDKException
+     */
+    List<DataSetFileProcessingEntity> getDataSetFileEntries(String imsOrg, String sandboxName, String accessToken, String dataSetFileId) throws ConnectorSDKException;
+
+    /**
+     * Lists all file entities present
+     * in a datasetfile path(folderName).
+     * @param imsOrg ImsOrg
      * @param accessToken Access Token
      * @param dataSetFileId DataSetFile id in Catalog metastore.
      * @return List<{@link DataSetFileProcessingEntity}> List of files present under one <code>dataSetFileId</code>.
@@ -42,13 +54,15 @@ public interface DataAccessService {
      */
     List<DataSetFileProcessingEntity> getDataSetFileEntries(String imsOrg, String accessToken, String dataSetFileId) throws ConnectorSDKException;
 
+
     /**
      * Lists all dataSetFiles referenced through catalog batch - <code>batchId</code>
      * @param imsOrg ImsOrg
+     * @param sandboxName x-sandbox-name
      * @param accessToken Access Token
      * @param batchId batchId id in Catalog metastore.
      * * @return List<{@link DataAccessFileEntity}> List of files linked with <code>batchId</code>
      * @throws ConnectorSDKException
      */
-    List<DataAccessFileEntity> getDataSetFilesFromBatchId(String imsOrg, String accessToken, String batchId) throws ConnectorSDKException;
+    List<DataAccessFileEntity> getDataSetFilesFromBatchId(String imsOrg, String sandboxName, String accessToken, String batchId) throws ConnectorSDKException;
 }

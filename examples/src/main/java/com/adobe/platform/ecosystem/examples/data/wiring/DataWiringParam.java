@@ -28,6 +28,8 @@ import com.adobe.platform.ecosystem.examples.util.ConnectorSDKUtil;
 public class DataWiringParam {
     private String imsOrg;
 
+    private String sandboxName;
+
     private DataSet dataSet;
 
     public DataWiringParam( String imsOrg, DataSet dataSet) {
@@ -35,8 +37,18 @@ public class DataWiringParam {
         this.dataSet = dataSet;
     }
 
+    public DataWiringParam( String imsOrg, String sandboxName, DataSet dataSet) {
+        this.imsOrg = imsOrg;
+        this.sandboxName = sandboxName;
+        this.dataSet = dataSet;
+    }
+
     public String getImsOrg() {
         return imsOrg;
+    }
+
+    public String getSandboxName() {
+        return sandboxName;
     }
 
     public String getAuthToken() throws ConnectorSDKException{

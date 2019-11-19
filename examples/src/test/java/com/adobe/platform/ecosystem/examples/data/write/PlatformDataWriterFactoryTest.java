@@ -50,7 +50,7 @@ public class PlatformDataWriterFactoryTest extends BaseTest {
         PlatformDataFormatterFactory formatterFactory = new PlatformDataFormatterFactory(writer, param, registryFactory);
         PlatformDataWriterFactory platWriter = new PlatformDataWriterFactory(param, catService, dis, httpClient, formatterFactory);
         try {
-            Mockito.when(dis.getBatchId(Mockito.any(), Mockito.any(), Mockito.any())).thenReturn("sfdsgsgsdgtw");
+            Mockito.when(dis.getBatchId(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any())).thenReturn("sfdsgsgsdgtw");
             assertTrue(platWriter.getWriter() != null);
         } catch (ConnectorSDKException e) {
             e.printStackTrace();

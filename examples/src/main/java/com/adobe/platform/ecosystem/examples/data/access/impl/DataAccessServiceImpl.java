@@ -64,6 +64,7 @@ public class DataAccessServiceImpl implements DataAccessService {
     @Override
     public List<DataSetFileProcessingEntity> getDataSetFileEntries(
             String imsOrg,
+            String sandboxName,
             String accessToken,
             String dataSetFileId
     ) throws ConnectorSDKException {
@@ -75,7 +76,7 @@ public class DataAccessServiceImpl implements DataAccessService {
             URIBuilder builder = new URIBuilder(dataAccessURI);
             builder.setPath(builder.getPath() + "/files/" + dataSetFileId);
             HttpGet request = new HttpGet(builder.build());
-            httpClientUtil.addHeader(request, accessToken, imsOrg, SDKConstants.CONNECTION_HEADER_JSON_CONTENT);
+            httpClientUtil.addHeader(request, accessToken, imsOrg, sandboxName, SDKConstants.CONNECTION_HEADER_JSON_CONTENT);
             String response = httpClientUtil.execute(request);
 
             JSONParser parser = new JSONParser();
@@ -98,11 +99,16 @@ public class DataAccessServiceImpl implements DataAccessService {
         return processingEntities;
     }
 
+    @Override
+    public List<DataSetFileProcessingEntity> getDataSetFileEntries(String imsOrg, String accessToken, String dataSetFileId) throws ConnectorSDKException {
+        return getDataSetFileEntries(imsOrg, null, accessToken, dataSetFileId);
+    }
+
     /**
      * {@inheritDoc}
      */
     @Override
-    public List<DataAccessFileEntity> getDataSetFilesFromBatchId(String imsOrg, String accessToken, String batchId) throws ConnectorSDKException {
+    public List<DataAccessFileEntity> getDataSetFilesFromBatchId(String imsOrg, String sandboxName, String accessToken, String batchId) throws ConnectorSDKException {
         List<DataAccessFileEntity> processingEntities = new ArrayList<>();
         try {
             ConnectorSDKUtil utilInstance = ConnectorSDKUtil.getInstance();
@@ -110,7 +116,7 @@ public class DataAccessServiceImpl implements DataAccessService {
             URIBuilder builder = new URIBuilder(dataAccessURI);
             builder.setPath(builder.getPath() + "/batches/" + batchId + "/files");
             HttpGet request = new HttpGet(builder.build());
-            httpClientUtil.addHeader(request, accessToken, imsOrg, SDKConstants.CONNECTION_HEADER_JSON_CONTENT);
+            httpClientUtil.addHeader(request, accessToken, imsOrg, sandboxName, SDKConstants.CONNECTION_HEADER_JSON_CONTENT);
             String response = httpClientUtil.execute(request);
 
             JSONParser parser = new JSONParser();

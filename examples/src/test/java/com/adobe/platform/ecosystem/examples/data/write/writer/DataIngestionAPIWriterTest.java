@@ -63,10 +63,10 @@ public class DataIngestionAPIWriterTest extends BaseTest {
         setUp();
         setUpHttpForJwtResponse();
 
-        when(dis.getBatchId(any(), any(), any())).thenReturn("dummyBatchId");
+        when(dis.getBatchId(any(), any(), any(), any())).thenReturn("dummyBatchId");
         when(formatter.getBuffer(any())).thenReturn(new byte[10]);
 
-        when(catService.pollForBatchProcessingCompletion(anyString(), anyString(), anyString())).thenReturn(getBatches().get(0));
+        when(catService.pollForBatchProcessingCompletion(anyString(), any(), anyString(), anyString())).thenReturn(getBatches().get(0));
     }
 
     @Test
@@ -184,7 +184,7 @@ public class DataIngestionAPIWriterTest extends BaseTest {
 
     @Test
     public void testWriteAPIForProcedural() throws ConnectorSDKException {
-        when(dis.writeToBatch(any(),any(),any(),any(),any(),any())).thenReturn(0);
+        when(dis.writeToBatch(any(),any(),any(),any(),any(),any(),any())).thenReturn(0);
         DataIngestionAPIWriter writer = new DataIngestionAPIWriter(dis, param, CSV_FILE_FORMAT, formatter, writeAttributes, catService);
         List<Object> data = new ArrayList<>();
         assert (writer.write(data) == 0);

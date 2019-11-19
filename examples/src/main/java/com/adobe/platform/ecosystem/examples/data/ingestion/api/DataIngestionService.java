@@ -36,12 +36,13 @@ public interface DataIngestionService {
      * Data Ingestion Service API.
      *
      * @param imsOrg IMS Org in context.
+     * @param sandboxName x-sandbox-name in context.
      * @param accessToken accessToken
      * @param payload payload for object.
      * @return returns the created batch Id.
      */
 
-    String getBatchId(String imsOrg, String accessToken, JSONObject payload) throws ConnectorSDKException;
+    String getBatchId(String imsOrg, String sandboxName, String accessToken, JSONObject payload) throws ConnectorSDKException;
 
     /**
      * This method is used to upload file via
@@ -50,21 +51,23 @@ public interface DataIngestionService {
      * @param batchId
      * @param dataSetId
      * @param imsOrg
+     * @param sandboxName
      * @param accessToken
      * @param fileFormat
      * @param buffer
      * @return
      */
 
-    int writeToBatch(String batchId, String dataSetId, String imsOrg, String accessToken, FileFormat fileFormat, byte[] buffer) throws ConnectorSDKException;
+    int writeToBatch(String batchId, String dataSetId, String imsOrg, String sandboxName, String accessToken, FileFormat fileFormat, byte[] buffer) throws ConnectorSDKException;
 
     /**
      * This method is used to signal completion
      * of batch uploads.
      * @param batchId
      * @param imsOrg
+     * @param sandboxName
      * @param accessToken
      * @return
      */
-    int signalBatchCompletion(String batchId, String imsOrg, String accessToken) throws ConnectorSDKException;
+    int signalBatchCompletion(String batchId, String imsOrg, String sandboxName, String accessToken) throws ConnectorSDKException;
 }

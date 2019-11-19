@@ -35,16 +35,26 @@ public class ETLAuthConnection {
      * @param imsOrg
      * @throws ConnectorSDKException
      */
-    public void validateConnection(String accessToken, String imsOrg)
+    public void validateConnection(String accessToken, String imsOrg, String sandboxName)
             throws ConnectorSDKException{
         //fetch batches from Catalog to test the validitity of connection credentials
         try {
             CatalogService catalogService = CatalogFactory.getCatalogService();
-            catalogService.getBatches(imsOrg, accessToken, new HashMap<>(), CatalogAPIStrategy.ONCE);
+            catalogService.getBatches(imsOrg, sandboxName, accessToken, new HashMap<>(), CatalogAPIStrategy.ONCE);
         }catch (Exception ex){
             throw new ConnectorSDKException("Please check the connection parameters imsOrg, catalog end point, access token : " + ex.getMessage(), ex);
         }
     }
 
+    /**
+     * This API checks of the connection is successful with the connection parameters
+     * provided by the client during ETL connection initialization
+     * @param accessToken
+     * @param imsOrg
+     * @throws ConnectorSDKException
+     */
+    public void validateConnection(String accessToken, String imsOrg) throws ConnectorSDKException {
+        this.validateConnection(accessToken, imsOrg, null);
+    }
 
 }
