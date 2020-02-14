@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.adobe.platform</groupId>
     <artifactId>example-parquetIO</artifactId>
-    <version>1.0.6</version>
+    <version>1.0.8</version>
     <packaging>jar</packaging>
     <description>This jar will take care conversion of CSV to Parquet &amp; vice-versa</description>
     <properties>
@@ -27,6 +27,13 @@
                     <groupId>jdk.tools</groupId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/commons-beanutils/commons-beanutils -->
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.9.4</version>
         </dependency>
 
         <dependency>
