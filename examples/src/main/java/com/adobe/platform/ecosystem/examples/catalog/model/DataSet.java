@@ -40,7 +40,7 @@ import com.adobe.platform.ecosystem.examples.catalog.impl.CatalogFactory;
 import com.adobe.platform.ecosystem.examples.constants.SDKConstants;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKUtil;
-import org.mortbay.util.ajax.JSON;
+
 
 import static com.adobe.platform.ecosystem.examples.schemaregistry.SchemaRegistryFactory.getSchemaRegistryService;
 

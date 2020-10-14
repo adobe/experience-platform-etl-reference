@@ -18,7 +18,8 @@ package com.adobe.platform.ecosystem.examples.util;
 
 import com.adobe.platform.ecosystem.examples.authentication.AccessTokenProcessor;
 import com.adobe.platform.ecosystem.examples.constants.SDKConstants;
-import org.apache.commons.lang.StringUtils;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 

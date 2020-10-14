@@ -17,7 +17,6 @@ package com.adobe.platform.ecosystem.examples.data.write.writer.extractor;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.mortbay.util.ajax.JSON;
 
 import java.util.Arrays;
 import java.util.Collections;
