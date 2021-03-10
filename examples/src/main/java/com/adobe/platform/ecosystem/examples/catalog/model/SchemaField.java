@@ -25,7 +25,7 @@ import java.util.logging.Logger;
 import com.adobe.platform.ecosystem.examples.catalog.function.DataTypeFunction;
 import com.adobe.platform.ecosystem.examples.data.validation.api.Rule;
 import com.adobe.platform.ecosystem.examples.data.validation.impl.rules.SchemaValidationRule;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 

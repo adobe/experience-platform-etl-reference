@@ -22,7 +22,8 @@ import com.adobe.platform.ecosystem.examples.util.ConnectorSDKUtil;
 import com.adobe.platform.ecosystem.examples.util.HttpClientUtil;
 import com.adobe.platform.ecosystem.examples.util.ResourceName;
 import io.jsonwebtoken.Jwts;
-import org.apache.commons.lang.StringUtils;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;

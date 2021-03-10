@@ -41,7 +41,8 @@ import com.adobe.platform.ecosystem.examples.data.wiring.DataWiringParam;
 
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKUtil;
 import com.adobe.platform.ecosystem.examples.util.EpochUtil;
-import org.apache.commons.lang.StringUtils;
+
+import org.apache.commons.lang3.StringUtils;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.example.data.simple.SimpleGroup;
 import org.apache.parquet.schema.*;
@@ -60,7 +61,6 @@ import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.DateTimeFormatterBuilder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.mortbay.util.ajax.JSON;
 
 /**
  * Created by vardgupt on 10/17/2017.

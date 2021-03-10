@@ -21,7 +21,8 @@ package com.adobe.platform.ecosystem.examples.data.validation.impl.rules;
 
 import com.adobe.platform.ecosystem.examples.data.validation.exception.ValidationException;
 import com.adobe.platform.ecosystem.examples.data.validation.exception.ValidationExceptionBuilder;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
+
 
 import java.util.List;
 import java.util.Optional;
