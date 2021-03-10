@@ -27,6 +27,7 @@ import com.adobe.platform.ecosystem.examples.util.ConnectorSDKException;
 import com.adobe.platform.ecosystem.examples.util.ConnectorSDKUtil;
 import com.adobe.platform.ecosystem.examples.util.HttpClientUtil;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -109,6 +110,10 @@ public class ParquetReaderProcessor extends ReaderProcessor {
         request.setHeader(SDKConstants.CONNECTION_HEADER_IMS_ORG_KEY, param.getImsOrg());
         request.setHeader(SDKConstants.CONNECTION_HEADER_X_API_KEY,
                 ConnectorSDKUtil.getInstance().getConnectionProperty(SDKConstants.CREDENTIAL_CLIENT_KEY));
+
+        if (!StringUtils.isEmpty(param.getSandboxName())) {
+            request.setHeader(SDKConstants.CONNECTION_HEADER_X_SANDBOX_NAME, param.getSandboxName());
+        }
         logger.log(Level.FINE,request.getRequestLine().getUri());
         HttpResponse response = httpClientUtil.executeRequest(request, false);
         checkErrorResponseCode(response);
