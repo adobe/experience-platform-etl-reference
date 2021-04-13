@@ -293,6 +293,7 @@ public class CatalogServiceImpl implements CatalogService {
                     String entityId = (String) key;
                     JSONObject jdata = (JSONObject) jsonObject.get(entityId);
                     jdata.put(SDKConstants.CATALOG_ID, entityId);
+                    jdata.put(SDKConstants.CATALOG_SANDBOX_NAME, sandboxName);
                     entities.add(getNewInstance(clazz, jdata));
                 }
             }

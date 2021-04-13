@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -135,6 +136,9 @@ public class DataIngestionServiceImpl implements DataIngestionService {
             request.setHeader(SDKConstants.CONNECTION_HEADER_IMS_ORG_KEY, imsOrg);
             request.setHeader(SDKConstants.CONNECTION_HEADER_X_API_KEY,
                     utilInstance.getConnectionProperty(SDKConstants.CREDENTIAL_CLIENT_KEY));
+            if (!StringUtils.isEmpty(sandboxName)) {
+                request.setHeader(SDKConstants.CONNECTION_HEADER_X_SANDBOX_NAME, sandboxName);
+            }
             HttpResponse response = httpClientUtil.executeRequest(request,false);
             if(response!=null && response.getStatusLine().getStatusCode()==200)
                 outputResponse = 0;

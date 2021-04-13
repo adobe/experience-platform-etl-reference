@@ -19,7 +19,9 @@
  */
 package com.adobe.platform.ecosystem.examples.data.validation.impl;
 
-import org.apache.commons.lang.StringUtils;
+
+
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 

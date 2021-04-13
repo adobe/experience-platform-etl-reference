@@ -65,7 +65,7 @@ public class SDKConstants {
      */
     public static final int CATALOG_MAX_LIMIT_PER_API_CALL = 100;
 
-    public static final String CATALOG_SANDBOX_NAME = "x-sandbox-name";
+    public static final String CATALOG_SANDBOX_NAME = "sandboxName";
     public static final String CATALOG_QUERY_PARAM_LIMIT = "limit";
     public static final String CATALOG_QUERY_PARAM_OFFSET = "offset";
     public static final String CATALOG_QUERY_PARAM_SORT = "sort";
@@ -91,7 +91,7 @@ public class SDKConstants {
 
     public static final String CATALOG_FILE_DESCRIPTION_PERSISTED_KEY = "persisted";
     public static final String CATALOG_FILE_DESCRIPTION_DELIMITERS_KEY = "delimiters";
-    public static final String CATALOG_DATASET_DEFAULT_PROPERTY = "fields,schema,name,description,imsOrg,fileDescription,viewId,schemaRef";
+    public static final String CATALOG_DATASET_DEFAULT_PROPERTY = "fields,schema,name,description,imsOrg,fileDescription,viewId,schemaRef,sandboxName";
 
     public static final String CATALOG_SCHEMA_REF_ID = "id";
     public static final String CATALOG_SCHEMA_REF_CONTENT_TYPE = "contentType";

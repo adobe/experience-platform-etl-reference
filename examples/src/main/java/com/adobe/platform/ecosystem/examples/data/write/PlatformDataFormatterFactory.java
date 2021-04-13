@@ -33,7 +33,8 @@ import com.adobe.platform.ecosystem.examples.data.write.field.converter.parquet.
 import com.adobe.platform.ecosystem.examples.data.write.writer.formatter.CSVDataFormatter;
 import com.adobe.platform.ecosystem.examples.data.write.writer.formatter.JSONDataFormatter;
 import com.adobe.platform.ecosystem.examples.data.write.writer.formatter.ParquetDataFormatter;
-import org.apache.commons.lang.StringUtils;
+
+import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONObject;
 
 import java.util.List;
