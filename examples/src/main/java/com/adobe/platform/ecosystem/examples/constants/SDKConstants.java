@@ -27,6 +27,7 @@ public class SDKConstants {
     public static final String CONNECTION_HEADER_JSON_CONTENT = "application/json";
     public static final String CONNECTION_HEADER_X_API_KEY = "x-api-key";
     public static final String CONNECTION_ENV_KEY = "env";
+    
     public static final String CATALOG_CREATED_KEY = "created";
     public static final String CATALOG_CREATED_AFTER_KEY = "createdAfter";
     public static final String CATALOG_CREATED_BEFORE_KEY = "createdBefore";
