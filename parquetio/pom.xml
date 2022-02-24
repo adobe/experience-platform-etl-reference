@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.adobe.platform</groupId>
     <artifactId>example-parquetIO</artifactId>
-    <version>1.1.10</version>
+    <version>1.1.12</version>
     <packaging>jar</packaging>
     <description>This jar will take care conversion of CSV to Parquet &amp; vice-versa</description>
     <properties>
@@ -108,6 +108,10 @@
                     <groupId>org.apache.commons</groupId>
                     <artifactId>commons-compress</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.apache.avro</groupId>
+                    <artifactId>avro</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 
@@ -123,6 +127,13 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>1.21</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.apache.avro/avro -->
+        <dependency>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro</artifactId>
+            <version>1.11.0</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/io.netty/netty-transport-native-epoll -->
@@ -165,7 +176,7 @@
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
-            <version>3.13.0</version>
+            <version>3.19.4</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents.client5/httpclient5 -->
