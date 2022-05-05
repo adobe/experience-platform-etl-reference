@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.adobe.platform</groupId>
     <artifactId>example-parquetIO</artifactId>
-    <version>1.1.16</version>
+    <version>1.1.18</version>
     <packaging>jar</packaging>
     <description>This jar will take care conversion of CSV to Parquet &amp; vice-versa</description>
     <properties>
@@ -190,7 +190,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.11.3</version>
+            <version>2.13.2.2</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
