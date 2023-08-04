@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.adobe.platform</groupId>
     <artifactId>example-parquetIO</artifactId>
-    <version>1.2.2</version>
+    <version>1.2.4</version>
     <packaging>jar</packaging>
     <description>This jar will take care conversion of CSV to Parquet &amp; vice-versa</description>
     <properties>
@@ -178,28 +178,28 @@
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
-            <version>11.0.11</version>
+            <version>11.0.15</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.eclipse.jetty/jetty-util -->
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-util</artifactId>
-            <version>11.0.11</version>
+            <version>11.0.15</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.eclipse.jetty/jetty-servlets -->
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-servlet</artifactId>
-            <version>11.0.11</version>
+            <version>11.0.15</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.eclipse.jetty/jetty-webapp -->
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-webapp</artifactId>
-            <version>11.0.11</version>
+            <version>11.0.15</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.google.protobuf/protobuf-java -->
@@ -255,7 +255,7 @@
         <dependency>
             <groupId>org.codehaus.jettison</groupId>
             <artifactId>jettison</artifactId>
-            <version>1.5.3</version>
+            <version>1.5.4</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/com.nimbusds/nimbus-jose-jwt -->
