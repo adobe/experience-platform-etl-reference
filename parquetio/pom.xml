@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.adobe.platform</groupId>
     <artifactId>example-parquetIO</artifactId>
-    <version>1.2.16</version>
+    <version>1.2.20</version>
     <packaging>jar</packaging>
     <description>This jar will take care conversion of CSV to Parquet &amp; vice-versa</description>
     <properties>
@@ -109,6 +109,10 @@
                     <artifactId>commons-compress</artifactId>
                 </exclusion>
                 <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-configuration2</artifactId>
+                </exclusion>
+                <exclusion>
                     <groupId>org.apache.avro</groupId>
                     <artifactId>avro</artifactId>
                 </exclusion>
@@ -131,6 +135,10 @@
                 <exclusion>
                     <groupId>org.xerial.snappy</groupId>
                     <artifactId>snappy-java</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>dnsjava</groupId>
+                    <artifactId>dnsjava</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -160,7 +168,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-handler</artifactId>
-            <version>4.1.100.Final</version>
+            <version>4.1.110.Final</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-compress -->
@@ -181,7 +189,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-epoll</artifactId>
-            <version>4.1.100.Final</version>
+            <version>4.1.110.Final</version>
         </dependency>
         
 
@@ -268,6 +276,21 @@
             <artifactId>jettison</artifactId>
             <version>1.5.4</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-configuration2 -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-configuration2</artifactId>
+            <version>2.11.0</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/dnsjava/dnsjava -->
+        <dependency>
+            <groupId>dnsjava</groupId>
+            <artifactId>dnsjava</artifactId>
+            <version>3.6.1</version>
+        </dependency>
+
 
         <!-- https://mvnrepository.com/artifact/com.nimbusds/nimbus-jose-jwt -->
         <dependency>
